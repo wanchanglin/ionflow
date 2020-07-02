@@ -1,3 +1,5 @@
+#' wl-02-07-2020, Thu: gather all codes
+
 #' Exploratory Analysis
 #'
 #'Exploratory tools for Ionomics data

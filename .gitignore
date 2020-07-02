@@ -1,0 +1,17 @@
+# wl-15-03-2018: 
+
+## Folders to be ignored 
+doc/
+# test-data/lcms_neg
+# test-data/lcms_pos
+
+## R Session Data files
+.RData
+.Rhistory
+.Rapp.history
+
+## Others
+.DS_Store
+*.swp
+*.*~
+

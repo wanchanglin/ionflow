@@ -32,8 +32,8 @@
 #' head(exp_anal$data.PCA_loadings)
 #' }
 #' @export
-ExploratoryAnalysis = function(data=NULL)
-{
+
+ExploratoryAnalysis = function(data=NULL) {
   Packages <- c("dplyr","tidyr","ggplot2","ggfortify","factoextra","pheatmap","gplots","mixOmics","qgraph","corrplot","data.table","gridExtra","sna","intergraph","igraph","Matrix","ggrepel","knitr","tidyr")
   suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
@@ -270,8 +270,6 @@ GeneClustering = function(data=NULL,
 
   return(res)
 }
-
-
 
 
 #' Network

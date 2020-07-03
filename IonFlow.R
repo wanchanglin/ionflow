@@ -1,6 +1,8 @@
 #' wl-03-07-2020, Fri: Load packages here. 
 
 ## ==== General settings ====
+rm(list = ls(all = T))
+
 #' load packagesI (totla 27 packages. Why so many packages needed?)
 Packages <- 
   c("corrplot","data.table","dplyr","factoextra","GGally","ggfortify",i

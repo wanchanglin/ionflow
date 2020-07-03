@@ -1,16 +1,26 @@
-#' wl-02-07-2020, Thu: gather all codes
+#' wl-02-07-2020, Thu: Put package files together
 
-#' Exploratory Analysis
+#' ==== Exploratory Analysis ====
 #'
 #'Exploratory tools for Ionomics data
-#' @param \code{data} a processed data frame of ion's concentrations (columns) for each gene's knockout (rows) (wide format) e.g. \code{data.wide} from the \code{PreProcessing_fn}
+#' @param \code{data} a processed data frame of ion's concentrations (columns)
+#'   for each gene's knockout (rows) (wide format) e.g. \code{data.wide} from
+#'   the \code{PreProcessing_fn}
 #'
-#' @return \code{plot.Pearson_correlation} plot of Pearson's correlations across ions
-#' @return \code{plot.PCA_Individual} plot of ion's profiles in a lower-dimensional space from PCA
-#' @return \code{plot.heatmap} plot of ion's concentrations for each gene's knockout with added clustering dendogram
-#' @return \code{plot.pairwise_correlation_map} plot of pairwise correlation coefficients across ions
-#' @return \code{plot.regularized_partial_correlation_network} plot of partial correlation coefficients for pairs of ions after conditioning for the remaining ions. Red for negative, green for positive partial correlations. No connections drawn when partial correlations equals 0
-#' @return \code{data.PCA_loadings} a data frame of weights of each of the original gene knockouts also known as loading vectors associated to each PC
+#' @return \code{plot.Pearson_correlation} plot of Pearson's correlations across
+#'   ions
+#' @return \code{plot.PCA_Individual} plot of ion's profiles in a
+#'   lower-dimensional space from PCA
+#' @return \code{plot.heatmap} plot of ion's concentrations for each gene's
+#'   knockout with added clustering dendogram
+#' @return \code{plot.pairwise_correlation_map} plot of pairwise correlation
+#'   coefficients across ions
+#' @return \code{plot.regularized_partial_correlation_network} plot of partial
+#'   correlation coefficients for pairs of ions after conditioning for the
+#'   remaining ions. Red for negative, green for positive partial correlations.
+#'   No connections drawn when partial correlations equals 0
+#' @return \code{data.PCA_loadings} a data frame of weights of each of the
+#'   original gene knockouts also known as loading vectors associated to each PC
 #'
 #' @examples \code{
 #' library(IonFlow)
@@ -32,17 +42,21 @@
 #' head(exp_anal$data.PCA_loadings)
 #' }
 #' @export
-
 ExploratoryAnalysis = function(data=NULL) {
-  Packages <- c("dplyr","tidyr","ggplot2","ggfortify","factoextra","pheatmap","gplots","mixOmics","qgraph","corrplot","data.table","gridExtra","sna","intergraph","igraph","Matrix","ggrepel","knitr","tidyr")
-  suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
+
+  #' Packages <-
+  #'   c("dplyr","tidyr","ggplot2","ggfortify","factoextra","pheatmap","gplots",
+  #'     "mixOmics","qgraph","corrplot","data.table","gridExtra","sna",
+  #'     "intergraph","igraph","Matrix","ggrepel","knitr","tidyr")
+
+  #' suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
   #### -------------------> Correlation
   col3 <- colorRampPalette(c("steelblue4","white","firebrick"))
-  corrplot.mixed(cor(data[,-1], use = "complete.obs"), number.cex = .7, lower.col = 'black', upper.col = col3(100))
+  corrplot.mixed(cor(data[,-1], use = "complete.obs"), number.cex = .7,
+                 lower.col = 'black', upper.col = col3(100))
 
   p_corr <- recordPlot()
-
 
   #### -------------------> PCA
   pca.X <- mixOmics::pca(t(data[,-1]),center=T,scale=F)
@@ -67,7 +81,6 @@ ExploratoryAnalysis = function(data=NULL) {
     ylab(paste("PC2: ",round(pca.X$explained_variance[2]*100,2),"% expl. variance", sep='')) +
     labs(title = "PCA")
 
-
   #### -------------------> HEATMAP
   pheatmap(data[,-1],
            show_rownames=F, cluster_cols=T, cluster_rows=T,
@@ -77,7 +90,6 @@ ExploratoryAnalysis = function(data=NULL) {
            scale="row")
 
   pheat <- recordPlot()
-
 
   #### -------------------> PAIRWISE CORRELATION MAP
   col <- colorRampPalette(c("skyblue4", "white", "plum4"))(20)
@@ -93,7 +105,6 @@ ExploratoryAnalysis = function(data=NULL) {
          tuning = 0.25,sampleSize = nrow(data[,-1])))
 
   Graph_lasso <- recordPlot()
-
 
   #### -------------------> Output
   res <- list()
@@ -111,16 +122,21 @@ ExploratoryAnalysis = function(data=NULL) {
   return(res)
 }
 
-
-#' Clustering
+#' ==== Clustering ====
 #'
 #'Clustering and enrichment tools for Ionomics data
-#' @param \code{data} a processed data frame of ion's concentrations (columns) for each gene's knockout (rows) (wide format) e.g. \code{data.wide} from the \code{PreProcessing_fn}
-#' @param \code{data_Symb} a processed data frame of symbolised (values -1,0, or 1) ion's concentration profiles (columns) for each gene's knockout (rows) (wide format) e.g. \code{data.wide_Symb} from the \code{PreProcessing_fn}
+#' @param \code{data} a processed data frame of ion's concentrations (columns)
+#'   for each gene's knockout (rows) (wide format) e.g. \code{data.wide} from
+#'   the \code{PreProcessing_fn}
+#' @param \code{data_Symb} a processed data frame of symbolised (values -1,0, or
+#'   1) ion's concentration profiles (columns) for each gene's knockout (rows)
+#'   (wide format) e.g. \code{data.wide_Symb} from the \code{PreProcessing_fn}
 #'
 #' @return \code{stats.clusters statistics} of the gene's count by cluster
-#' @return \code{stats.Kegg_Goslim_annotation} statistics from the GO Slim annotation
-#' @return \code{stats.Goterms_enrichment} statistics from the GO terms enrichment
+#' @return \code{stats.Kegg_Goslim_annotation} statistics from the GO Slim
+#'   annotation
+#' @return \code{stats.Goterms_enrichment} statistics from the GO terms
+#'   enrichment
 #'
 #' @return \code{plot.profiles} plot of the gene's profiles for each cluster
 #'
@@ -131,7 +147,8 @@ ExploratoryAnalysis = function(data=NULL) {
 #' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
 #'
 #' ### Run GeneClustering function
-#' gene_clust <- GeneClustering(data=pre_proc$data.wide, data_Symb=pre_proc$data.wide_Symb)
+#' gene_clust <- GeneClustering(data=pre_proc$data.wide,
+#'   data_Symb=pre_proc$data.wide_Symb)
 #'
 #' # stats
 #' gene_clust$stats.clusters
@@ -142,12 +159,15 @@ ExploratoryAnalysis = function(data=NULL) {
 #' gene_clust$plot.profiles
 #' }
 #' @export
-GeneClustering = function(data=NULL,
-                          data_Symb=NULL)
-{
+GeneClustering = function(data=NULL, data_Symb=NULL) {
 
-  Packages <- c("dplyr","tidyr","reshape2","reshape","ggplot2","ggfortify","factoextra","pheatmap","gplots","mixOmics","qgraph","GOstats","GO.db","org.Sc.sgd.db","data.table","gridExtra","sna","GGally","intergraph","igraph","network","Matrix","ggrepel","knitr","tidyr","psych")
-  suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
+  #' Packages <-
+  #'   c("dplyr","tidyr","reshape2","reshape","ggplot2","ggfortify","factoextra",
+  #'     "pheatmap","gplots","mixOmics","qgraph","GOstats","GO.db",
+  #'     "org.Sc.sgd.db","data.table","gridExtra","sna","GGally","intergraph",
+  #'     "igraph","network","Matrix","ggrepel","knitr","tidyr","psych")
+
+  #' suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
   #### -------------------> Define clusters
   res.dist <- dist(data_Symb[,-1], method = "manhattan")
@@ -179,8 +199,6 @@ GeneClustering = function(data=NULL,
     theme(legend.position="none") +
     theme(axis.text.x=element_text(angle=90, hjust=1),axis.text=element_text(size=10))
 
-
-
   #### -------------------> KEGG AND GO SLIM ANNOTATION
   p.data_list = list()
   for(i in 1:dim(df_sub)[1]){
@@ -208,7 +226,6 @@ GeneClustering = function(data=NULL,
       dplyr::filter(!Term %in% c("molecular_function", "biological_process", "cellular_component"))
     p.data_list[[i]] = p.data
   }
-
 
   df.data_list = label_list <- list()
   for(i in 1:dim(df_sub)[1]){
@@ -258,7 +275,6 @@ GeneClustering = function(data=NULL,
   Goterms_enrichment.list_by_clust <- lapply(p.data_list2,"[",-c(4,5,8))
   names(Goterms_enrichment.list_by_clust) <- label_list2
 
-
   #### -------------------> Output
   res <- list()
   class(res) = "GeneClustering"
@@ -271,15 +287,20 @@ GeneClustering = function(data=NULL,
   return(res)
 }
 
-
-#' Network
+#' ==== Network ====
 #'
 #'Network tools for Ionomics data
-#' @param \code{data} a processed data frame of ion's concentrations (columns) for each gene's knockout (rows) (wide format) e.g. \code{data.wide} from the \code{PreProcessing_fn}
-#' @param \code{data_Symb} a processed data frame of symbolised (values -1,0, or 1) ion's concentration profiles (columns) for each gene's knockout (rows) (wide format) e.g. \code{data.wide_Symb} from the \code{PreProcessing_fn}
+#' @param \code{data} a processed data frame of ion's concentrations (columns)
+#'   for each gene's knockout (rows) (wide format) e.g. \code{data.wide} from
+#'   the \code{PreProcessing_fn}
+#' @param \code{data_Symb} a processed data frame of symbolised (values -1,0, or
+#'   1) ion's concentration profiles (columns) for each gene's knockout (rows)
+#'   (wide format) e.g. \code{data.wide_Symb} from the \code{PreProcessing_fn}
 #'
-#' @return \code{stats.impact_betweeness} statistics of the impact betweenees data
-#' @return \code{stats.impact_betweeness_by_cluster} statistics of the impact betweenees data by cluster
+#' @return \code{stats.impact_betweeness} statistics of the impact betweenees
+#'   data
+#' @return \code{stats.impact_betweeness_by_cluster} statistics of the impact
+#'   betweenees data by cluster
 #'
 #' @return \code{plot.pnet plot} of the gene's network
 #' @return \code{plot.impact_betweenees} plot of the impact betweenees
@@ -291,7 +312,8 @@ GeneClustering = function(data=NULL,
 #' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
 #'
 #' ### Run GeneNetwork function
-#' gene_net <- GeneNetwork(data=pre_proc$data.wide, data_Symb=pre_proc$data.wide_Symb)
+#' gene_net <- GeneNetwork(data=pre_proc$data.wide,
+#'   data_Symb=pre_proc$data.wide_Symb)
 #'
 #' # stats
 #' gene_net$stats.impact_betweeness
@@ -302,11 +324,14 @@ GeneClustering = function(data=NULL,
 #' gene_net$plot.impact_betweenees
 #' }
 #' @export
-GeneNetwork = function(data=NULL,
-                       data_Symb=NULL)
-{
-  Packages <- c("ggrepel","ggplot2","network","intergraph","dplyr","tidyr","reshape2","reshape","ggplot2","ggfortify","Matrix","ggrepel","knitr","tidyr","GGally","factoextra","grDevices","data.table","gridExtra")
-  suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
+GeneNetwork = function(data=NULL, data_Symb=NULL) {
+
+  #' Packages <-
+  #'   c("ggrepel","ggplot2","network","intergraph","dplyr","tidyr","reshape2",
+  #'     "reshape","ggplot2","ggfortify","Matrix","ggrepel","knitr","tidyr",
+  #'     "GGally","factoextra","grDevices","data.table","gridExtra")
+
+  #' suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
   # Cluster of gene with same profile
   res.dist <- dist(data_Symb[,-1], method = "manhattan")
@@ -390,7 +415,6 @@ GeneNetwork = function(data=NULL,
                    legend.size = 10, legend.position = "right")
   }
 
-
   # Impact and betweenness
   df1 <- data[data_Symb$Cluster %in% ux,] # df of 269 genes, 10 clusters
   btw <- sna::betweenness(A)
@@ -430,7 +454,6 @@ GeneNetwork = function(data=NULL,
     xlab("Impact") +
     ylab("Log(betweenness+1)")
 
-
   rownames(df.res) <- c()
   df.res2 <- df.res[,-c(4,5)]
   names(df.res2) <- c('Knockout','Impact','Betweenness','Position')
@@ -443,7 +466,6 @@ GeneNetwork = function(data=NULL,
   df.tab2 <- df.tab %>% group_by(Var1) %>% top_n(1, Freq)
   names(df.tab2) <- c('Cluster','Position','nGenes')
 
-
   #### -------------------> Output
   res <- list()
   class(res) = "GeneNetwork"
@@ -455,25 +477,34 @@ GeneNetwork = function(data=NULL,
   return(res)
 }
 
-
-
-
-#' Pre-processing
+#' ==== Pre-processing ====
 #'
 #'Pre-processing tools for Ionomics data
-#' @param \code{data} a data frame of ion's concentrations (columns) for various gene's knockout (rows)
-#' @param \code{stdev} an optional pre-defined vector of standard deviations for each ion
+#' @param \code{data} a data frame of ion's concentrations (columns) for various
+#'   gene's knockout (rows)
+#' @param \code{stdev} an optional pre-defined vector of standard deviations for
+#'   each ion
 #'
-#' @return \code{stats.raw_data} statistics for the raw data ion concentration values
-#' @return \code{stats.outliers} statistics (raw count and percentage of outliers) from the raw data for each ion
-#' @return \code{stats.median_batch_corrected_data} statistics for the median batch corrected data
+#' @return \code{stats.raw_data} statistics for the raw data ion concentration
+#'   values
+#' @return \code{stats.outliers} statistics (raw count and percentage of
+#'   outliers) from the raw data for each ion
+#' @return \code{stats.median_batch_corrected_data} statistics for the median
+#'   batch corrected data
 #' @return \code{stats.standardised_data} statistics for standardised data
-#' @return \code{plot.logConcentration_z_scores} plot of the symbolised ion concentration profiles of the knockouts
-#' @return \code{plot.logConcentration_by_batch} plot by batch of the log-ion concentration values after outlier removal and median batch correction
-#' @return \code{dataR.long} a processed data frame of ion's concentrations with batch-replicated gene's knockout (long format)
-#' @return \code{data.long} a processed data frame of ion's concentrations for each gene's knockout (long format)
-#' @return \code{data.wide} a processed data frame of ion's concentrations (columns) for each gene's knockout (rows) (wide format)
-#' @return \code{data.wide_Symb} a processed data frame of symbolised (values -1,0, or 1) ion's concentration profiles (columns) for each gene's knockout (rows) (wide format)
+#' @return \code{plot.logConcentration_z_scores} plot of the symbolised ion
+#'   concentration profiles of the knockouts
+#' @return \code{plot.logConcentration_by_batch} plot by batch of the log-ion
+#'   concentration values after outlier removal and median batch correction
+#' @return \code{dataR.long} a processed data frame of ion's concentrations with
+#'   batch-replicated gene's knockout (long format)
+#' @return \code{data.long} a processed data frame of ion's concentrations for
+#'   each gene's knockout (long format)
+#' @return \code{data.wide} a processed data frame of ion's concentrations
+#'   (columns) for each gene's knockout (rows) (wide format)
+#' @return \code{data.wide_Symb} a processed data frame of symbolised (values
+#'   -1,0, or 1) ion's concentration profiles (columns) for each gene's knockout
+#'   (rows) (wide format)
 #'
 #' @examples \code{
 #' library(IonFlow)
@@ -498,11 +529,14 @@ GeneNetwork = function(data=NULL,
 #' head(pre_proc$data.wide_Symb)
 #' }
 #' @export
-PreProcessing = function(data=NULL,stdev=NULL)
-{
+PreProcessing = function(data=NULL,stdev=NULL) {
 
-  Packages <- c("dplyr","tidyr","reshape2","reshape","ggplot2","ggfortify","factoextra","pheatmap","gplots","data.table","gridExtra","network","Matrix","ggrepel","knitr","tidyr","psych")
-  suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
+  #' Packages <-
+  #'   c("dplyr","tidyr","reshape2","reshape","ggplot2","ggfortify",
+  #'     "factoextra","pheatmap","gplots","data.table","gridExtra","network",
+  #'     "Matrix","ggrepel","knitr","psych")
+
+  #' suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
   #### -------------------> Import data
   list.s <- list()
@@ -555,7 +589,6 @@ PreProcessing = function(data=NULL,stdev=NULL)
     theme(legend.position="none") +
     theme(axis.text.x=element_blank())
 
-
   list.mbc <- list()
   for (i in 1:max(length(levels(data_long_clean_scaled$Ion)))){
     list.mbc[[i]] <- c(levels(data_long_clean_scaled$Ion)[i],round(summary(datasets[[i]]$logConcentration_corr),3),round(var(datasets[[i]]$logConcentration_corr),3))
@@ -595,7 +628,6 @@ PreProcessing = function(data=NULL,stdev=NULL)
   df.mbc2 <- data.frame(do.call(rbind,list.mbc2))
   names(df.mbc2) <- c('Ion','Min','1st Quartile','Median','Mean', '3rd Quartile', 'Max','Variance' )
 
-
   #### -------------------> Symbolization
   data_long_clean_scaled_norm$Symb <- ifelse((data_long_clean_scaled_norm$logConcentration_corr_norm > -3) & (data_long_clean_scaled_norm$logConcentration_corr_norm< 3), 0, ifelse(data_long_clean_scaled_norm$logConcentration_corr_norm>=3,1,-1))
 
@@ -611,8 +643,6 @@ PreProcessing = function(data=NULL,stdev=NULL)
     xlab("log(Concentration) (z-score)") +
     ylab("Frequency") +
     geom_vline(xintercept=c(-3,3),col='red')
-
-
 
   #### -------------------> Output
   res <- list()

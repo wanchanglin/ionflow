@@ -162,7 +162,7 @@ ExploratoryAnalysis = function(data=NULL) {
 GeneClustering = function(data=NULL, data_Symb=NULL) {
 
   #' Packages <-
-  #'   c("dplyr","tidyr","reshape2","reshape","ggplot2","ggfortify","factoextra",
+  #'   c("dplyr","tidyr","reshape2","ggplot2","ggfortify","factoextra",
   #'     "pheatmap","gplots","mixOmics","qgraph","GOstats","GO.db",
   #'     "org.Sc.sgd.db","data.table","gridExtra","sna","GGally","intergraph",
   #'     "igraph","network","Matrix","ggrepel","knitr","tidyr","psych")
@@ -175,7 +175,8 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
   data_Symb$cluster <- cutree(res.hc, h = 0) # distance 0
 
   #### -------------------> Subset cluster with more than 10 genes
-  df <- as.data.frame(table(data_Symb$cluster)); names(df) <- c('cluster', 'nGenes')
+  df <- as.data.frame(table(data_Symb$cluster)); 
+  names(df) <- c('cluster', 'nGenes')
   df_sub <- df[df$nGenes>10,]
   rownames(df_sub) <- c()
 
@@ -328,7 +329,7 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
 
   #' Packages <-
   #'   c("ggrepel","ggplot2","network","intergraph","dplyr","tidyr","reshape2",
-  #'     "reshape","ggplot2","ggfortify","Matrix","ggrepel","knitr","tidyr",
+  #'     "ggplot2","ggfortify","Matrix","ggrepel","knitr","tidyr",
   #'     "GGally","factoextra","grDevices","data.table","gridExtra")
 
   #' suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
@@ -532,7 +533,7 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
 PreProcessing = function(data=NULL,stdev=NULL) {
 
   #' Packages <-
-  #'   c("dplyr","tidyr","reshape2","reshape","ggplot2","ggfortify",
+  #'   c("dplyr","tidyr","reshape2","ggplot2","ggfortify",
   #'     "factoextra","pheatmap","gplots","data.table","gridExtra","network",
   #'     "Matrix","ggrepel","knitr","psych")
 

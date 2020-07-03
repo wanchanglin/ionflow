@@ -4,12 +4,14 @@
 rm(list = ls(all = T))
 
 #' load packagesI (totla 27 packages. Why so many packages needed?)
+ #' pkg <- c("factoextra","reshape","knitr","Matrix","grDevices","gridExtra",
+ #'           "network", "igraph","psych","ggrepel")
+
+#' wl-03-07-2020, Fri: qgraph loads plent of R packages
 Packages <- 
-  c("corrplot","data.table","dplyr","factoextra","GGally","ggfortify",i
-    "ggplot2","ggrepel","GO.db","GOstats","gplots","grDevices","gridExtra",
-    "igraph","intergraph","knitr","Matrix","mixOmics","network",
-    "org.Sc.sgd.db","pheatmap","psych","qgraph","reshape","reshape2","sna",
-    "tidyr")
+  c("corrplot","data.table","reshape2","dplyr","tidyr", "ggplot2",
+    "GGally","ggfortify", "gplots","pheatmap", "intergraph", "sna", "qgraph", 
+    "org.Sc.sgd.db","GO.db","GOstats","mixOmics")
 
 suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 

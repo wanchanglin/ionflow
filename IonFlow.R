@@ -18,8 +18,14 @@ suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
 source("all_IonFlow.R")
 
+#' IonData <- read.table("./test-data/IonData.txt", header = T, sep = " ", 
+#'                       stringsAsFactors = F)
+#' save(IonData,file="./test-data/IonData.rdata")
+load(file="./test-data/IonData.rdata")
+
 ## ==== Pre-processing ====
-pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
+pre_proc <- PreProcessing(data = IonData)
+#' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
 # stats
 pre_proc$stats.raw_data
 pre_proc$stats.outliers

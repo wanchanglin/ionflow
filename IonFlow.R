@@ -2,6 +2,8 @@
 
 ## ==== General settings ====
 rm(list = ls(all = T))
+setwd("~/my_galaxy/ionflow")
+library(ggplot2)
 
 #' load packages (totla 27 packages. Why so many packages needed?)
  #' pkg <- c("reshape","knitr","Matrix","gridExtra",
@@ -24,8 +26,19 @@ source("all_IonFlow.R")
 load(file="./test-data/IonData.rdata")
 
 ## ==== Pre-processing ====
+
+ # data=IonData
+ # stdev=NULL
+
 pre_proc <- PreProcessing(data = IonData)
 #' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
+names(pre_proc)
+# [1] "stats.raw_data"                    "stats.outliers"                   
+# [3] "stats.median_batch_corrected_data" "stats.standardised_data"          
+# [5] "dataR.long"                        "data.long"                        
+# [7] "data.wide"                         "data.wide_Symb"                   
+# [9] "plot.logConcentration_by_batch"    "plot.logConcentration_z_scores" 
+
 # stats
 pre_proc$stats.raw_data
 pre_proc$stats.outliers
@@ -39,6 +52,9 @@ head(pre_proc$dataR.long)
 head(pre_proc$data.long)
 head(pre_proc$data.wide)
 head(pre_proc$data.wide_Symb)
+
+# save(pre_proc,file="./test-data/pre_proc.rdata")
+load(file="./test-data/pre_proc.rdata")
 
 ## ==== Exploratory analysis ====
 exp_anal <- ExploratoryAnalysis(data = pre_proc$data.wide)

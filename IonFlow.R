@@ -59,7 +59,8 @@ data_Symb <- read.csv("./test-data/data.wide_Symb.csv", stringsAsFactors = F)
 data_Symb <- data_Symb[,-1]
 
 #' Use saved pre-processing results
-load(file="./test-data/pre_proc.rdata")
+#' load(file="./test-data/pre_proc.rdata")
+load(file="./doc/pre_proc.rdata")
 
 #' data = pre_proc$data.wide 
 #' data_Symb = pre_proc$data.wide_Symb
@@ -78,6 +79,8 @@ exp_anal$plot.regularized_partial_correlation_network
 # data
 head(exp_anal$data.PCA_loadings)
 
+#' save(exp_anal,file="./doc/exp_anal.rdata")
+
 ## ==== Gene Clustering ====
 
 gene_clust <- GeneClustering(data = data, data_Symb = data_Symb)
@@ -90,6 +93,8 @@ gene_clust$stats.Kegg_Goslim_annotation
 gene_clust$stats.Goterms_enrichment
 # plots
 gene_clust$plot.profiles
+
+#' save(gene_clust,file="./doc/gene_clust.rdata")
 
 ## ==== Gene Network ====
 

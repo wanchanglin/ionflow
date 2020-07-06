@@ -1,32 +1,30 @@
 #' wl-03-07-2020, Fri: Load packages here. 
 #' wl-06-07-2020, Mon: debug functions PreProcessing and ExploratoryAnalysis
-library(IonFlow)
 
 ## ==== General settings ====
+#' library(IonFlow)
 rm(list = ls(all = T))
 setwd("~/my_galaxy/ionflow")
 
 #' pkgs <- c("reshape","knitr","Matrix","gridExtra",
-#'            "network", "igraph","psych","ggrepel","dplyr",)
+#'            "network", "igraph","psych", "GGally", 
+#'            "factoextra", "ggfortify"    #' wl-06-07-2020, Mon: do not use
+#'           )
 
 #' wl-03-07-2020, Fri: qgraph loads plent of R packages
 Packages <- 
-  c("data.table","reshape2","tidyr", "ggplot2", 
-    "corrplot","gplots","pheatmap", "factoextra","ggfortify","mixOmics",
-    "GGally", "intergraph", "sna", "qgraph", 
+  c("data.table","reshape2", "dplyr", "tidyr", "ggplot2", "ggrepel",
+    "corrplot","gplots","pheatmap", "mixOmics", "intergraph", "sna", "qgraph", 
     "org.Sc.sgd.db","GO.db","GOstats")
 suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
-
-pkgs <- c("data.table","reshape2","tidyr", "ggplot2","ggrepel", 
-          "corrplot","gplots","pheatmap", "mixOmics", "qgraph")
-invisible(lapply(pkgs, library,character.only = TRUE))
 
 source("all_IonFlow.R")
 
 #' IonData <- read.table("./test-data/IonData.txt", header = T, sep = " ", 
 #'                       stringsAsFactors = F)
 #' save(IonData,file="./test-data/IonData.rdata")
-load(file="./test-data/IonData.rdata")
+#' load(file="./test-data/IonData.rdata")
+load(file="./doc/IonData.rdata")
 
 ## ==== Pre-processing ====
 # data=IonData

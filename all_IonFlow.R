@@ -1,4 +1,8 @@
 #' wl-02-07-2020, Thu: Put package files together
+#' wl-06-07-2020, Mon: 
+#'  - find '<<-'. Should be '<-'
+#'  - global data sets: data_GOslim and data_ORF2KEGG are used in
+#'    GeneClustering. Should change
 
 #' ==== Pre-processing ====
 #'
@@ -655,7 +659,9 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
   df.res3 <-merge(df.res2, gene.cluster, by="Knockout",all.x=TRUE)
 
   df.tab <- data.frame(table(df.res3$Cluster,df.res3$Position))
-  df.tab2 <- df.tab %>% group_by(Var1) %>% top_n(1, Freq)
+
+  #' wl-06-07-2020, Mon: add dplyr:: for clarify
+  df.tab2 <- df.tab %>% dplyr::group_by(Var1) %>% top_n(1, Freq)
   names(df.tab2) <- c('Cluster','Position','nGenes')
 
   #### -------------------> Output

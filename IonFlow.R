@@ -1,13 +1,13 @@
 #' wl-03-07-2020, Fri: Load packages here. 
+#' wl-06-07-2020, Mon: debug functions PreProcessing and ExploratoryAnalysis
+library(IonFlow)
 
 ## ==== General settings ====
 rm(list = ls(all = T))
 setwd("~/my_galaxy/ionflow")
-library(ggplot2)
 
-#' load packages (totla 27 packages. Why so many packages needed?)
- #' pkg <- c("reshape","knitr","Matrix","gridExtra",
- #'           "network", "igraph","psych","ggrepel","dplyr",)
+#' pkgs <- c("reshape","knitr","Matrix","gridExtra",
+#'            "network", "igraph","psych","ggrepel","dplyr",)
 
 #' wl-03-07-2020, Fri: qgraph loads plent of R packages
 Packages <- 
@@ -15,8 +15,11 @@ Packages <-
     "corrplot","gplots","pheatmap", "factoextra","ggfortify","mixOmics",
     "GGally", "intergraph", "sna", "qgraph", 
     "org.Sc.sgd.db","GO.db","GOstats")
-
 suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
+
+pkgs <- c("data.table","reshape2","tidyr", "ggplot2","ggrepel", 
+          "corrplot","gplots","pheatmap", "mixOmics", "qgraph")
+invisible(lapply(pkgs, library,character.only = TRUE))
 
 source("all_IonFlow.R")
 
@@ -26,19 +29,11 @@ source("all_IonFlow.R")
 load(file="./test-data/IonData.rdata")
 
 ## ==== Pre-processing ====
-
- # data=IonData
- # stdev=NULL
-
+# data=IonData
+# stdev=NULL
 pre_proc <- PreProcessing(data = IonData)
-#' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
-names(pre_proc)
-# [1] "stats.raw_data"                    "stats.outliers"                   
-# [3] "stats.median_batch_corrected_data" "stats.standardised_data"          
-# [5] "dataR.long"                        "data.long"                        
-# [7] "data.wide"                         "data.wide_Symb"                   
-# [9] "plot.logConcentration_by_batch"    "plot.logConcentration_z_scores" 
 
+#' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
 # stats
 pre_proc$stats.raw_data
 pre_proc$stats.outliers
@@ -54,10 +49,26 @@ head(pre_proc$data.wide)
 head(pre_proc$data.wide_Symb)
 
 # save(pre_proc,file="./test-data/pre_proc.rdata")
+
+## ==== Load Pre-proceesed data from GitHub ====
+
+#' load data set from github 
+data <- read.csv("./test-data/data.wide.csv", stringsAsFactors = F)
+data <- data[,-1]
+data_Symb <- read.csv("./test-data/data.wide_Symb.csv", stringsAsFactors = F)
+data_Symb <- data_Symb[,-1]
+
+#' Use saved pre-processing results
 load(file="./test-data/pre_proc.rdata")
 
+#' data = pre_proc$data.wide 
+#' data_Symb = pre_proc$data.wide_Symb
+
 ## ==== Exploratory analysis ====
+exp_anal <- ExploratoryAnalysis(data = data)
+
 exp_anal <- ExploratoryAnalysis(data = pre_proc$data.wide)
+
 # plots
 exp_anal$plot.Pearson_correlation
 exp_anal$plot.PCA_Individual
@@ -68,6 +79,9 @@ exp_anal$plot.regularized_partial_correlation_network
 head(exp_anal$data.PCA_loadings)
 
 ## ==== Gene Clustering ====
+
+gene_clust <- GeneClustering(data = data, data_Symb = data_Symb)
+
 gene_clust <- GeneClustering(data = pre_proc$data.wide, 
                              data_Symb = pre_proc$data.wide_Symb)
 # stats
@@ -78,6 +92,9 @@ gene_clust$stats.Goterms_enrichment
 gene_clust$plot.profiles
 
 ## ==== Gene Network ====
+
+gene_net <- GeneNetwork(data=data, data_Symb=data_Symb)
+
 gene_net <- GeneNetwork(data = pre_proc$data.wide, 
                         data_Symb = pre_proc$data.wide_Symb)
 # stats

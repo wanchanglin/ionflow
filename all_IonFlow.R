@@ -267,7 +267,7 @@ ExploratoryAnalysis = function(data=NULL) {
   corrplot.mixed(cor(data[,-1], use = "complete.obs"), number.cex = .7,
                  lower.col = 'black', upper.col = col3(100))
 
-  p_corr <- recordPlot()
+  p_corr <- recordPlot() 
 
   #### -------------------> PCA
   pca.X <- mixOmics::pca(t(data[,-1]),center=T,scale=F)
@@ -283,7 +283,7 @@ ExploratoryAnalysis = function(data=NULL) {
   dtp <- data.frame('Ion' = row.names(data.frame(pca.X$variates)), pca.X$variates)
   names(dtp) <- c("Ion","PC1","PC2")
 
-  pca_plot <- ggplot2::ggplot(data = dtp, ggplot2::aes(x = PC1, y = PC2)) +
+  pca_plot <- ggplot(data = dtp, aes(x = PC1, y = PC2)) +
     geom_point(color='steelblue', size=3, alpha=0.4) +
     geom_text_repel(ggplot2::aes(label = row.names(data.frame(pca.X$variates))), size=4) +
     theme_bw() +
@@ -293,11 +293,8 @@ ExploratoryAnalysis = function(data=NULL) {
     labs(title = "PCA")
 
   #### -------------------> HEATMAP
-  pheatmap(data[,-1],
-           show_rownames=F, cluster_cols=T, cluster_rows=T,
-           legend = T,
-           fontsize = 15,
-           clustering_method = 'ward.D',
+  pheatmap(data[,-1], show_rownames=F, cluster_cols=T, cluster_rows=T,
+           legend = T, fontsize = 15, clustering_method = 'ward.D',
            scale="row")
 
   pheat <- recordPlot()
@@ -311,7 +308,7 @@ ExploratoryAnalysis = function(data=NULL) {
   pcm <- recordPlot()
 
   #### -------------------> Regularized partial correlation network MAP
-  cad <- cor_auto(data[,-1])
+  cad <- cor_auto(data[,-1]) # wl-06-07-2020, Mon: from package lavaan
   suppressWarnings(qgraph(cad, graph = "glasso", layout = "spring",
          tuning = 0.25,sampleSize = nrow(data[,-1])))
 
@@ -320,12 +317,9 @@ ExploratoryAnalysis = function(data=NULL) {
   #### -------------------> Output
   res <- list()
   class(res) = "ExploratoryAnalysis"
-
   res$plot.Pearson_correlation <- p_corr
   res$plot.PCA_Individual <- pca_plot
-
   res$data.PCA_loadings <- PCA_loadings
-
   res$plot.heatmap <- pheat
   res$plot.pairwise_correlation_map <- pcm
   res$plot.regularized_partial_correlation_network <- Graph_lasso
@@ -371,14 +365,6 @@ ExploratoryAnalysis = function(data=NULL) {
 #' }
 #' @export
 GeneClustering = function(data=NULL, data_Symb=NULL) {
-
-  #' Packages <-
-  #'   c("dplyr","tidyr","reshape2","ggplot2","ggfortify","factoextra",
-  #'     "pheatmap","gplots","mixOmics","qgraph","GOstats","GO.db",
-  #'     "org.Sc.sgd.db","data.table","gridExtra","sna","GGally","intergraph",
-  #'     "igraph","network","Matrix","ggrepel","knitr","tidyr","psych")
-
-  #' suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
   #### -------------------> Define clusters
   res.dist <- dist(data_Symb[,-1], method = "manhattan")
@@ -538,13 +524,6 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
 #' @export
 GeneNetwork = function(data=NULL, data_Symb=NULL) {
 
-  #' Packages <-
-  #'   c("ggrepel","ggplot2","network","intergraph","dplyr","tidyr","reshape2",
-  #'     "ggplot2","ggfortify","Matrix","ggrepel","knitr","tidyr",
-  #'     "GGally","factoextra","grDevices","data.table","gridExtra")
-
-  #' suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
-
   # Cluster of gene with same profile
   res.dist <- dist(data_Symb[,-1], method = "manhattan")
   res.hc <- hclust(d = res.dist, method = "single")
@@ -605,7 +584,8 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
   names(cpy) = ux1
 
   # Compute empirical correlation matrix
-  corrGenes <- cor(t(as.matrix(data[,-1])), method = "pearson", use = "pairwise.complete.obs")
+  corrGenes <- cor(t(as.matrix(data[,-1])), method = "pearson", 
+                   use = "pairwise.complete.obs")
 
   # Subset correlation matrix based on the cluster filtering
   A = corrGenes[index,index]

@@ -61,16 +61,22 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   #### -------------------> Import data
   list.s <- list()
   data2 <- data[,-c(1,2)]
-  for (i in 1:14){
+
+  #' wl-08-07-2020, Wed: change for general
+  #' for (i in 1:14){
+  for (i in 1:ncol(data2)){ 
     list.s[[i]] <- c(names(data2)[i],round(summary(data2[,i]),3),
                      round(var(data2[,i]),3))
   }
   df.s <- data.frame(do.call(rbind,list.s))
   names(df.s) <-  c('Ion','Min','1st Quartile','Median','Mean', '3rd Quartile', 
                     'Max','Variance' )
-  
-  #' wl-06-07-2020, Mon: should simplify something like this:
-  #' tmp <- as.data.frame(t(sapply(data2, summary)))
+
+  #' wl-06-07-2020, Mon: might simplify something like this:
+  #' tmp <- as.data.frame(t(sapply(data2,function(x){
+  #'   c(round(summary(x),3), round(var(x),3))
+  #' })))
+  #' names(tmp)[ncol(tmp)]  <- "Variance"
   
   #### -------------------> Outlier detection
   data$id <- row.names(data)
@@ -91,11 +97,10 @@ PreProcessing = function(data=NULL,stdev=NULL) {
     extreme.t.upper = (iqr * 3) + upperq
     extreme.t.lower = lowerq - (iqr * 3)
     data_long[data_long$Ion==levels(data_long$Ion)[i],'Outlier'] <- 
-      ifelse((data_long_sub$Concentration > extreme.t.upper || data_long_sub$Concentration < extreme.t.lower),1,0)
-
-    #' wl-06-07-2020, Mon: potential BUG. Should use '||'. Should change '&'
-    #' as '&&' as well in the rest of this script.
+      ifelse((data_long_sub$Concentration > extreme.t.upper |
+              data_long_sub$Concentration < extreme.t.lower),1,0)
   }
+
   df_outlier <- data.frame(cbind(levels(data_long$Ion),
                                  table(data_long$Ion,data_long$Outlier),
                                  round(table(data_long$Ion,data_long$Outlier)[,2]/dim(data_long)[1]*100,2)))
@@ -190,7 +195,7 @@ PreProcessing = function(data=NULL,stdev=NULL) {
 
   #### -------------------> Symbolization
   data_long_clean_scaled_norm$Symb <- 
-    ifelse((data_long_clean_scaled_norm$logConcentration_corr_norm > -3) && (data_long_clean_scaled_norm$logConcentration_corr_norm< 3), 
+    ifelse((data_long_clean_scaled_norm$logConcentration_corr_norm > -3) & (data_long_clean_scaled_norm$logConcentration_corr_norm< 3), 
            0, ifelse(data_long_clean_scaled_norm$logConcentration_corr_norm>=3,1,-1))
 
   #### -------------------> Aggregation of the batch replicas
@@ -198,7 +203,7 @@ PreProcessing = function(data=NULL,stdev=NULL) {
     data.frame(aggregate(. ~ Knockout*Ion, data_long_clean_scaled_norm[,c('Knockout','Ion','logConcentration_corr_norm','Symb')], median))
 
   data_long_clean_scaled_norm_unique$Symb <- 
-    ifelse((data_long_clean_scaled_norm_unique$Symb<0.5) && (data_long_clean_scaled_norm_unique$Symb>-0.5), 
+    ifelse((data_long_clean_scaled_norm_unique$Symb<0.5) & (data_long_clean_scaled_norm_unique$Symb>-0.5), 
            0, ifelse(data_long_clean_scaled_norm_unique$Symb>=0.5,1,-1))
 
   data_wide_clean_scaled_norm_unique <- 
@@ -447,7 +452,7 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
     label <- paste("Cluster",df_sub$cluster[i],paste("(",df_sub$nGenes[i], " genes)", sep=''), sep=' ')
     p.data_list_sub$Cluster <- rep(label,nrow(p.data_list_sub))
     sub_data <- 
-      p.data_list_sub[(p.data_list_sub$Percent>5) && 
+      p.data_list_sub[(p.data_list_sub$Percent>5) & 
                       (p.data_list_sub$Ontology %in% c("Biological process","Cellular component","Molecular function")),]
     df.data_list[[i]] <- sub_data
     label_list[[i]] <- label
@@ -485,7 +490,7 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
                                              pvalues = pvalues(hgOver), oddsRatios = oddsRatios(hgOver),expectedCounts=expectedCounts(hgOver),
                                              geneCounts=geneCounts(hgOver),universeCounts=universeCounts(hgOver)),
                            c("GO_ID","Description","Pvalue","OddsRatio","ExpCount","Count","CountUniverse")),"Ontology"=ont[k])
-            %>% dplyr::filter(Pvalue <= 0.05 && Count > 1))
+            %>% dplyr::filter(Pvalue <= 0.05 & Count > 1))
 
     p.data_list2[[i]] <- results
     label_list2[[i]] <- label
@@ -587,7 +592,7 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
     if (length(names(which(colSums(sub_df.symb == -1) > 0)))>0) {l2 <- paste0(names(which(colSums(sub_df.symb == -1) > 0)),"(-)")}
     if (length(names(which(colSums(sub_df.symb == 1) > 0)))>0) {labelsC[[i]] <- l1}
     if (length(names(which(colSums(sub_df.symb == -1) > 0)))>0) {labelsC[[i]] <- l2}
-    if ((length(names(which(colSums(sub_df.symb == 1) > 0)))>0) && (length(names(which(colSums(sub_df.symb == -1) > 0)))>0)) {labelsC[[i]] <- c(l1,l2)}
+    if ((length(names(which(colSums(sub_df.symb == 1) > 0)))>0) & (length(names(which(colSums(sub_df.symb == -1) > 0)))>0)) {labelsC[[i]] <- c(l1,l2)}
     labelsC2[[i]] <- do.call(paste, c(as.list(labelsC[[i]]), sep = ", "))
   }
   names(labelsC2) = ux
@@ -637,18 +642,18 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
     impact = round(impact,3),
     betweenness = round(btw,3),
     log.betweenness = round(log(btw+1),3),
-    pos = factor(ifelse((impact < quantile(impact,.75)) && (log(btw+1) < quantile(log(btw+1),.75)),1,
-                        ifelse((impact < quantile(impact,.75)) && (log(btw+1) > quantile(log(btw+1),.75)),2,
-                               ifelse((impact > quantile(impact,.75)) && (log(btw+1) < quantile(log(btw+1),.75)),3,4)))),
-    pos.label = factor(ifelse((impact < quantile(impact,.75)) && (log(btw+1) < quantile(log(btw+1),.75)), 'Low impact, low betweenness',
-                              ifelse((impact < quantile(impact,.75)) && (log(btw+1) > quantile(log(btw+1),.75)),'Low impact, high betweenness',
-                                     ifelse((impact > quantile(impact,.75)) && (log(btw+1) < quantile(log(btw+1),.75)),'High impact, low betweenness','High impact, high betweenness')))))
+    pos = factor(ifelse((impact < quantile(impact,.75)) & (log(btw+1) < quantile(log(btw+1),.75)),1,
+                        ifelse((impact < quantile(impact,.75)) & (log(btw+1) > quantile(log(btw+1),.75)),2,
+                               ifelse((impact > quantile(impact,.75)) & (log(btw+1) < quantile(log(btw+1),.75)),3,4)))),
+    pos.label = factor(ifelse((impact < quantile(impact,.75)) & (log(btw+1) < quantile(log(btw+1),.75)), 'Low impact, low betweenness',
+                              ifelse((impact < quantile(impact,.75)) & (log(btw+1) > quantile(log(btw+1),.75)),'Low impact, high betweenness',
+                                     ifelse((impact > quantile(impact,.75)) & (log(btw+1) < quantile(log(btw+1),.75)),'High impact, low betweenness','High impact, high betweenness')))))
 
   rownames(df.res) = data$Knockout[index]
-  q1 <- row.names(subset(df.res, (impact < quantile(impact,.75)) && (log.betweenness < quantile(log.betweenness,.75))))
-  q2 <- row.names(subset(df.res, (impact < quantile(impact,.75)) && (log.betweenness > quantile(log.betweenness,.75))))
-  q3 <- row.names(subset(df.res, (impact > quantile(impact,.75)) && (log.betweenness < quantile(log.betweenness,.75))))
-  q4 <- row.names(subset(df.res, (impact > quantile(impact,.75)) && (log.betweenness > quantile(log.betweenness,.75))))
+  q1 <- row.names(subset(df.res, (impact < quantile(impact,.75)) & (log.betweenness < quantile(log.betweenness,.75))))
+  q2 <- row.names(subset(df.res, (impact < quantile(impact,.75)) & (log.betweenness > quantile(log.betweenness,.75))))
+  q3 <- row.names(subset(df.res, (impact > quantile(impact,.75)) & (log.betweenness < quantile(log.betweenness,.75))))
+  q4 <- row.names(subset(df.res, (impact > quantile(impact,.75)) & (log.betweenness > quantile(log.betweenness,.75))))
   idx <- unique(c(sample(q1,6),sample(q2,6),sample(q3,6),sample(q4,6)))
   df.idx <- df.res[idx,]
 

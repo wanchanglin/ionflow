@@ -41,8 +41,8 @@ if (F) {
 }
 
 ## ==== Pre-processing ====
-#' data = IonData
-#' stdev = pre_defined_sd
+data = IonData
+stdev = pre_defined_sd
 
 #' pre_proc <- PreProcessing(data = IonData, stdev = NULL)
 pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)

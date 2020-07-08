@@ -131,16 +131,17 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   #' wl-06-07-2020, Mon: combine 
   data_long_clean_scaled <- do.call(rbind, datasets)
 
-  p1 <- ggplot2::ggplot(data = data_long_clean_scaled, 
-                        ggplot2::aes(x = factor(Batch_ID), 
-                                     y = logConcentration_corr, 
-                                     col=factor(Batch_ID))) +
-  geom_point(shape=1) +
-  facet_wrap(~Ion) +
-  xlab("Batch.ID") +
-  ylab("log(Concentration) (ppm)") +
-  theme(legend.position="none") +
-  theme(axis.text.x=element_blank())
+  p1 <- 
+    ggplot(data = data_long_clean_scaled, 
+           aes(x = factor(Batch_ID), 
+               y = logConcentration_corr, 
+               col = factor(Batch_ID))) +
+    geom_point(shape=1) +
+    facet_wrap(~Ion) +
+    xlab("Batch.ID") +
+    ylab("log(Concentration) (ppm)") +
+    theme(legend.position="none") +
+    theme(axis.text.x=element_blank())
 
   list.mbc <- list()
 
@@ -159,6 +160,12 @@ PreProcessing = function(data=NULL,stdev=NULL) {
     for (i in 1:length(levels(data_long_clean_scaled$Ion))){
       sds[i] <- as.numeric(sd(data_long_clean_scaled$logConcentration_corr[data_long_clean_scaled$Ion==levels(data_long_clean_scaled$Ion)[i]])) # Ions' sd of logConcentration_corr
     }
+
+    #' wl-08-07-2020, Wed: may use plyr::ddplyr
+    #' tmp <- plyr::ddply(data_long_clean_scaled, "Ion", 
+    #'                    function(x) sd(x$logConcentration_corr))
+    #' tmp <- as.numeric(as.vector(tmp[,2]))
+
   } else {
     sds=as.numeric(as.vector(stdev[,1]))
   }
@@ -207,17 +214,20 @@ PreProcessing = function(data=NULL,stdev=NULL) {
            0, ifelse(data_long_clean_scaled_norm_unique$Symb>=0.5,1,-1))
 
   data_wide_clean_scaled_norm_unique <- 
-    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout~ Ion, value.var="logConcentration_corr_norm")
+    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout~ Ion, 
+                    value.var="logConcentration_corr_norm")
 
   data_wide_clean_scaled_norm_unique_Symb <- 
-    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout~ Ion, value.var="Symb")
+    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout~ Ion, 
+                    value.var="Symb")
 
-  p2 <- ggplot2::ggplot(data = data_long_clean_scaled_norm_unique, ggplot2::aes(x = logConcentration_corr_norm)) +
-  geom_histogram(binwidth=.1) +
-  facet_wrap(~Ion) +
-  xlab("log(Concentration) (z-score)") +
-  ylab("Frequency") +
-  geom_vline(xintercept=c(-3,3),col='red')
+  p2 <- 
+    ggplot(data = data_long_clean_scaled_norm_unique, aes(x = logConcentration_corr_norm)) +
+    geom_histogram(binwidth=.1) +
+    facet_wrap(~Ion) +
+    xlab("log(Concentration) (z-score)") +
+    ylab("Frequency") +
+    geom_vline(xintercept=c(-3,3),col='red')
 
   #### -------------------> Output
   res <- list()
@@ -305,7 +315,7 @@ ExploratoryAnalysis = function(data=NULL) {
 
   pca_plot <- ggplot(data = dtp, aes(x = PC1, y = PC2)) +
     geom_point(color='steelblue', size=3, alpha=0.4) +
-    geom_text_repel(ggplot2::aes(label = row.names(data.frame(pca.X$variates))), size=4) +
+    geom_text_repel(aes(label = row.names(data.frame(pca.X$variates))), size=4) +
     theme_bw() +
     theme(legend.position = "none") +
     xlab(paste("PC1: ",round(pca.X$explained_variance[1]*100,2),"% expl. variance", sep='')) +
@@ -409,9 +419,9 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
   }
   df.tmp_long_all <- data.frame(do.call(rbind,df.tmp_long))
 
-  p1 <- ggplot2::ggplot(data = df.tmp_long_all, ggplot2::aes(x = Ion, y = logConcentration_corr_norm)) +
+  p1 <- ggplot(data = df.tmp_long_all, aes(x = Ion, y = logConcentration_corr_norm)) +
     facet_wrap(~Cluster) +
-    geom_line(ggplot2::aes(group = Knockout)) +
+    geom_line(aes(group = Knockout)) +
     stat_summary(fun.data = "mean_se", color = "red")+
     labs(x = "", y = "") +
     theme(legend.position="none") +
@@ -657,15 +667,16 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
   idx <- unique(c(sample(q1,6),sample(q2,6),sample(q3,6),sample(q4,6)))
   df.idx <- df.res[idx,]
 
-  gp1 <-  ggplot2::ggplot(data=df.res,ggplot2::aes(x=impact,y=log.betweenness)) +
-    geom_point(ggplot2::aes(col=pos.label), alpha=.3, size=3) +
+  gp1 <- 
+    ggplot(data=df.res, aes(x=impact,y=log.betweenness)) +
+    geom_point(aes(col=pos.label), alpha=.3, size=3) +
     scale_color_manual(values=c("plum4","palegreen4","indianred","cornflowerblue")) +
     theme_linedraw() +
     theme_light() +
     theme(legend.position="bottom") +
     guides(colour = guide_legend(nrow = 2)) +
     theme(legend.title=element_blank()) +
-    geom_text_repel(data=df.idx, ggplot2::aes(label=df.idx$Knockout), size=3.5) +
+    geom_text_repel(data=df.idx, aes(label=df.idx$Knockout), size=3.5) +
     geom_vline(xintercept=quantile(df.res$impact,.75),linetype="dashed") +
     geom_hline(yintercept=quantile(df.res$log.betweenness,.75),linetype="dashed") +
     xlab("Impact") +

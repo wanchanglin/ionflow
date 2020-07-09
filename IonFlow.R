@@ -17,27 +17,30 @@ Packages <-
     "org.Sc.sgd.db","GO.db","GOstats")
 suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
-#' library(IonFlow)
-source("all_IonFlow.R")
-if (F) {
-  IonData <- read.table("./test-data/IonData.txt", header = T, sep = " ", 
-                        stringsAsFactors = T)
-  pre_defined_sd  <- read.table("./test-data/pre_defined_sd.txt", 
-                                header = T, sep = " ", stringsAsFactors = T)
-  data_GOslim <- read.table("./test-data/data_GOslim.txt", header = T, 
-                            sep = " ", stringsAsFactors = T)
-  data_ORF2KEGG <- read.table("./test-data/data_ORF2KEGG.txt", header = T, 
-                              sep = " ", stringsAsFactors = T)
-
-  save(IonData,file="./test-data/IonData.rdata")
-  save(pre_defined_sd,file="./test-data/pre_defined_sd.rdata")
-  save(data_GOslim,file="./test-data/data_GOslim.rdata")
-  save(data_ORF2KEGG,file="./test-data/data_ORF2KEGG.rdata")
+if (T) {
+  library(IonFlow) 
 } else {
-  load(file="./test-data/IonData.rdata")
-  load(file="./test-data/pre_defined_sd.rdata")
-  load(file="./test-data/data_GOslim.rdata")
-  load(file="./test-data/data_ORF2KEGG.rdata")
+  source("all_IonFlow.R")
+  if (F) {
+    IonData <- read.table("./test-data/IonData.txt", header = T, sep = " ", 
+                          stringsAsFactors = T)
+    pre_defined_sd  <- read.table("./test-data/pre_defined_sd.txt", 
+                                  header = T, sep = " ", stringsAsFactors = T)
+    data_GOslim <- read.table("./test-data/data_GOslim.txt", header = T, 
+                              sep = " ", stringsAsFactors = T)
+    data_ORF2KEGG <- read.table("./test-data/data_ORF2KEGG.txt", header = T, 
+                                sep = " ", stringsAsFactors = T)
+
+    save(IonData,file="./test-data/IonData.rdata")
+    save(pre_defined_sd,file="./test-data/pre_defined_sd.rdata")
+    save(data_GOslim,file="./test-data/data_GOslim.rdata")
+    save(data_ORF2KEGG,file="./test-data/data_ORF2KEGG.rdata")
+  } else {
+    load(file="./test-data/IonData.rdata")
+    load(file="./test-data/pre_defined_sd.rdata")
+    load(file="./test-data/data_GOslim.rdata")
+    load(file="./test-data/data_ORF2KEGG.rdata")
+  }
 }
 
 ## ==== Pre-processing ====
@@ -67,7 +70,7 @@ head(pre_proc$data.wide_Symb)
 ## ==== Load Pre-proceesed data ====
 
 #' Load pre-processing results
-load(file="./test-data/pre_proc.rdata")
+#' load(file="./test-data/pre_proc.rdata")
 data      <- pre_proc$data.wide 
 data_Symb <- pre_proc$data.wide_Symb
 

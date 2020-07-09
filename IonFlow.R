@@ -17,7 +17,7 @@ Packages <-
     "org.Sc.sgd.db","GO.db","GOstats")
 suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
-if (T) {
+if (F) {
   library(IonFlow) 
 } else {
   source("all_IonFlow.R")

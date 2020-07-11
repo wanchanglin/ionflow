@@ -271,8 +271,6 @@ PreProcessing = function(data=NULL,stdev=NULL) {
 #'   original gene knockouts also known as loading vectors associated to each PC
 #'
 #' @examples \code{
-#' library(IonFlow)
-#'
 #' ### Run PreProcessing function
 #' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
 #'
@@ -298,6 +296,23 @@ ExploratoryAnalysis = function(data=NULL) {
                  lower.col = 'black', upper.col = col3(100))
 
   p_corr <- recordPlot() 
+
+  #' wl-11-07-2020, Sat: pca computation
+  if (F){
+    x <- t(data[,-1])
+    which(is.null(x), arr.ind=TRUE) #' missing values??!!
+
+    pca  <- prcomp(x, center = T, scale. = F)
+    vars <- pca$sdev^2
+    vars <- vars/sum(vars)      #' Proportion of Variance
+    names(vars) <- colnames(pca$rotation)
+    vars <- round(vars * 100,2)
+    dfn  <- paste(names(vars)," (",vars[names(vars)],"%)",sep="")
+
+    x    <- data.frame(pca$x)
+    names(x) <- dfn
+    x    <- x[,pcs]
+  }
 
   #### -------------------> PCA
   pca.X <- mixOmics::pca(t(data[,-1]),center=T,scale=F)

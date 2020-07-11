@@ -70,7 +70,7 @@ head(pre_proc$data.wide_Symb)
 ## ==== Load Pre-proceesed data ====
 
 #' Load pre-processing results
-#' load(file="./test-data/pre_proc.rdata")
+load(file="./test-data/pre_proc.rdata")
 data      <- pre_proc$data.wide 
 data_Symb <- pre_proc$data.wide_Symb
 

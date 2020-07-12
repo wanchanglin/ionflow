@@ -64,6 +64,13 @@ head(pre_proc$data.long)
 head(pre_proc$data.wide)
 head(pre_proc$data.wide_Symb)
 
+#' wl-12-07-2020, Sun:
+sum(is.na(pre_proc$dataR.long))         # 0
+sum(is.na(pre_proc$data.long))          # 0
+sum(is.na(pre_proc$data.wide))          # 28 
+sum(is.na(pre_proc$data.wide_Symb))     # 28
+
+
 #' save(pre_proc,file="./test-data/pre_proc_std_null.rdata")
 #' save(pre_proc,file="./test-data/pre_proc.rdata")
 

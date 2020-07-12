@@ -3,6 +3,7 @@
 #'  - find '<<-'. Should be '<-'
 #'  - global data sets: data_GOslim and data_ORF2KEGG are used in
 #'    GeneClustering. Should change
+#' wl-12-07-2020, Sun: find where NAs come from (caused by reshape2:dcast)
 
 #' ==== Pre-processing ====
 #'
@@ -81,6 +82,9 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   #### -------------------> Outlier detection
   data$id <- row.names(data)
   data_long <- tidyr::gather(data,Ion,Concentration, Ca:Zn, factor_key=TRUE)
+
+  #' tmp <- pivot_longer(data, cols = Ca:Zn, names_to = "Ion", 
+  #'                     values_to = "Concentration", values_drop_na = TRUE)
 
   #' wl-06-07-2020, Mon: BUG. It's dangerous to use 'levels'. It is only for
   #' factor.  Make vectors as factors before using levels function. Don't
@@ -216,10 +220,13 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   data_wide_clean_scaled_norm_unique <- 
     reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout~ Ion, 
                     value.var="logConcentration_corr_norm")
+  #' wl-12-07-2020, Sun: here is the missing values coming from
+  #' sum(is.na(data_wide_clean_scaled_norm_unique)) #'[1] 28
 
   data_wide_clean_scaled_norm_unique_Symb <- 
     reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout~ Ion, 
                     value.var="Symb")
+  #' sum(is.na(data_wide_clean_scaled_norm_unique_Symb)) #'[1] 28
 
   p2 <- 
     ggplot(data = data_long_clean_scaled_norm_unique, aes(x = logConcentration_corr_norm)) +

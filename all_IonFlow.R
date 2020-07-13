@@ -4,6 +4,7 @@
 #'  - global data sets: data_GOslim and data_ORF2KEGG are used in
 #'    GeneClustering. Should change
 #' wl-12-07-2020, Sun: find where NAs come from (caused by reshape2:dcast)
+#' wl-13-07-2020, Mon: handle NAs in PreProcessing
 
 #' ==== Pre-processing ====
 #'
@@ -83,9 +84,6 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   data$id <- row.names(data)
   data_long <- tidyr::gather(data,Ion,Concentration, Ca:Zn, factor_key=TRUE)
 
-  #' tmp <- pivot_longer(data, cols = Ca:Zn, names_to = "Ion", 
-  #'                     values_to = "Concentration", values_drop_na = TRUE)
-
   #' wl-06-07-2020, Mon: BUG. It's dangerous to use 'levels'. It is only for
   #' factor.  Make vectors as factors before using levels function. Don't
   #' presume they are factors. Check them using:
@@ -105,9 +103,10 @@ PreProcessing = function(data=NULL,stdev=NULL) {
               data_long_sub$Concentration < extreme.t.lower),1,0)
   }
 
-  df_outlier <- data.frame(cbind(levels(data_long$Ion),
-                                 table(data_long$Ion,data_long$Outlier),
-                                 round(table(data_long$Ion,data_long$Outlier)[,2]/dim(data_long)[1]*100,2)))
+  df_outlier <- 
+    data.frame(cbind(levels(data_long$Ion),
+                     table(data_long$Ion,data_long$Outlier),
+                     round(table(data_long$Ion,data_long$Outlier)[,2]/dim(data_long)[1]*100,2)))
   rownames(df_outlier) <- c()
   colnames(df_outlier) <- c('Ion','no outlier','outlier','outlier(%)')
   data_long_clean <- data_long[data_long$Outlier<1,]
@@ -210,23 +209,27 @@ PreProcessing = function(data=NULL,stdev=NULL) {
            0, ifelse(data_long_clean_scaled_norm$logConcentration_corr_norm>=3,1,-1))
 
   #### -------------------> Aggregation of the batch replicas
+
+  #' wl-13-07-2020, Mon: add prefix and change * as +
   data_long_clean_scaled_norm_unique <- 
-    data.frame(aggregate(. ~ Knockout*Ion, data_long_clean_scaled_norm[,c('Knockout','Ion','logConcentration_corr_norm','Symb')], median))
+    data.frame(stats::aggregate(. ~ Knockout + Ion, 
+                                data_long_clean_scaled_norm[,c('Knockout','Ion','logConcentration_corr_norm','Symb')], 
+                                median))
 
   data_long_clean_scaled_norm_unique$Symb <- 
     ifelse((data_long_clean_scaled_norm_unique$Symb<0.5) & (data_long_clean_scaled_norm_unique$Symb>-0.5), 
            0, ifelse(data_long_clean_scaled_norm_unique$Symb>=0.5,1,-1))
 
+  #' wl-13-07-2020, Mon: Fill in structural(aggregation) missing values  
   data_wide_clean_scaled_norm_unique <- 
-    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout~ Ion, 
+    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion, 
+                    fill = 0,                #' wl: keep it or not?
                     value.var="logConcentration_corr_norm")
-  #' wl-12-07-2020, Sun: here is the missing values coming from
-  #' sum(is.na(data_wide_clean_scaled_norm_unique)) #'[1] 28
 
   data_wide_clean_scaled_norm_unique_Symb <- 
-    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout~ Ion, 
+    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion, 
+                    fill = 0,                #' wl: keep it or not?
                     value.var="Symb")
-  #' sum(is.na(data_wide_clean_scaled_norm_unique_Symb)) #'[1] 28
 
   p2 <- 
     ggplot(data = data_long_clean_scaled_norm_unique, aes(x = logConcentration_corr_norm)) +
@@ -240,18 +243,17 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   res <- list()
   class(res) = "PreProcessing"
 
-  res$stats.raw_data <- df.s # raw data
-  res$stats.outliers <- df_outlier # outliers
-  res$stats.median_batch_corrected_data <- df.mbc # median batch corrected data
-  res$stats.standardised_data <- df.mbc2 # standardised data
+  res$stats.raw_data                    <- df.s       # raw data
+  res$stats.outliers                    <- df_outlier # outliers
+  res$stats.median_batch_corrected_data <- df.mbc     # median batch corrected data
+  res$stats.standardised_data           <- df.mbc2    # standardised data
+  res$dataR.long                        <- data_long_clean_scaled_norm
+  res$data.long                         <- data_long_clean_scaled_norm_unique
+  res$data.wide                         <- data_wide_clean_scaled_norm_unique
+  res$data.wide_Symb                    <- data_wide_clean_scaled_norm_unique_Symb
+  res$plot.logConcentration_by_batch    <- p1
+  res$plot.logConcentration_z_scores    <- p2
 
-  res$dataR.long <- data_long_clean_scaled_norm
-  res$data.long <- data_long_clean_scaled_norm_unique
-  res$data.wide <- data_wide_clean_scaled_norm_unique
-  res$data.wide_Symb <- data_wide_clean_scaled_norm_unique_Symb
-
-  res$plot.logConcentration_by_batch <- p1
-  res$plot.logConcentration_z_scores <- p2
   return(res)
 }
 
@@ -304,21 +306,23 @@ ExploratoryAnalysis = function(data=NULL) {
 
   p_corr <- recordPlot() 
 
-  #' wl-11-07-2020, Sat: pca computation
+  #' wl-11-07-2020, Sat: Original (trust) pca computation if there is no NAs. 
   if (F){
-    x <- t(data[,-1])
-    which(is.null(x), arr.ind=TRUE) #' missing values??!!
-
-    pca  <- prcomp(x, center = T, scale. = F)
+    dat  <- t(data[,-1])
+    pca  <- prcomp(dat, center = T, scale. = F)
     vars <- pca$sdev^2
     vars <- vars/sum(vars)      #' Proportion of Variance
     names(vars) <- colnames(pca$rotation)
     vars <- round(vars * 100,2)
     dfn  <- paste(names(vars)," (",vars[names(vars)],"%)",sep="")
-
-    x    <- data.frame(pca$x)
-    names(x) <- dfn
-    x    <- x[,pcs]
+    #' PCA scores
+    pca_scores <- data.frame(pca$x)
+    names(pca_scores) <- dfn
+    head(pca_scores)   
+    #' PCA loadings
+    pca_loadings <- data.frame(pca$rotation)
+    rownames(pca_loadings) <- data$Knockout
+    head(pca_loadings)
   }
 
   #### -------------------> PCA

@@ -1,5 +1,7 @@
 #' wl-03-07-2020, Fri: Load packages here. 
 #' wl-06-07-2020, Mon: debug functions PreProcessing and ExploratoryAnalysis
+#' wl-13-07-2020, Mon: NAs and PCA
+#' wl-14-07-2020, Tue: Fix a bug in network analysis
 
 ## ==== General settings ====
 rm(list = ls(all = T))
@@ -9,11 +11,12 @@ setwd("~/my_galaxy/ionflow")
 #' - Not used: "intergraph", "factoextra", "ggfortify", "knitr", "reshape"
 #' - attached: "Matrix", "network", "igraph","psych", "data.table",
 #'             "gridExtra","GGally"
+#' - option: "mixOmics" 
 
 #' wl-03-07-2020, Fri: Must load. qgraph loads plent of R packages
 Packages <- 
   c("reshape2", "dplyr", "tidyr", "ggplot2", "ggrepel",
-    "corrplot","gplots","pheatmap", "mixOmics", "sna", "qgraph", 
+    "corrplot","gplots","pheatmap", "sna", "qgraph", 
     "org.Sc.sgd.db","GO.db","GOstats")
 suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
 
@@ -64,11 +67,11 @@ head(pre_proc$data.long)
 head(pre_proc$data.wide)
 head(pre_proc$data.wide_Symb)
 
-#' wl-12-07-2020, Sun:
+#' wl-12-07-2020, Sun: check NAs
 sum(is.na(pre_proc$data.wide))          # 28 
 sum(is.na(pre_proc$data.wide_Symb))     # 28
 
-#' save(pre_proc,file="./test-data/pre_proc_std_null.rdata")
+#' save(pre_proc,file="./doc/rdata/pre_proc_std_null_prcomp.rdata")
 #' save(pre_proc,file="./test-data/pre_proc.rdata")
 
 ## ==== Load Pre-proceesed data ====

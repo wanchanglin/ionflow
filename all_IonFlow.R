@@ -5,6 +5,8 @@
 #'    GeneClustering. Should change
 #' wl-12-07-2020, Sun: find where NAs come from (caused by reshape2:dcast)
 #' wl-13-07-2020, Mon: handle NAs in PreProcessing
+#' wl-14-07-2020, Tue: fix a bug in GeneNetwork. Option for PCA computation
+#'  using R core package stats in ExploratoryAnalysis
 
 #' ==== Pre-processing ====
 #'
@@ -36,8 +38,6 @@
 #'   (rows) (wide format)
 #'
 #' @examples \code{
-#' library(IonFlow)
-#'
 #' ### Run PreProcessing function
 #' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
 #'
@@ -306,47 +306,62 @@ ExploratoryAnalysis = function(data=NULL) {
 
   p_corr <- recordPlot() 
 
-  #' wl-11-07-2020, Sat: Original (trust) pca computation if there is no NAs. 
-  if (F){
+  #' wl-14-07-2020, Tue: Original (trust) pca computation if there is no NAs. 
+  if (T){                            #' Use prcomp(core R package 'stats')
     dat  <- t(data[,-1])
     pca  <- prcomp(dat, center = T, scale. = F)
+
+    #' variance explained
     vars <- pca$sdev^2
     vars <- vars/sum(vars)      #' Proportion of Variance
     names(vars) <- colnames(pca$rotation)
     vars <- round(vars * 100,2)
     dfn  <- paste(names(vars)," (",vars[names(vars)],"%)",sep="")
+
     #' PCA scores
     pca_scores <- data.frame(pca$x)
-    names(pca_scores) <- dfn
-    head(pca_scores)   
+    #' names(pca_scores) <- dfn
+
     #' PCA loadings
-    pca_loadings <- data.frame(pca$rotation)
-    rownames(pca_loadings) <- data$Knockout
-    head(pca_loadings)
+    PCA_loadings <- data.frame(pca$rotation)
+    rownames(PCA_loadings) <- data$Knockout
+    PCA_loadings <- PCA_loadings[,1:2]
+
+    #' PCA plot using ggplot2
+    pca_plot <- 
+      ggplot(data = pca_scores[,1:2], aes(x = PC1, y = PC2)) +
+      geom_point(color='steelblue', size=3, alpha=0.4) +
+      geom_text_repel(aes(label = row.names(pca_scores)), size=4) +
+      theme_bw() +
+      theme(legend.position = "none") +
+      xlab(dfn[1]) +
+      ylab(dfn[2]) +
+      labs(title = "PCA")
+
+  } else {                            #' use mixOmics::pca
+    #### -------------------> PCA
+    pca.X <- mixOmics::pca(t(data[,-1]),center=T,scale=F)
+
+    loadings_PC1 <- data.frame(mixOmics::selectVar(pca.X, comp=1)$value)
+    row.names(loadings_PC1) <- data$Knockout[order(loadings_PC1)]
+    loadings_PC2 <- data.frame(mixOmics::selectVar(pca.X, comp=2)$value)
+    row.names(loadings_PC2) <- data$Knockout[order(loadings_PC2)]
+    PCA_loadings <- data.frame(cbind(loadings_PC1,loadings_PC2))
+    names(PCA_loadings) <- c('PC1','PC2')
+
+    # Individual factor map
+    dtp <- data.frame('Ion' = row.names(data.frame(pca.X$variates)), pca.X$variates)
+    names(dtp) <- c("Ion","PC1","PC2")
+
+    pca_plot <- ggplot(data = dtp, aes(x = PC1, y = PC2)) +
+      geom_point(color='steelblue', size=3, alpha=0.4) +
+      geom_text_repel(aes(label = row.names(data.frame(pca.X$variates))), size=4) +
+      theme_bw() +
+      theme(legend.position = "none") +
+      xlab(paste("PC1: ",round(pca.X$explained_variance[1]*100,2),"% expl. variance", sep='')) +
+      ylab(paste("PC2: ",round(pca.X$explained_variance[2]*100,2),"% expl. variance", sep='')) +
+      labs(title = "PCA")
   }
-
-  #### -------------------> PCA
-  pca.X <- mixOmics::pca(t(data[,-1]),center=T,scale=F)
-
-  loadings_PC1 <- data.frame(mixOmics::selectVar(pca.X, comp=1)$value)
-  row.names(loadings_PC1) <- data$Knockout[order(loadings_PC1)]
-  loadings_PC2 <- data.frame(mixOmics::selectVar(pca.X, comp=2)$value)
-  row.names(loadings_PC2) <- data$Knockout[order(loadings_PC2)]
-  PCA_loadings <- data.frame(cbind(loadings_PC1,loadings_PC2))
-  names(PCA_loadings) <- c('PC1','PC2')
-
-  # Individual factor map
-  dtp <- data.frame('Ion' = row.names(data.frame(pca.X$variates)), pca.X$variates)
-  names(dtp) <- c("Ion","PC1","PC2")
-
-  pca_plot <- ggplot(data = dtp, aes(x = PC1, y = PC2)) +
-    geom_point(color='steelblue', size=3, alpha=0.4) +
-    geom_text_repel(aes(label = row.names(data.frame(pca.X$variates))), size=4) +
-    theme_bw() +
-    theme(legend.position = "none") +
-    xlab(paste("PC1: ",round(pca.X$explained_variance[1]*100,2),"% expl. variance", sep='')) +
-    ylab(paste("PC2: ",round(pca.X$explained_variance[2]*100,2),"% expl. variance", sep='')) +
-    labs(title = "PCA")
 
   #### -------------------> HEATMAP
   pheatmap(data[,-1], show_rownames=F, cluster_cols=T, cluster_rows=T,
@@ -402,8 +417,6 @@ ExploratoryAnalysis = function(data=NULL) {
 #' @return \code{plot.profiles} plot of the gene's profiles for each cluster
 #'
 #' @examples \code{
-#' library(IonFlow)
-#'
 #' ### Run PreProcessing function
 #' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
 #'
@@ -565,8 +578,6 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
 #' @return \code{plot.impact_betweenees} plot of the impact betweenees
 #'
 #' @examples \code{
-#' library(IonFlow)
-#'
 #' ### Run PreProcessing function
 #' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
 #'
@@ -590,7 +601,8 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
   res.hc <- hclust(d = res.dist, method = "single")
   data_Symb$cluster <- cutree(res.hc, h = 0) # distance 0
 
-  df <- as.data.frame(table(data_Symb$cluster)); names(df) <- c('cluster', 'nGenes')
+  df <- as.data.frame(table(data_Symb$cluster))
+  names(df) <- c('cluster', 'nGenes')
   for(i in 1:dim(df)[1]){
     tmp_wide <- data[data_Symb$cluster==df$cluster[i],]
     label <- paste("Cluster",df$cluster[i],paste("(",df$nGenes[i], " genes)", sep=''), sep=' ')
@@ -604,20 +616,25 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
   # Compute gene cluster id (index)
   index = data_Symb$Cluster
 
-  # Cluster 2 (largest cluster) contains genes with no phenotype hence not considered (input to 0)
+  # Cluster 2 (largest cluster) contains genes with no phenotype hence not
+  # considered (input to 0)
   index[index==Rk$Var1[1]]=0
-  # Smaller clusters (Freq<10) input to 0 as well (we consider only cluster with at least 10 genes)
+
+  # Smaller clusters (Freq<10) input to 0 as well (we consider only cluster
+  # with at least 10 genes)
   for(i in which(Rk$Freq<10)[1]:dim(Rk)[1]){
     index[index==Rk$Var1[i]]=0
   }
   # Apply the cluster filtering
-  index=index>0
+  index = index > 0
 
-  # cluster labels with info of accumulation/decumulation of Ions (high/lower abundance)
-  x=data_Symb$Cluster[index]
-  ux=unique(x)
+  # cluster labels with info of accumulation/decumulation of Ions
+  # (high/lower abundance)
+  x  = data_Symb$Cluster[index]
+  ux = unique(x)
   df.symb <- data_Symb[data_Symb$Cluster %in% c(unique(x)),]
-  df <- as.data.frame(table(df.symb$Cluster)); names(df) <- c('Cluster', 'nGenes')
+  df <- as.data.frame(table(df.symb$Cluster))
+  names(df) <- c('Cluster', 'nGenes')
 
   # Assign label
   labelsC2 <-labelsC <- list()
@@ -639,11 +656,6 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
     df.symb$Label[(df.symb$Cluster==ux[i])] <- rep(ny[i],nrow(sub_df.symb))
   }
 
-  x1=df.symb$Label
-  ux1=unique(x1)
-  cpy= rainbow(length(ux))
-  names(cpy) = ux1
-
   # Compute empirical correlation matrix
   corrGenes <- cor(t(as.matrix(data[,-1])), method = "pearson", 
                    use = "pairwise.complete.obs")
@@ -653,20 +665,26 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
   # Diagonal value (1's) put to 0 to avoid showing edges from/to the same gene
   diag(A) <- 0
   # Subset correlation matrix based on threshold=0.6
-  A=(A>0.6)
+  A <- (A>0.6)
   A <- ifelse(A==TRUE,1,0)
+
   # Generate network
   Net = network::network(A, directed = FALSE)
-  #h <- network.copy(Net)
-  #summary(h)
+  #' plot(Net)
+  #' summary(Net)
 
   # Network plot
+  x1         = df.symb$Label
+  ux1        = unique(x1)
+  cpy        = rainbow(length(ux))
+  names(cpy) = ux1
 
   gNEt <- function(dat=NULL ){
     GGally::ggnet2(dat, color = x1, color.legend = 'Label', palette = cpy,
                    edge.alpha = 0.5, size = 2,
                    legend.size = 10, legend.position = "right")
   }
+  #' net_p <- gNEt(Net)
 
   # Impact and betweenness
   df1 <- data[data_Symb$Cluster %in% ux,] # df of 269 genes, 10 clusters
@@ -690,7 +708,16 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
   q2 <- row.names(subset(df.res, (impact < quantile(impact,.75)) & (log.betweenness > quantile(log.betweenness,.75))))
   q3 <- row.names(subset(df.res, (impact > quantile(impact,.75)) & (log.betweenness < quantile(log.betweenness,.75))))
   q4 <- row.names(subset(df.res, (impact > quantile(impact,.75)) & (log.betweenness > quantile(log.betweenness,.75))))
-  idx <- unique(c(sample(q1,6),sample(q2,6),sample(q3,6),sample(q4,6)))
+  
+  #' wl-14-07-2020, Tue: potential bug in sample replacement
+  #' idx <- unique(c(sample(q1,6),sample(q2,6),sample(q3,6),sample(q4,6)))
+  N <- 6
+  lst <- list(q1,q2,q3,q4)   #' sapply(lst, length)
+  idx <- lapply(lst,function(x){
+    if (length(x) > N) sample(x,N) else x           
+  })
+  idx <- unique(unlist(idx))
+
   df.idx <- df.res[idx,]
 
   gp1 <- 
@@ -702,7 +729,8 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
     theme(legend.position="bottom") +
     guides(colour = guide_legend(nrow = 2)) +
     theme(legend.title=element_blank()) +
-    geom_text_repel(data=df.idx, aes(label=df.idx$Knockout), size=3.5) +
+    #' geom_text_repel(data=df.idx, aes(label=df.idx$Knockout), size=3.5) +
+    geom_text_repel(data=df.idx, aes(label=Knockout), size=3.5) +
     geom_vline(xintercept=quantile(df.res$impact,.75),linetype="dashed") +
     geom_hline(yintercept=quantile(df.res$log.betweenness,.75),linetype="dashed") +
     xlab("Impact") +

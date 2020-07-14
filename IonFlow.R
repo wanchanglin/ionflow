@@ -77,7 +77,8 @@ sum(is.na(pre_proc$data.wide_Symb))     # 28
 ## ==== Load Pre-proceesed data ====
 
 #' Load pre-processing results
-load(file="./test-data/pre_proc.rdata")
+#' load(file="./test-data/pre_proc.rdata")
+#' load(file="./test-data/pre_proc_std_null.rdata")
 data      <- pre_proc$data.wide 
 data_Symb <- pre_proc$data.wide_Symb
 

@@ -223,13 +223,19 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   #' wl-13-07-2020, Mon: Fill in structural(aggregation) missing values  
   data_wide_clean_scaled_norm_unique <- 
     reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion, 
-                    fill = 0,                #' wl: keep it or not?
+                    #' fill = 0,                #' wl: keep it or not?
                     value.var="logConcentration_corr_norm")
 
   data_wide_clean_scaled_norm_unique_Symb <- 
     reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion, 
-                    fill = 0,                #' wl: keep it or not?
+                    #' fill = 0,                #' wl: keep it or not?
                     value.var="Symb")
+
+  #' wl-23-07-2020, Thu: remove NAs
+  data_wide_clean_scaled_norm_unique <-
+    data_wide_clean_scaled_norm_unique[complete.cases(data_wide_clean_scaled_norm_unique),]                       ## remove NAs
+  data_wide_clean_scaled_norm_unique_Symb <-
+    data_wide_clean_scaled_norm_unique_Symb[complete.cases(data_wide_clean_scaled_norm_unique_Symb),]                       ## remove NAs
 
   p2 <- 
     ggplot(data = data_long_clean_scaled_norm_unique, aes(x = logConcentration_corr_norm)) +

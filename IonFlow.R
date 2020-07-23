@@ -1,24 +1,24 @@
 #' wl-03-07-2020, Fri: Load packages here. 
 #' wl-06-07-2020, Mon: debug functions PreProcessing and ExploratoryAnalysis
+#' wl-06-07-2020, Mon: R packages 
+#' - Not used: "intergraph", "factoextra", "ggfortify", "knitr", "reshape"
+#' - attached: "Matrix", "network", "igraph","psych", "data.table",
+#'             "gridExtra","GGally"
+#' - option: "mixOmics" 
 #' wl-13-07-2020, Mon: NAs and PCA
 #' wl-14-07-2020, Tue: Fix a bug in network analysis
+#' wl-23-07-2020, Thu: test PreProcessing with NAs removal
 
 ## ==== General settings ====
 rm(list = ls(all = T))
 setwd("~/my_galaxy/ionflow")
 
-#' wl-06-07-2020, Mon: 
-#' - Not used: "intergraph", "factoextra", "ggfortify", "knitr", "reshape"
-#' - attached: "Matrix", "network", "igraph","psych", "data.table",
-#'             "gridExtra","GGally"
-#' - option: "mixOmics" 
-
 #' wl-03-07-2020, Fri: Must load. qgraph loads plent of R packages
-Packages <- 
+pkgs <- 
   c("reshape2", "dplyr", "tidyr", "ggplot2", "ggrepel",
     "corrplot","gplots","pheatmap", "sna", "qgraph", 
     "org.Sc.sgd.db","GO.db","GOstats")
-suppressWarnings(invisible(lapply(Packages, library, character.only = TRUE)))
+suppressWarnings(invisible(lapply(pkgs, library, character.only = TRUE)))
 
 if (F) {
   library(IonFlow) 
@@ -50,8 +50,8 @@ if (F) {
 #' data = IonData
 #' stdev = pre_defined_sd
 
-#' pre_proc <- PreProcessing(data = IonData, stdev = NULL)
-pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
+pre_proc <- PreProcessing(data = IonData, stdev = NULL)
+#' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
 
 # stats
 pre_proc$stats.raw_data
@@ -76,7 +76,6 @@ sum(is.na(pre_proc$data.wide_Symb))     # 28
 
 ## ==== Load Pre-proceesed data ====
 
-#' Load pre-processing results
 #' load(file="./test-data/pre_proc.rdata")
 #' load(file="./test-data/pre_proc_std_null.rdata")
 data      <- pre_proc$data.wide 
@@ -89,10 +88,7 @@ data_Symb <- pre_proc$data.wide_Symb
 #' data_Symb <- data_Symb[,-1]
 
 ## ==== Exploratory analysis ====
-
-exp_anal <- ExploratoryAnalysis(data = data)
-#' exp_anal <- ExploratoryAnalysis(data = pre_proc$data.wide)
-
+exp_anal <- ExploratoryAnalysis(data = pre_proc$data.wide)
 # plots
 exp_anal$plot.Pearson_correlation
 exp_anal$plot.PCA_Individual
@@ -105,9 +101,8 @@ head(exp_anal$data.PCA_loadings)
 #' save(exp_anal,file="./doc/exp_anal.rdata")
 
 ## ==== Gene Clustering ====
-
-gene_clust <- GeneClustering(data = data, data_Symb = data_Symb)
-
+gene_clust <- GeneClustering(data = pre_proc$data.wide, 
+                             data_Symb = pre_proc$data.wide_Symb)
 # stats
 gene_clust$stats.clusters
 gene_clust$stats.Kegg_Goslim_annotation
@@ -118,9 +113,8 @@ gene_clust$plot.profiles
 #' save(gene_clust,file="./doc/gene_clust.rdata")
 
 ## ==== Gene Network ====
-
-gene_net <- GeneNetwork(data=data, data_Symb=data_Symb)
-
+gene_net <- GeneNetwork(data = pre_proc$data.wide, 
+                        data_Symb = pre_proc$data.wide_Symb)
 # stats
 gene_net$stats.impact_betweeness
 gene_net$stats.impact_betweeness_by_cluster
@@ -129,4 +123,3 @@ gene_net$plot.pnet
 gene_net$plot.impact_betweenees
 
 #' save(gene_net,file="./doc/gene_net.rdata")
-

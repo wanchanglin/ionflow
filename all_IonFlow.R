@@ -632,7 +632,7 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
     index[index==Rk$Var1[i]]=0
   }
   # Apply the cluster filtering
-  index = index > 0
+  index = index > 0        # sum(index)   # 268
 
   # cluster labels with info of accumulation/decumulation of Ions
   # (high/lower abundance)
@@ -676,8 +676,6 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
 
   # Generate network
   Net = network::network(A, directed = FALSE)
-  #' plot(Net)
-  #' summary(Net)
 
   # Network plot
   x1         = df.symb$Label

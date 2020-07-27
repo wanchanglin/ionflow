@@ -69,17 +69,17 @@ head(pre_proc$data.wide_Symb)
 
 #' wl-12-07-2020, Sun: check NAs
 sum(is.na(pre_proc$data.wide))          # 28 
-sum(is.na(pre_proc$data.wide_Symb))     # 28
 
 #' save(pre_proc,file="./doc/rdata/pre_proc_std_null_prcomp.rdata")
 #' save(pre_proc,file="./test-data/pre_proc.rdata")
 
 ## ==== Load Pre-proceesed data ====
 
-#' load(file="./test-data/pre_proc.rdata")
+load(file="./test-data/pre_proc.rdata")
 #' load(file="./test-data/pre_proc_std_null.rdata")
 data      <- pre_proc$data.wide 
 data_Symb <- pre_proc$data.wide_Symb
+sum(is.na(data))
 
 #' load data set from github 
 #' data <- read.csv("./test-data/data.wide.csv", stringsAsFactors = F)

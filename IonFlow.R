@@ -11,7 +11,8 @@
 
 ## ==== General settings ====
 rm(list = ls(all = T))
-setwd("~/my_galaxy/ionflow")
+#' setwd("~/my_galaxy/ionflow")
+setwd("C:/R_lwc/my_galaxy/ionflow")
 
 #' wl-03-07-2020, Fri: Must load. qgraph loads plent of R packages
 pkgs <- 
@@ -24,26 +25,10 @@ if (F) {
   library(IonFlow) 
 } else {
   source("all_IonFlow.R")
-  if (F) {
-    IonData <- read.table("./test-data/IonData.txt", header = T, sep = " ", 
-                          stringsAsFactors = T)
-    pre_defined_sd  <- read.table("./test-data/pre_defined_sd.txt", 
-                                  header = T, sep = " ", stringsAsFactors = T)
-    data_GOslim <- read.table("./test-data/data_GOslim.txt", header = T, 
-                              sep = " ", stringsAsFactors = T)
-    data_ORF2KEGG <- read.table("./test-data/data_ORF2KEGG.txt", header = T, 
-                                sep = " ", stringsAsFactors = T)
-
-    save(IonData,file="./test-data/IonData.rdata")
-    save(pre_defined_sd,file="./test-data/pre_defined_sd.rdata")
-    save(data_GOslim,file="./test-data/data_GOslim.rdata")
-    save(data_ORF2KEGG,file="./test-data/data_ORF2KEGG.rdata")
-  } else {
-    load(file="./test-data/IonData.rdata")
-    load(file="./test-data/pre_defined_sd.rdata")
-    load(file="./test-data/data_GOslim.rdata")
-    load(file="./test-data/data_ORF2KEGG.rdata")
-  }
+  load(file="./test-data/IonData.rdata")
+  load(file="./test-data/pre_defined_sd.rdata")
+  load(file="./test-data/data_GOslim.rdata")
+  load(file="./test-data/data_ORF2KEGG.rdata")
 }
 
 ## ==== Pre-processing ====
@@ -67,25 +52,14 @@ head(pre_proc$data.long)
 head(pre_proc$data.wide)
 head(pre_proc$data.wide_Symb)
 
-#' wl-12-07-2020, Sun: check NAs
-sum(is.na(pre_proc$data.wide))          # 28 
-
-#' save(pre_proc,file="./doc/rdata/pre_proc_std_null_prcomp.rdata")
 #' save(pre_proc,file="./test-data/pre_proc.rdata")
 
 ## ==== Load Pre-proceesed data ====
 
-load(file="./test-data/pre_proc.rdata")
-#' load(file="./test-data/pre_proc_std_null.rdata")
+#' load(file="./test-data/pre_proc.rdata")
 data      <- pre_proc$data.wide 
 data_Symb <- pre_proc$data.wide_Symb
 sum(is.na(data))
-
-#' load data set from github 
-#' data <- read.csv("./test-data/data.wide.csv", stringsAsFactors = F)
-#' data <- data[,-1]
-#' data_Symb <- read.csv("./test-data/data.wide_Symb.csv", stringsAsFactors = F)
-#' data_Symb <- data_Symb[,-1]
 
 ## ==== Exploratory analysis ====
 exp_anal <- ExploratoryAnalysis(data = pre_proc$data.wide)
@@ -98,7 +72,7 @@ exp_anal$plot.regularized_partial_correlation_network
 # data
 head(exp_anal$data.PCA_loadings)
 
-#' save(exp_anal,file="./doc/exp_anal.rdata")
+#' save(exp_anal,file="./test-data/exp_anal.rdata")
 
 ## ==== Gene Clustering ====
 gene_clust <- GeneClustering(data = pre_proc$data.wide, 
@@ -110,7 +84,7 @@ gene_clust$stats.Goterms_enrichment
 # plots
 gene_clust$plot.profiles
 
-#' save(gene_clust,file="./doc/gene_clust.rdata")
+#' save(gene_clust,file="./test-data/gene_clust.rdata")
 
 ## ==== Gene Network ====
 gene_net <- GeneNetwork(data = pre_proc$data.wide, 
@@ -122,4 +96,4 @@ gene_net$stats.impact_betweeness_by_cluster
 gene_net$plot.pnet
 gene_net$plot.impact_betweenees
 
-#' save(gene_net,file="./doc/gene_net.rdata")
+#' save(gene_net,file="./test-data/gene_net.rdata")

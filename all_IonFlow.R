@@ -1,12 +1,4 @@
 #' wl-02-07-2020, Thu: Put package files together
-#' wl-06-07-2020, Mon: 
-#'  - find '<<-'. Should be '<-'
-#'  - global data sets: data_GOslim and data_ORF2KEGG are used in
-#'    GeneClustering. Should change
-#' wl-12-07-2020, Sun: find where NAs come from (caused by reshape2:dcast)
-#' wl-13-07-2020, Mon: handle NAs in PreProcessing
-#' wl-14-07-2020, Tue: fix a bug in GeneNetwork. Option for PCA computation
-#'  using R core package stats in ExploratoryAnalysis
 
 #' ==== Pre-processing ====
 #'
@@ -64,7 +56,6 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   list.s <- list()
   data2 <- data[,-c(1,2)]
 
-  #' wl-08-07-2020, Wed: change for general
   #' for (i in 1:14){
   for (i in 1:ncol(data2)){ 
     list.s[[i]] <- c(names(data2)[i],round(summary(data2[,i]),3),
@@ -74,20 +65,11 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   names(df.s) <-  c('Ion','Min','1st Quartile','Median','Mean', '3rd Quartile', 
                     'Max','Variance' )
 
-  #' wl-06-07-2020, Mon: might simplify something like this:
-  #' tmp <- as.data.frame(t(sapply(data2,function(x){
-  #'   c(round(summary(x),3), round(var(x),3))
-  #' })))
-  #' names(tmp)[ncol(tmp)]  <- "Variance"
-  
   #### -------------------> Outlier detection
   data$id <- row.names(data)
   data_long <- tidyr::gather(data,Ion,Concentration, Ca:Zn, factor_key=TRUE)
 
-  #' wl-06-07-2020, Mon: BUG. It's dangerous to use 'levels'. It is only for
-  #' factor.  Make vectors as factors before using levels function. Don't
-  #' presume they are factors. Check them using:
-  #' lapply(data_long, class)
+  #' wl-06-07-2020, Mon: Make vectors as factors before using levels function.
   data_long$Knockout <- as.factor(data_long$Knockout)
   data_long$Ion <- as.factor(data_long$Ion)
 
@@ -163,12 +145,6 @@ PreProcessing = function(data=NULL,stdev=NULL) {
     for (i in 1:length(levels(data_long_clean_scaled$Ion))){
       sds[i] <- as.numeric(sd(data_long_clean_scaled$logConcentration_corr[data_long_clean_scaled$Ion==levels(data_long_clean_scaled$Ion)[i]])) # Ions' sd of logConcentration_corr
     }
-
-    #' wl-08-07-2020, Wed: may use plyr::ddplyr
-    #' tmp <- plyr::ddply(data_long_clean_scaled, "Ion", 
-    #'                    function(x) sd(x$logConcentration_corr))
-    #' tmp <- as.numeric(as.vector(tmp[,2]))
-
   } else {
     sds=as.numeric(as.vector(stdev[,1]))
   }
@@ -209,29 +185,24 @@ PreProcessing = function(data=NULL,stdev=NULL) {
            0, ifelse(data_long_clean_scaled_norm$logConcentration_corr_norm>=3,1,-1))
 
   #### -------------------> Aggregation of the batch replicas
-
-  #' wl-13-07-2020, Mon: add prefix and change * as +
   data_long_clean_scaled_norm_unique <- 
-    data.frame(stats::aggregate(. ~ Knockout + Ion, 
-                                data_long_clean_scaled_norm[,c('Knockout','Ion','logConcentration_corr_norm','Symb')], 
-                                median))
+    data.frame(aggregate(. ~ Knockout * Ion, 
+                         data_long_clean_scaled_norm[,c('Knockout','Ion','logConcentration_corr_norm','Symb')], 
+                         median))
 
   data_long_clean_scaled_norm_unique$Symb <- 
     ifelse((data_long_clean_scaled_norm_unique$Symb<0.5) & (data_long_clean_scaled_norm_unique$Symb>-0.5), 
            0, ifelse(data_long_clean_scaled_norm_unique$Symb>=0.5,1,-1))
 
-  #' wl-13-07-2020, Mon: Fill in structural(aggregation) missing values  
   data_wide_clean_scaled_norm_unique <- 
     reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion, 
-                    #' fill = 0,                #' wl: keep it or not?
                     value.var="logConcentration_corr_norm")
 
   data_wide_clean_scaled_norm_unique_Symb <- 
     reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion, 
-                    #' fill = 0,                #' wl: keep it or not?
                     value.var="Symb")
 
-  #' wl-23-07-2020, Thu: remove NAs
+  #' wl-23-07-2020, Thu: remove NAs if any
   data_wide_clean_scaled_norm_unique <-
     data_wide_clean_scaled_norm_unique[complete.cases(data_wide_clean_scaled_norm_unique),]                       ## remove NAs
   data_wide_clean_scaled_norm_unique_Symb <-
@@ -312,62 +283,28 @@ ExploratoryAnalysis = function(data=NULL) {
 
   p_corr <- recordPlot() 
 
-  #' wl-14-07-2020, Tue: Original (trust) pca computation if there is no NAs. 
-  if (T){                            #' Use prcomp(core R package 'stats')
-    dat  <- t(data[,-1])
-    pca  <- prcomp(dat, center = T, scale. = F)
+  #### -------------------> PCA
+  pca.X <- mixOmics::pca(t(data[,-1]),center=T,scale=F)
 
-    #' variance explained
-    vars <- pca$sdev^2
-    vars <- vars/sum(vars)      #' Proportion of Variance
-    names(vars) <- colnames(pca$rotation)
-    vars <- round(vars * 100,2)
-    dfn  <- paste(names(vars)," (",vars[names(vars)],"%)",sep="")
+  loadings_PC1 <- data.frame(mixOmics::selectVar(pca.X, comp=1)$value)
+  row.names(loadings_PC1) <- data$Knockout[order(loadings_PC1)]
+  loadings_PC2 <- data.frame(mixOmics::selectVar(pca.X, comp=2)$value)
+  row.names(loadings_PC2) <- data$Knockout[order(loadings_PC2)]
+  PCA_loadings <- data.frame(cbind(loadings_PC1,loadings_PC2))
+  names(PCA_loadings) <- c('PC1','PC2')
 
-    #' PCA scores
-    pca_scores <- data.frame(pca$x)
-    #' names(pca_scores) <- dfn
+  # Individual factor map
+  dtp <- data.frame('Ion' = row.names(data.frame(pca.X$variates)), pca.X$variates)
+  names(dtp) <- c("Ion","PC1","PC2")
 
-    #' PCA loadings
-    PCA_loadings <- data.frame(pca$rotation)
-    rownames(PCA_loadings) <- data$Knockout
-    PCA_loadings <- PCA_loadings[,1:2]
-
-    #' PCA plot using ggplot2
-    pca_plot <- 
-      ggplot(data = pca_scores[,1:2], aes(x = PC1, y = PC2)) +
-      geom_point(color='steelblue', size=3, alpha=0.4) +
-      geom_text_repel(aes(label = row.names(pca_scores)), size=4) +
-      theme_bw() +
-      theme(legend.position = "none") +
-      xlab(dfn[1]) +
-      ylab(dfn[2]) +
-      labs(title = "PCA")
-
-  } else {                            #' use mixOmics::pca
-    #### -------------------> PCA
-    pca.X <- mixOmics::pca(t(data[,-1]),center=T,scale=F)
-
-    loadings_PC1 <- data.frame(mixOmics::selectVar(pca.X, comp=1)$value)
-    row.names(loadings_PC1) <- data$Knockout[order(loadings_PC1)]
-    loadings_PC2 <- data.frame(mixOmics::selectVar(pca.X, comp=2)$value)
-    row.names(loadings_PC2) <- data$Knockout[order(loadings_PC2)]
-    PCA_loadings <- data.frame(cbind(loadings_PC1,loadings_PC2))
-    names(PCA_loadings) <- c('PC1','PC2')
-
-    # Individual factor map
-    dtp <- data.frame('Ion' = row.names(data.frame(pca.X$variates)), pca.X$variates)
-    names(dtp) <- c("Ion","PC1","PC2")
-
-    pca_plot <- ggplot(data = dtp, aes(x = PC1, y = PC2)) +
-      geom_point(color='steelblue', size=3, alpha=0.4) +
-      geom_text_repel(aes(label = row.names(data.frame(pca.X$variates))), size=4) +
-      theme_bw() +
-      theme(legend.position = "none") +
-      xlab(paste("PC1: ",round(pca.X$explained_variance[1]*100,2),"% expl. variance", sep='')) +
-      ylab(paste("PC2: ",round(pca.X$explained_variance[2]*100,2),"% expl. variance", sep='')) +
-      labs(title = "PCA")
-  }
+  pca_plot <- ggplot(data = dtp, aes(x = PC1, y = PC2)) +
+    geom_point(color='steelblue', size=3, alpha=0.4) +
+    geom_text_repel(aes(label = row.names(data.frame(pca.X$variates))), size=4) +
+    theme_bw() +
+    theme(legend.position = "none") +
+    xlab(paste("PC1: ",round(pca.X$explained_variance[1]*100,2),"% expl. variance", sep='')) +
+    ylab(paste("PC2: ",round(pca.X$explained_variance[2]*100,2),"% expl. variance", sep='')) +
+    labs(title = "PCA")
 
   #### -------------------> HEATMAP
   pheatmap(data[,-1], show_rownames=F, cluster_cols=T, cluster_rows=T,
@@ -385,7 +322,7 @@ ExploratoryAnalysis = function(data=NULL) {
   pcm <- recordPlot()
 
   #### -------------------> Regularized partial correlation network MAP
-  cad <- cor_auto(data[,-1]) # wl-06-07-2020, Mon: from package lavaan
+  cad <- cor_auto(data[,-1])
   suppressWarnings(qgraph(cad, graph = "glasso", layout = "spring",
          tuning = 0.25,sampleSize = nrow(data[,-1])))
 
@@ -750,8 +687,7 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
 
   df.tab <- data.frame(table(df.res3$Cluster,df.res3$Position))
 
-  #' wl-06-07-2020, Mon: add dplyr:: for clarify
-  df.tab2 <- df.tab %>% dplyr::group_by(Var1) %>% top_n(1, Freq)
+  df.tab2 <- df.tab %>% group_by(Var1) %>% top_n(1, Freq)
   names(df.tab2) <- c('Cluster','Position','nGenes')
 
   #### -------------------> Output

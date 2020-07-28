@@ -11,10 +11,10 @@
 
 ## ==== General settings ====
 rm(list = ls(all = T))
-#' setwd("~/my_galaxy/ionflow")
-setwd("C:/R_lwc/my_galaxy/ionflow")
+setwd("~/my_galaxy/ionflow")
+#' setwd("C:/R_lwc/my_galaxy/ionflow")
 
-#' wl-03-07-2020, Fri: Must load. qgraph loads plent of R packages
+#' wl-03-07-2020, Fri: qgraph loads plent of R packages
 pkgs <- 
   c("reshape2", "dplyr", "tidyr", "ggplot2", "ggrepel",
     "corrplot","gplots","pheatmap", "sna", "qgraph", 
@@ -52,8 +52,6 @@ head(pre_proc$data.long)
 head(pre_proc$data.wide)
 head(pre_proc$data.wide_Symb)
 
-#' save(pre_proc,file="./test-data/pre_proc.rdata")
-
 ## ==== Load Pre-proceesed data ====
 
 #' load(file="./test-data/pre_proc.rdata")
@@ -72,8 +70,6 @@ exp_anal$plot.regularized_partial_correlation_network
 # data
 head(exp_anal$data.PCA_loadings)
 
-#' save(exp_anal,file="./test-data/exp_anal.rdata")
-
 ## ==== Gene Clustering ====
 gene_clust <- GeneClustering(data = pre_proc$data.wide, 
                              data_Symb = pre_proc$data.wide_Symb)
@@ -83,8 +79,6 @@ gene_clust$stats.Kegg_Goslim_annotation
 gene_clust$stats.Goterms_enrichment
 # plots
 gene_clust$plot.profiles
-
-#' save(gene_clust,file="./test-data/gene_clust.rdata")
 
 ## ==== Gene Network ====
 gene_net <- GeneNetwork(data = pre_proc$data.wide, 
@@ -96,4 +90,3 @@ gene_net$stats.impact_betweeness_by_cluster
 gene_net$plot.pnet
 gene_net$plot.impact_betweenees
 
-#' save(gene_net,file="./test-data/gene_net.rdata")

@@ -1,4 +1,14 @@
-#' wl-02-07-2020, Thu: Put package files together
+#' wl-02-07-2020, Thu: Put the original functions for IonFlow in one file.
+#' wl-28-07-2020, Tue: A very limit changes summary
+#'  1.) PreProcessing:  
+#'      - Apply 'as.factor' for 'Knockout' and 'Ion'
+#'      - 'data_long_clean_scaled' and 'data_long_clean_scaled_norm' are
+#'        combined out of loop (in order to save time and memory)
+#'      - Missing values are caused by outlier removal. Therefore they are
+#'        omitted using 'complete.cases'
+#'  2.) ExploratoryAnalysis: No changes
+#'  3.) GeneClustering: No changes
+#'  4.) GeneNetwork: Fix a bug in 'sample' with default option 'replacement'
 
 #' ==== Pre-processing ====
 #'
@@ -204,9 +214,9 @@ PreProcessing = function(data=NULL,stdev=NULL) {
 
   #' wl-23-07-2020, Thu: remove NAs if any
   data_wide_clean_scaled_norm_unique <-
-    data_wide_clean_scaled_norm_unique[complete.cases(data_wide_clean_scaled_norm_unique),]                       ## remove NAs
+    data_wide_clean_scaled_norm_unique[complete.cases(data_wide_clean_scaled_norm_unique),]
   data_wide_clean_scaled_norm_unique_Symb <-
-    data_wide_clean_scaled_norm_unique_Symb[complete.cases(data_wide_clean_scaled_norm_unique_Symb),]                       ## remove NAs
+    data_wide_clean_scaled_norm_unique_Symb[complete.cases(data_wide_clean_scaled_norm_unique_Symb),]
 
   p2 <- 
     ggplot(data = data_long_clean_scaled_norm_unique, aes(x = logConcentration_corr_norm)) +

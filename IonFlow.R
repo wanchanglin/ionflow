@@ -11,14 +11,14 @@
 
 ## ==== General settings ====
 rm(list = ls(all = T))
-setwd("~/my_galaxy/ionflow")
-#' setwd("C:/R_lwc/my_galaxy/ionflow")
+#' setwd("~/my_galaxy/ionflow")
+setwd("C:/R_lwc/my_galaxy/ionflow")
 
 #' wl-03-07-2020, Fri: qgraph loads plent of R packages
-pkgs <- 
-  c("reshape2", "dplyr", "tidyr", "ggplot2", "ggrepel",
-    "corrplot","gplots","pheatmap", "sna", "qgraph", 
-    "org.Sc.sgd.db","GO.db","GOstats")
+pkgs <- c("reshape2", "plyr", "dplyr", "tidyr", "ggplot2", "ggrepel",
+          "corrplot", "gplots", "pheatmap", 
+          "network", "sna", "GGally", "qgraph",
+          "org.Sc.sgd.db", "GO.db", "GOstats")
 suppressWarnings(invisible(lapply(pkgs, library, character.only = TRUE)))
 
 if (F) {
@@ -35,8 +35,8 @@ if (F) {
 #' data = IonData
 #' stdev = pre_defined_sd
 
-pre_proc <- PreProcessing(data = IonData, stdev = NULL)
-#' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
+#' pre_proc <- PreProcessing(data = IonData, stdev = NULL)
+pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
 
 # stats
 pre_proc$stats.raw_data
@@ -50,13 +50,15 @@ pre_proc$plot.logConcentration_z_scores
 head(pre_proc$dataR.long)
 head(pre_proc$data.long)
 head(pre_proc$data.wide)
-head(pre_proc$data.wide_Symb)
+head(pre_proc$data.wide_symb)
+
+#' save(pre_proc,   file="./test-data/pre_proc.rdata")
 
 ## ==== Load Pre-proceesed data ====
 
 #' load(file="./test-data/pre_proc.rdata")
 data      <- pre_proc$data.wide 
-data_Symb <- pre_proc$data.wide_Symb
+data_symb <- pre_proc$data.wide_symb
 sum(is.na(data))
 
 ## ==== Exploratory analysis ====
@@ -72,7 +74,7 @@ head(exp_anal$data.PCA_loadings)
 
 ## ==== Gene Clustering ====
 gene_clust <- GeneClustering(data = pre_proc$data.wide, 
-                             data_Symb = pre_proc$data.wide_Symb)
+                             data_symb = pre_proc$data.wide_symb)
 # stats
 gene_clust$stats.clusters
 gene_clust$stats.Kegg_Goslim_annotation
@@ -82,7 +84,7 @@ gene_clust$plot.profiles
 
 ## ==== Gene Network ====
 gene_net <- GeneNetwork(data = pre_proc$data.wide, 
-                        data_Symb = pre_proc$data.wide_Symb)
+                        data_symb = pre_proc$data.wide_symb)
 # stats
 gene_net$stats.impact_betweeness
 gene_net$stats.impact_betweeness_by_cluster

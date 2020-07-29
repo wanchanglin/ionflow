@@ -35,7 +35,7 @@
 #'   each gene's knockout (long format)
 #' @return \code{data.wide} a processed data frame of ion's concentrations
 #'   (columns) for each gene's knockout (rows) (wide format)
-#' @return \code{data.wide_Symb} a processed data frame of symbolised (values
+#' @return \code{data.wide_symb} a processed data frame of symbolised (values
 #'   -1,0, or 1) ion's concentration profiles (columns) for each gene's knockout
 #'   (rows) (wide format)
 #'
@@ -57,7 +57,7 @@
 #' head(pre_proc$dataR.long)
 #' head(pre_proc$data.long)
 #' head(pre_proc$data.wide)
-#' head(pre_proc$data.wide_Symb)
+#' head(pre_proc$data.wide_symb)
 #' }
 #' @export
 PreProcessing = function(data=NULL,stdev=NULL) {
@@ -189,34 +189,34 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   df.mbc2 <- data.frame(do.call(rbind,list.mbc2))
   names(df.mbc2) <- c('Ion','Min','1st Quartile','Median','Mean', '3rd Quartile', 'Max','Variance' )
 
-  #### -------------------> Symbolization
-  data_long_clean_scaled_norm$Symb <- 
+  #### -------------------> symbolization
+  data_long_clean_scaled_norm$symb <- 
     ifelse((data_long_clean_scaled_norm$logConcentration_corr_norm > -3) & (data_long_clean_scaled_norm$logConcentration_corr_norm< 3), 
            0, ifelse(data_long_clean_scaled_norm$logConcentration_corr_norm>=3,1,-1))
 
   #### -------------------> Aggregation of the batch replicas
   data_long_clean_scaled_norm_unique <- 
     data.frame(aggregate(. ~ Knockout * Ion, 
-                         data_long_clean_scaled_norm[,c('Knockout','Ion','logConcentration_corr_norm','Symb')], 
+                         data_long_clean_scaled_norm[,c('Knockout','Ion','logConcentration_corr_norm','symb')], 
                          median))
 
-  data_long_clean_scaled_norm_unique$Symb <- 
-    ifelse((data_long_clean_scaled_norm_unique$Symb<0.5) & (data_long_clean_scaled_norm_unique$Symb>-0.5), 
-           0, ifelse(data_long_clean_scaled_norm_unique$Symb>=0.5,1,-1))
+  data_long_clean_scaled_norm_unique$symb <- 
+    ifelse((data_long_clean_scaled_norm_unique$symb<0.5) & (data_long_clean_scaled_norm_unique$symb>-0.5), 
+           0, ifelse(data_long_clean_scaled_norm_unique$symb>=0.5,1,-1))
 
   data_wide_clean_scaled_norm_unique <- 
     reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion, 
                     value.var="logConcentration_corr_norm")
 
-  data_wide_clean_scaled_norm_unique_Symb <- 
+  data_wide_clean_scaled_norm_unique_symb <- 
     reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion, 
-                    value.var="Symb")
+                    value.var="symb")
 
   #' wl-23-07-2020, Thu: remove NAs if any
   data_wide_clean_scaled_norm_unique <-
     data_wide_clean_scaled_norm_unique[complete.cases(data_wide_clean_scaled_norm_unique),]
-  data_wide_clean_scaled_norm_unique_Symb <-
-    data_wide_clean_scaled_norm_unique_Symb[complete.cases(data_wide_clean_scaled_norm_unique_Symb),]
+  data_wide_clean_scaled_norm_unique_symb <-
+    data_wide_clean_scaled_norm_unique_symb[complete.cases(data_wide_clean_scaled_norm_unique_symb),]
 
   p2 <- 
     ggplot(data = data_long_clean_scaled_norm_unique, aes(x = logConcentration_corr_norm)) +
@@ -237,7 +237,7 @@ PreProcessing = function(data=NULL,stdev=NULL) {
   res$dataR.long                        <- data_long_clean_scaled_norm
   res$data.long                         <- data_long_clean_scaled_norm_unique
   res$data.wide                         <- data_wide_clean_scaled_norm_unique
-  res$data.wide_Symb                    <- data_wide_clean_scaled_norm_unique_Symb
+  res$data.wide_symb                    <- data_wide_clean_scaled_norm_unique_symb
   res$plot.logConcentration_by_batch    <- p1
   res$plot.logConcentration_z_scores    <- p2
 
@@ -357,9 +357,9 @@ ExploratoryAnalysis = function(data=NULL) {
 #' @param \code{data} a processed data frame of ion's concentrations (columns)
 #'   for each gene's knockout (rows) (wide format) e.g. \code{data.wide} from
 #'   the \code{PreProcessing_fn}
-#' @param \code{data_Symb} a processed data frame of symbolised (values -1,0, or
+#' @param \code{data_symb} a processed data frame of symbolised (values -1,0, or
 #'   1) ion's concentration profiles (columns) for each gene's knockout (rows)
-#'   (wide format) e.g. \code{data.wide_Symb} from the \code{PreProcessing_fn}
+#'   (wide format) e.g. \code{data.wide_symb} from the \code{PreProcessing_fn}
 #'
 #' @return \code{stats.clusters statistics} of the gene's count by cluster
 #' @return \code{stats.Kegg_Goslim_annotation} statistics from the GO Slim
@@ -375,7 +375,7 @@ ExploratoryAnalysis = function(data=NULL) {
 #'
 #' ### Run GeneClustering function
 #' gene_clust <- GeneClustering(data=pre_proc$data.wide,
-#'   data_Symb=pre_proc$data.wide_Symb)
+#'   data_symb=pre_proc$data.wide_symb)
 #'
 #' # stats
 #' gene_clust$stats.clusters
@@ -386,15 +386,15 @@ ExploratoryAnalysis = function(data=NULL) {
 #' gene_clust$plot.profiles
 #' }
 #' @export
-GeneClustering = function(data=NULL, data_Symb=NULL) {
+GeneClustering = function(data=NULL, data_symb=NULL) {
 
   #### -------------------> Define clusters
-  res.dist <- dist(data_Symb[,-1], method = "manhattan")
+  res.dist <- dist(data_symb[,-1], method = "manhattan")
   res.hc <- hclust(d = res.dist, method = "single")
-  data_Symb$cluster <- cutree(res.hc, h = 0) # distance 0
+  data_symb$cluster <- cutree(res.hc, h = 0) # distance 0
 
   #### -------------------> Subset cluster with more than 10 genes
-  df <- as.data.frame(table(data_Symb$cluster)); 
+  df <- as.data.frame(table(data_symb$cluster)); 
   names(df) <- c('cluster', 'nGenes')
   df_sub <- df[df$nGenes>10,]
   rownames(df_sub) <- c()
@@ -402,7 +402,7 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
   #### -------------------> Plot clustering
   df.tmp_long = list()
   for(i in 1:dim(df_sub)[1]){
-    tmp_wide <- data[data_Symb$cluster==df_sub$cluster[i],]
+    tmp_wide <- data[data_symb$cluster==df_sub$cluster[i],]
     tmp_long <- gather(tmp_wide, Ion, logConcentration_corr_norm,  Ca:Zn, factor_key=TRUE)
     tmp_long$Cluster_number <- rep(df_sub$cluster[i],nrow(tmp_long))
     label <- paste("Cluster",df_sub$cluster[i],paste("(",df_sub$nGenes[i], " genes)", sep=''), sep=' ')
@@ -422,7 +422,7 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
   #### -------------------> KEGG AND GO SLIM ANNOTATION
   p.data_list = list()
   for(i in 1:dim(df_sub)[1]){
-    inputGeneSet <- data_Symb$Knockout[data_Symb$cluster==df_sub$cluster[i]]
+    inputGeneSet <- data_symb$Knockout[data_symb$cluster==df_sub$cluster[i]]
 
     N <- as.numeric(length(inputGeneSet))
     p.data <- data_GOslim %>%
@@ -464,12 +464,12 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
   names(Kegg_Goslim_annotation.list_by_clust) <- label_list
 
   #### -------------------> GO TERMS ENRICHMENT
-  universeGenes=as.character(data_Symb$Knockout) # universo dei dati sperimentali
+  universeGenes=as.character(data_symb$Knockout) # universo dei dati sperimentali
 
   p.data_list2 = label_list2 = list()
   for(i in 1:dim(df_sub)[1]){
     label <- paste("Cluster",df_sub$cluster[i],paste("(",df_sub$nGenes[i], " genes)", sep=''), sep=' ')
-    inputGeneSet <- data_Symb$Knockout[data_Symb$cluster==df_sub$cluster[i]]
+    inputGeneSet <- data_symb$Knockout[data_symb$cluster==df_sub$cluster[i]]
 
     ont=c("BP","MF","CC")
     results <- c()
@@ -518,9 +518,9 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
 #' @param \code{data} a processed data frame of ion's concentrations (columns)
 #'   for each gene's knockout (rows) (wide format) e.g. \code{data.wide} from
 #'   the \code{PreProcessing_fn}
-#' @param \code{data_Symb} a processed data frame of symbolised (values -1,0, or
+#' @param \code{data_symb} a processed data frame of symbolised (values -1,0, or
 #'   1) ion's concentration profiles (columns) for each gene's knockout (rows)
-#'   (wide format) e.g. \code{data.wide_Symb} from the \code{PreProcessing_fn}
+#'   (wide format) e.g. \code{data.wide_symb} from the \code{PreProcessing_fn}
 #'
 #' @return \code{stats.impact_betweeness} statistics of the impact betweenees
 #'   data
@@ -536,7 +536,7 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
 #'
 #' ### Run GeneNetwork function
 #' gene_net <- GeneNetwork(data=pre_proc$data.wide,
-#'   data_Symb=pre_proc$data.wide_Symb)
+#'   data_symb=pre_proc$data.wide_symb)
 #'
 #' # stats
 #' gene_net$stats.impact_betweeness
@@ -547,27 +547,27 @@ GeneClustering = function(data=NULL, data_Symb=NULL) {
 #' gene_net$plot.impact_betweenees
 #' }
 #' @export
-GeneNetwork = function(data=NULL, data_Symb=NULL) {
+GeneNetwork = function(data=NULL, data_symb=NULL) {
 
   # Cluster of gene with same profile
-  res.dist <- dist(data_Symb[,-1], method = "manhattan")
+  res.dist <- dist(data_symb[,-1], method = "manhattan")
   res.hc <- hclust(d = res.dist, method = "single")
-  data_Symb$cluster <- cutree(res.hc, h = 0) # distance 0
+  data_symb$cluster <- cutree(res.hc, h = 0) # distance 0
 
-  df <- as.data.frame(table(data_Symb$cluster))
+  df <- as.data.frame(table(data_symb$cluster))
   names(df) <- c('cluster', 'nGenes')
   for(i in 1:dim(df)[1]){
-    tmp_wide <- data[data_Symb$cluster==df$cluster[i],]
+    tmp_wide <- data[data_symb$cluster==df$cluster[i],]
     label <- paste("Cluster",df$cluster[i],paste("(",df$nGenes[i], " genes)", sep=''), sep=' ')
-    data_Symb$Cluster[data_Symb$cluster==df$cluster[i]] <- rep(label,nrow(tmp_wide))
+    data_symb$Cluster[data_symb$cluster==df$cluster[i]] <- rep(label,nrow(tmp_wide))
   }
 
   # Freq in each cluster
-  Rk <- as.data.frame(table(data_Symb$Cluster))
+  Rk <- as.data.frame(table(data_symb$Cluster))
   Rk <- Rk[with(Rk, order(-Rk$Freq)), ]
 
   # Compute gene cluster id (index)
-  index = data_Symb$Cluster
+  index = data_symb$Cluster
 
   # Cluster 2 (largest cluster) contains genes with no phenotype hence not
   # considered (input to 0)
@@ -583,9 +583,9 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
 
   # cluster labels with info of accumulation/decumulation of Ions
   # (high/lower abundance)
-  x  = data_Symb$Cluster[index]
+  x  = data_symb$Cluster[index]
   ux = unique(x)
-  df.symb <- data_Symb[data_Symb$Cluster %in% c(unique(x)),]
+  df.symb <- data_symb[data_symb$Cluster %in% c(unique(x)),]
   df <- as.data.frame(table(df.symb$Cluster))
   names(df) <- c('Cluster', 'nGenes')
 
@@ -638,7 +638,7 @@ GeneNetwork = function(data=NULL, data_Symb=NULL) {
   #' net_p <- gNEt(Net)
 
   # Impact and betweenness
-  df1 <- data[data_Symb$Cluster %in% ux,] # df of 269 genes, 10 clusters
+  df1 <- data[data_symb$Cluster %in% ux,] # df of 269 genes, 10 clusters
   btw <- sna::betweenness(A)
   impact <- apply(df1[,-1],1, function(a) dist(rbind(a,rep(0,ncol(df1[-1]))))) # L2 norm
 

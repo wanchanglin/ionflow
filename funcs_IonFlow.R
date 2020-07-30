@@ -1,4 +1,4 @@
-f' wl-02-07-2020, Thu: Put package files together
+#' wl-02-07-2020, Thu: Put package files together
 #' wl-06-07-2020, Mon:
 #'  - Find '<<-'. Should be '<-'
 #'  - Global data sets: data_GOslim and data_ORF2KEGG are used in GeneClustering. 

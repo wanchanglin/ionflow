@@ -8,11 +8,12 @@
 #' wl-13-07-2020, Mon: NAs and PCA
 #' wl-14-07-2020, Tue: Fix a bug in network analysis
 #' wl-23-07-2020, Thu: test PreProcessing with NAs removal
+#' wl-30-07-2020, Thu: test 'funcs_IonFlow' and 'user_id'
 
 ## ==== General settings ====
 rm(list = ls(all = T))
-#' setwd("~/my_galaxy/ionflow")
-setwd("C:/R_lwc/my_galaxy/ionflow")
+setwd("~/my_galaxy/ionflow")
+#' setwd("C:/R_lwc/my_galaxy/ionflow")
 
 #' wl-03-07-2020, Fri: qgraph loads plent of R packages
 pkgs <- c("reshape2", "plyr", "dplyr", "tidyr", "ggplot2", "ggrepel",
@@ -24,9 +25,11 @@ suppressWarnings(invisible(lapply(pkgs, library, character.only = TRUE)))
 if (F) {
   library(IonFlow) 
 } else {
-  source("all_IonFlow.R")
+  #' source("all_IonFlow.R")
+  source("funcs_IonFlow.R")
   load(file="./test-data/IonData.rdata")
-  load(file="./test-data/pre_defined_sd.rdata")
+  #' load(file="./test-data/pre_defined_sd.rdata")
+  load(file="./test-data/user_sd.rdata")
   load(file="./test-data/data_GOslim.rdata")
   load(file="./test-data/data_ORF2KEGG.rdata")
 }
@@ -36,7 +39,8 @@ if (F) {
 #' stdev = pre_defined_sd
 
 #' pre_proc <- PreProcessing(data = IonData, stdev = NULL)
-pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
+#' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
+pre_proc <- PreProcessing(data = IonData, stdev = user_sd)
 
 # stats
 pre_proc$stats.raw_data

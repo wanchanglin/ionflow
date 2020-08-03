@@ -26,7 +26,7 @@
 GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
 
   ## -------------------> Define clusters
-  res.dist <- dist(data_symb[, -1], method = "manhattan")
+  res.dist <- dist(data_symb[, -1], method = "manhattan")  #' "euclidean"
   res.hc <- hclust(d = res.dist, method = "single")
   clus <- cutree(res.hc, h = 0) # distance 0
 
@@ -40,7 +40,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
 
   #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number 
   idx <- clus %in% df_sub$cluster
-  sum(idx)
+  #' sum(idx)
 
   mat <- data[idx,]
   mat$cluster <- clus[idx]
@@ -66,28 +66,31 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
           axis.text.x = element_text(angle = 90, hjust = 1),
           axis.text = element_text(size = 10))
 
+
   ## -------------------> KEGG AND GO SLIM ANNOTATION
   mat <- data_symb[idx,]
+  data_GOslim$Ontology <- as.character(data_GOslim$Ontology)
 
   kego <- plyr::dlply(mat, "cluster", function(x) {
-    inputGeneSet <- x$Knockout
+    #' x <- subset(mat, cluster == "10")
+    inputGeneSet <- as.character(x$Knockout)
     N <- length(inputGeneSet)
 
     res <- data_GOslim %>%
-      dplyr::mutate(Ontology =
-                      setNames(c("Biological process",
-                                  "Cellular component", "Molecular function"),
-                                c("P", "C", "F"))[as.character(Ontology)]) %>%
-      dplyr::filter(ORFs %in% as.character(inputGeneSet)) %>%
+      dplyr::mutate(Ontology = setNames(c("Biological process",
+                                          "Cellular component", 
+                                          "Molecular function"),
+                                        c("P", "C", "F"))[Ontology]) %>%
+      dplyr::filter(ORFs %in% inputGeneSet) %>%
       dplyr::group_by(GOslim, Ontology) %>%
       dplyr::filter(GOslim != "other") %>%
       dplyr::rename(Term = GOslim) %>%
       dplyr::summarise(Count = n()) %>%
       dplyr::mutate(Percent = Count / N * 100) %>%
       dplyr::bind_rows(data_ORF2KEGG %>%
-                        dplyr::filter(ORF %in% as.character(inputGeneSet)) %>%
+                        dplyr::filter(ORF %in% inputGeneSet) %>%
                         dplyr::group_by(KEGGID, Pathway) %>%
-                        dplyr::summarise(Count = dplyr::n()) %>%
+                        dplyr::summarise(Count = n()) %>%
                         dplyr::mutate(Ontology = "KEGG") %>%
                         dplyr::rename(Term = Pathway) %>%
                         dplyr::ungroup() %>%
@@ -96,17 +99,17 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
                         dplyr::mutate(Percent = Count / N * 100)) %>%
       dplyr::filter(!Term %in% c("molecular_function", "biological_process",
                                   "cellular_component"))
-
   })
-
   names(kego) <- paste0("Cluster ", df_sub[[1]], " (", df_sub[[2]], " genes)")
 
   #' wl-25-07-2020, Sat: filter annotation results. Should set threshold for
   #' Percent?
   kego <- lapply(kego, function(x){
-    x[(x$Percent > 5) & 
-      (x$Ontology %in% c("Biological process", "Cellular component",
-                         "Molecular function")), ]
+    ## wl-03-08-2020, Mon: need to check Ontology again.
+    ## x[(x$Percent > 5) & 
+    ##   (x$Ontology %in% c("Biological process", "Cellular component",
+    ##                      "Molecular function")), ]
+    x[x$Percent > 5,]  
   })
   #' sapply(kego, dim)
   

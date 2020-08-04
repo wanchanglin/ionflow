@@ -9,6 +9,7 @@
 #'  2.) ExploratoryAnalysis: No changes
 #'  3.) GeneClustering: No changes
 #'  4.) GeneNetwork: Fix a bug in 'sample' with default option 'replacement'
+#' wl-04-08-2020, Tue: Correct one mistake in GeneClustering
 
 #' ==== Pre-processing ====
 #'
@@ -484,15 +485,33 @@ GeneClustering = function(data=NULL, data_symb=NULL) {
                    conditional=T,
                    testDirection="over")
       hgOver <- hyperGTest(params)
-    }
 
-    results <-
-      rbind(results,
-            cbind(setNames(dplyr::data_frame(ID=names(pvalues(hgOver)), Term = Term(ID),
-                                             pvalues = pvalues(hgOver), oddsRatios = oddsRatios(hgOver),expectedCounts=expectedCounts(hgOver),
-                                             geneCounts=geneCounts(hgOver),universeCounts=universeCounts(hgOver)),
-                           c("GO_ID","Description","Pvalue","OddsRatio","ExpCount","Count","CountUniverse")),"Ontology"=ont[k])
-            %>% dplyr::filter(Pvalue <= 0.05 & Count > 1))
+      #' wl-04-08-2020, Tue: mistake here(close too soon).
+      ## }
+
+      ## results <-
+      ##   rbind(results,
+      ##         cbind(setNames(dplyr::data_frame(ID=names(pvalues(hgOver)), Term = Term(ID),
+      ##                                          pvalues = pvalues(hgOver), oddsRatios = oddsRatios(hgOver),expectedCounts=expectedCounts(hgOver),
+      ##                                          geneCounts=geneCounts(hgOver),universeCounts=universeCounts(hgOver)),
+      ##                        c("GO_ID","Description","Pvalue","OddsRatio","ExpCount","Count","CountUniverse")),"Ontology"=ont[k])
+      ##         %>% dplyr::filter(Pvalue <= 0.05 & Count > 1))
+
+      results[[k]] <-
+              cbind(setNames(
+                  dplyr::data_frame(
+                            ID = names(pvalues(hgOver)),
+                            Term = Term(ID),
+                            pvalues = pvalues(hgOver),
+                            oddsRatios = oddsRatios(hgOver),
+                            expectedCounts = expectedCounts(hgOver),
+                            geneCounts = geneCounts(hgOver),
+                            universeCounts = universeCounts(hgOver)),
+                  c("GO_ID", "Description", "Pvalue", "OddsRatio", "ExpCount",
+                    "Count", "CountUniverse")
+              ), "Ontology" = ont[k]) %>% dplyr::filter(Pvalue <= 0.05 & Count > 1)
+    }
+    results <- do.call("rbind", results)
 
     p.data_list2[[i]] <- results
     label_list2[[i]] <- label

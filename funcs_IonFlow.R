@@ -19,11 +19,12 @@
 #'   - GeneNetwork: Keep the largest cluster
 #'   - PreProcessing: Change user provided sd format. Two columns: Ion and sd 
 #'   - Test on data subset: fewer batches and fewer Ion items
-
+#' wl-04-08-2020, Tue: re-write GeneClustering. Correct one mistake
 
 #' ==== Clustering ====
 #'
-GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
+GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
+                           thres_anno = 5) {
 
   ## -------------------> Define clusters
   res.dist <- dist(data_symb[, -1], method = "manhattan")  #' "euclidean"
@@ -72,7 +73,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
   data_GOslim$Ontology <- as.character(data_GOslim$Ontology)
 
   kego <- plyr::dlply(mat, "cluster", function(x) {
-    #' x <- subset(mat, cluster == "10")
+    ## x <- subset(mat, cluster == "15")
     inputGeneSet <- as.character(x$Knockout)
     N <- length(inputGeneSet)
 
@@ -87,7 +88,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
       dplyr::rename(Term = GOslim) %>%
       dplyr::summarise(Count = n()) %>%
       dplyr::mutate(Percent = Count / N * 100) %>%
-      dplyr::bind_rows(data_ORF2KEGG %>%
+      dplyr::bind_rows( data_ORF2KEGG %>%
                         dplyr::filter(ORF %in% inputGeneSet) %>%
                         dplyr::group_by(KEGGID, Pathway) %>%
                         dplyr::summarise(Count = n()) %>%
@@ -105,55 +106,62 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
   #' wl-25-07-2020, Sat: filter annotation results. Should set threshold for
   #' Percent?
   kego <- lapply(kego, function(x){
-    ## wl-03-08-2020, Mon: need to check Ontology again.
     ## x[(x$Percent > 5) & 
     ##   (x$Ontology %in% c("Biological process", "Cellular component",
     ##                      "Molecular function")), ]
-    x[x$Percent > 5,]  
+    x[x$Percent > thres_anno,]  
   })
-  #' sapply(kego, dim)
-  
+
+  #' wl-04-08-2020, Tue: bind together 
+  kego <- dplyr::bind_rows(kego, .id = "Cluster" )  
+
   ## -------------------> GO TERMS ENRICHMENT
 
+  #' wl-04-08-2020, Tue: re-write
   universeGenes <- as.character(data_symb$Knockout)
   mat <- data_symb[idx,]
 
   goen <- plyr::dlply(mat, "cluster", function(x) {
-    inputGeneSet <- x$Knockout
-    ont <- c("BP", "MF", "CC")
-    results <- c()
-    for (k in 1:3) {
+    ## x <- subset(mat, cluster == "10")
+    inputGeneSet <- as.character(x$Knockout)
+    ont <- c("BP", "MF", "CC")         ## wl-04-08-2020, Tue: why three?
+    res <- lapply(ont, function (y) {
       params <- new("GOHyperGParams",
-                    geneIds = as.character(inputGeneSet),
+                    geneIds = inputGeneSet,
                     universeGeneIds = universeGenes,
                     annotation = "org.Sc.sgd.db",
                     categoryName = "GO",
-                    ontology = ont[k],
+                    ontology = y,
                     pvalueCutoff = 0.05,
                     conditional = T,
                     testDirection = "over")
-      hgOver <- hyperGTest(params)
-    }
-
-    results <-
-      rbind(results,
-            cbind(setNames(
-                dplyr::data_frame(
-                           ID = names(pvalues(hgOver)),
-                           Term = Term(ID),
-                           pvalues = pvalues(hgOver),
-                           oddsRatios = oddsRatios(hgOver),
-                           expectedCounts = expectedCounts(hgOver),
-                           geneCounts = geneCounts(hgOver),
-                           universeCounts = universeCounts(hgOver)),
-                c("GO_ID", "Description", "Pvalue", "OddsRatio", "ExpCount",
-                  "Count", "CountUniverse")
-            ), "Ontology" = ont[k])
-            %>% dplyr::filter(Pvalue <= 0.05 & Count > 1))
+      hyperGTest(params)
+    })
+    names(res) <- ont
+    
+    #' extract some results and move out filtering
+    res_1 <- lapply(ont, function(y){
+      hgOver <- res[[y]]
+      tmp <- cbind(setNames(tibble(ID = names(pvalues(hgOver)),
+                                  Term = Term(ID),
+                                  pvalues = pvalues(hgOver),
+                                  oddsRatios = oddsRatios(hgOver),
+                                  expectedCounts = expectedCounts(hgOver),
+                                  geneCounts = geneCounts(hgOver),
+                                  universeCounts = universeCounts(hgOver)),
+                            c("GO_ID", "Description", "Pvalue", "OddsRatio", 
+                              "ExpCount", "Count", "CountUniverse")),
+                  Ontology = y) ## %>% dplyr::filter(Pvalue <= 0.05 & Count > 1)
+    })
+   res_2 <- do.call("rbind", res_1) 
   })
   
   names(goen) <- paste0("Cluster ", df_sub[[1]], " (", df_sub[[2]], " genes)")
-  goen_s <- lapply(goen, "[", -c(4, 5, 8))
+
+  #' binding and filtering
+  goen <- lapply(goen, "[", -c(4, 5, 8)) %>%
+    dplyr::bind_rows(.id = "Cluster" ) %>% 
+    dplyr::filter(Pvalue <= 0.05 & Count > 1)
 
   ## -------------------> Output
   res <- list()
@@ -162,7 +170,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
   res$stats.clusters <- df_sub               # selected clusters 
   res$plot.profiles <- clus_p                # plot cluster profiles
   res$stats.Kegg_Goslim_annotation <- kego   # KEGG AND GO SLIM ANNOTATION
-  res$stats.Goterms_enrichment <- goen_s     # GO TERMS ENRICHMENT
+  res$stats.Goterms_enrichment <- goen       # GO TERMS ENRICHMENT
 
   return(res)
 }
@@ -170,7 +178,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10) {
 #' ==== Network ====
 #'
 GeneNetwork <- function(data = NULL, data_symb = NULL, 
-                        thres_clus = 10, thres_cor = 0.6) {
+                        thres_clus = 10, thres_corr = 0.6) {
 
   ## Cluster of gene with same profile
   res.dist <- dist(data_symb[, -1], method = "manhattan")
@@ -232,7 +240,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
 
   ## Subset correlation matrix based on threshold=0.6
   ## wl-27-07-2020, Mon: need another threshold?
-  A <- (A > thres_cor)
+  A <- (A > thres_corr)
   A <- ifelse(A == TRUE, 1, 0)
 
   ## Generate network

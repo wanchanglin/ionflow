@@ -1,0 +1,364 @@
+<!--
+wl-10-08-2020, Mon: commence
+--> 
+
+<tool id="ionfow" name="IonFlow" version="0.1.0">
+  <description>
+    Pipeline for processing and analysis of ionomics data
+  </description>
+  <macros>
+    <import>macros.xml</import>
+  </macros>
+  <expand macro="requirements" />
+  <expand macro="stdio" />
+
+  <!-- =============================================================== -->
+  <command detect_errors="exit_code">
+    <![CDATA[
+    
+      Rscript ${__tool_directory__}/ionflow.R
+        --ion_file '$ion_file'
+
+        ## use std file or not
+        --std_file_sel '$std.std_file_sel' 
+        #if $std.std_file_sel=='yes':
+          --std_file '$std.std_file'
+        #end if
+
+        ## Clustering and network analysis
+        --thres_clus '$thres_clus'
+        --thres_anno '$thres_anno'
+        --thres_corr '$thres_corr'
+        
+        ## output: pre-processing
+        --pre_proc_pdf  '$pre_proc_pdf'
+        --df_stats_out  '$df_stats_out'
+        --outl_out  '$outl_out'
+        --data_wide_out  '$data_wide_out'
+        --data_wide_symb_out  '$data_wide_symb_out'
+
+        ## output: exploratory analysis
+        --exp_anal_pdf  '$exp_anal_pdf'
+
+        ## output: gene clustering
+        --gene_clus_pdf  '$gene_clus_pdf'
+        --clus_out  '$clus_out'
+        --anno_out  '$anno_out'
+        --enri_out  '$enri_out'
+
+        ## output: gene network
+        --gene_net_pdf  '$gene_net_pdf'
+        --imbe_out  '$imbe_out'
+        --imbe_tab_out  '$imbe_tab_out'
+    ]]>
+  </command>
+
+  <!-- =============================================================== -->
+  <inputs>
+    <param name="ion_file" type="data"  format="tabular"
+           label="Ion data table"
+           help="Ion data table with columns of Ions and rows of knockout. 
+                 The first two columns must be names of knowckout and batch ID." />
+
+    <conditional name="std">
+      <param name="std_file_sel" type="select"
+             label="Use user defined ion std file or not" 
+             help="Use manul std values or calculation from ion data for 
+                   standardisation.">
+        <option value="yes" selected="true">Use defined file</option>
+        <option value="no">Caculate from data set</option>
+      </param>
+
+      <when value="yes">
+        <param name="std_file" type="data"  format="tabular" 
+               label="STD file" 
+               help="A data matrix containing only two columns. The fisrt 
+                     column is the names of ion and the second one is std i
+                     values. " />
+      </when>
+      <when value="no">
+      </when>
+    </conditional>
+
+    <param name="thres_clus" type="float" value="10" 
+            label="Specify clustering threshold"
+            help="Gene number threshold in a hierarchical clustering centre." /> 
+
+    <param name="thres_anno" type="float" value="5.0" min="0" max="100"
+           label="Specify annotation percentage threshold"
+           help="Percentage threshold for annotation (0 - 100).  
+                 Features large than threshold will be kept." /> 
+
+    <param name="thres_corr" type="float" value="0.60" min="0" max="1"
+           label="Specify correlation threshold"
+           help="Correlation threshold for network analysis (0 - 1).  
+                 Features large than threshold will be kept." /> 
+
+  </inputs>
+
+
+  <!-- =============================================================== -->
+  <outputs>
+    <data format="pdf" name="pre_proc_pdf" 
+          label="Pre-processing plots for Ions on ${on_string}" />
+    <data format="tabular" name="df_stats_out" 
+          label="Statistical summary of data set on ${on_string}"/>
+    <data format="tabular" name="outl_out" 
+          label="Outlier table on ${on_string}"/>
+    <data format="tabular" name="data_wide_out" 
+          label="Pre-processed data in wide format on ${on_string}"/>
+    <data format="tabular" name="data_wide_symb_out" 
+          label="Symbolization datain wide format on ${on_string}"/>
+
+    <data format="pdf" name="exp_anal_pdf" 
+          label="Explanatation analysis plots for Ions on ${on_string}" />
+
+    <data format="pdf" name="gene_clus_pdf" 
+          label="Gene clustering plots on ${on_string}" />
+    <data format="tabular" name="clus_out" 
+          label="Clustering table on ${on_string}"/>
+    <data format="tabular" name="anno_out" 
+          label="Annotation table on ${on_string}"/>
+    <data format="tabular" name="enri_out" 
+          label="Enrichment table on ${on_string}"/>
+
+    <data format="pdf" name="gene_net_pdf" 
+          label="Gene network plots on ${on_string}" />
+    <data format="tabular" name="imbe_out" 
+          label="Impact and betweenness table on ${on_string}"/>
+    <data format="tabular" name="imbe_tab_out" 
+          label="Impact and betweenness contingency table on ${on_string}"/>
+
+  </outputs>
+
+  <!-- =============================================================== -->
+  <tests>
+    <test>
+      <param name="ion_file" value="iondata_test.tsv" />
+      <param name="std_file_sel" value="yes" />
+      <param name="std_file" value="user_std.tsv" />
+
+      <param name="thres_clus" value="10.0" />
+      <param name="thres_anno" value="5.0" />
+      <param name="thres_corr" value="0.6" />
+
+      <output name="pre_proc_pdf"       file="res/pre_proc.pdf" compare="sim_size" />
+      <output name="df_stats_out"       file="res/df_stats.tsv" compare="diff" />
+      <output name="outl_out"           file="res/outl.tsv" compare="diff" />
+      <output name="data_wide_out"      file="res/data_wide.tsv" compare="diff" />
+      <output name="data_wide_symb_out" file="res/data_wide_symb.tsv" compare="diff" />
+
+      <output name="exp_anal_pdf"  file="res/exp_anal.pdf" compare="sim_size" />
+
+      <output name="gene_clus_pdf" file="res/gene_clus.pdf" compare="sim_size" />
+      <output name="clus_out"      file="res/clus.tsv" compare="diff" />
+      <output name="anno_out"      file="res/kegg_go_anno.tsv" compare="diff" />
+      <output name="enri_out"      file="res/go_enri.tsv" compare="diff" />
+
+      <output name="gene_net_pdf" file="res/gene_net.pdf" compare="sim_size" />
+      <output name="imbe_out"     file="res/impact_betweeness.tsv" compare="diff" />
+      <output name="imbe_tab_out" file="res/impact_betweeness_tab.tsv" />
+    </test>
+
+  </tests>
+
+  <!-- =============================================================== -->
+<help>
+Pipeline for processing and analysis of ionomics data
+==============
+
+Description
+-----------
+
+This tool performs filtering on the DIMS peaks produced by
+**DIMS Processing**. Current three methods are implemented:
+
+QC filtering
+  Filtering based on the RSD of QC samples. The peaks with RSD larger than
+  the designated threshold will be removed. Also missing value (MV)
+  filtering can be applied to 'qc' or 'sample'.
+
+Blank filtering
+  Filtering based on the characteristics of blank samples. The peaks whose
+  characteristics in 'sample' is less than in 'blank' will be removed. An
+  option of MV filtering on 'sample' can be employed.
+
+MV filtering
+  Filtering based on the missing value percentages. The peaks with the
+  percentages larger than the designated threshold will be removed. The
+  operation is performed on 'sample'. If MV filtering is not performed on
+  'sample' inside 'QC filtering' and 'Blank filtering', this procedure
+  should be employed. Without MV filtering, even 'MV imputation' will fail
+  in some cases.
+
+Inputs
+------
+
+**\1. Peak Table**
+
+The input file is a peak table in tubular format. It can be produced by
+**DIMS Processing**. The following is an example with the first two columns
+of information such as annotation results and mz values and other columns
+are samples. The row corresponds the peaks. The filtering will only perform
+on intensity data and leave other data (such as 'name' and 'mz') unchanged.
+
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| name                 | mz       | 07_sample | 08_sample |  23_pool |  24_pool | 71_blank | 72_blank |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| TG_6:0_[M+NH4]1+     | 236.1129 |  22828.96 |  19742.27 | 11294.65 | 11772.57 |  4715.92 | 17952.02 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| TG_6:0_[M+Na]1+      | 241.0683 |      0.00 |      0.00 |   149.14 |     0.00 |   231.95 |    99.92 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| LPC_2:0_[M+H]1+      | 300.1207 |      0.00 |      0.00 |     0.00 |    98.52 |     0.00 |     0.00 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| LPC-2O_3:0_[M+H]1+   | 300.1571 |      0.00 |    107.11 |   301.06 |   825.36 |     0.00 |   375.61 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| LPC_3:1_[M+H]1+      | 312.1207 |    128.80 |     60.71 |     0.00 |     0.00 |     0.00 |   106.92 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| PC-O_3:0_[M+H]1+     | 314.1363 |      0.00 |     59.78 |     0.00 |   108.20 |     0.00 |    62.81 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| LPC-2O_4:0_[M+H]1+   | 314.1727 |    342.96 |    193.56 |   627.61 |  4370.63 |   410.80 |   718.93 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| PC-O_4:0_[M+H]1+     |  328.152 |    109.82 |      0.00 |   148.11 |   227.95 |     0.00 |    92.32 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| LPC_O-5:0_[M+H]1+    | 328.1884 |    105.31 |    377.61 |     0.00 |   204.87 |    73.78 |    92.58 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| PC_4:0_[M+H]1+       | 342.1312 |      0.00 |      0.00 |     0.00 |     0.00 |     0.00 |     0.00 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| LPC_5:0_[M+H]1+      | 342.1676 |     83.94 |      0.00 |   143.46 |  2550.10 |     0.00 |   290.45 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| Cer_20:1_[M+H]1+     | 342.3003 |    585.12 |   2147.71 |  1506.26 |  1202.96 |     0.00 |   511.88 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+| MG_16:0_[M+NH4]1+    | 348.3108 |   7284.15 |  13460.34 | 22220.10 |  1939.08 |  4642.73 |  3129.56 |
++----------------------+----------+-----------+-----------+----------+----------+----------+----------+
+
+|
+
+**\2. Group**
+  
+This group information indicates the categorical group for the samples
+in peak table. The group item must be **sample**, **qc** or **blank**. 
+Each group must at least include **sample** with or without **qc** or
+**blank**.  Number of each item must be no less than 2. Two methods for
+providing the group information:
+   
+- **Input manually**: type items separated by commas. For example, group has 
+  'sample', 'qc' and 'blank':
+  ::
+
+    sample, sample, qc, qc, blank, blank
+
+  Group has 'sample' and 'qc': 
+  ::
+
+    qc, sample, sample, sample, qc, qc
+   
+  Group has only 'sample':
+  ::
+
+    sample, sample, sample,cample,sample,sample
+
+- **Load a tubular table**: The user can load one-column tabular data. For
+  example:
+
+
+  +--------+   
+  | sample |        
+  +--------+        
+  | sample |        
+  +--------+        
+  | qc     |        
+  +--------+        
+  | qc     |        
+  +--------+        
+  | blank  |        
+  +--------+        
+  | blank  |        
+  +--------+        
+
+    |
+
+  Note that this table does not includes any header.   
+
+Parameters
+----------
+
+**\1. QC Filtering**
+
+Use this option if you provide 'sample' in **Group** and intend to perform
+QC filtering.
+
+- **RSD threshold**: RSD threshold on 'sample'. The default value is 20.
+  **Note** that if a large quantity of peaks are removed, user can
+  increase this threshold based on the RSD distribution and run again.
+
+- **MV filtering**: A boolean value indicate whether MV filtering is
+  applied or not.
+
+- **MV filtering on 'sample' or 'qc'**: A boolean value indicating MV
+  filtering is applied to whether 'qc' or 'sample'. If TRUE, MV filtering
+  is performed on 'qc'. 
+
+- **MV threshold**: MV percentage threshold. The default is 30.
+
+**\2. Blank Filtering**
+
+Use this option if you provide 'blank' in **Group** and intend to perform
+blank filtering.
+
+- **Method**: method to calculate the characteristic of peaks. The
+  available methods are: *mean* (default compare="diff" /> *median* and *max*.
+
+- **Multifying factor**: A factor to multiply the characteristics of
+  *blank*. The default is 1.
+
+- **MV filtering**: A boolean value indicate whether MV filtering is
+  applied to 'sample' or not.
+
+- **MV threshold**: MV percentage threshold. The default is 30.
+
+**\3. MV Filtering**
+
+Use this option if MV filtering is not performed on 'sample' inside **QC
+Filtering** or **Blank Filtering**. Or **Group** only include 'sample'.
+
+- **MV threshold**: MV percentage threshold. The default is 30.
+
+
+**\4. Merge Data**
+
+A boolean value indicating whether or not merging 'sample','qc' and 'blank'.
+If not, only 'sample' will be imputed and output.
+
+**\5. MV Imputation**
+
+Missing value imputation. Currently two categorical methods are available:
+
+- **Univariate**: includes *mean*, *median* and *min*
+- **Multivariate**: includes *knn* (default) and *pca*
+
+
+Outputs
+----------
+
+**\1. Filtered Peak Table**
+
+A tabular format file containing filtered peaks. The file structure is the
+same as input peak table.
+
+**\2. Distribution plots of RSD and MV percentage**
+
+A PDF file consisting of histogram and boxplot for both RSD and MV. The
+plots give rough guardian for how to select the right thresholds of RSD
+and MV. If the filtering results are not satisfied, for example, too many
+or too few of peaks' removal, user can run filtering again by setting
+new thresholds of RSD and MV based on the distribution plots. 
+
+It should be noted that threshold of RSD has large influences on filtering.
+If too many peaks have been removed, user should consider to increase
+threshold or not to perform QC filtering at all.
+
+</help>
+  <citations>
+  </citations>
+</tool>

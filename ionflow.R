@@ -203,7 +203,7 @@ if (com_f) {
     imbe_tab_out = paste0(tool_dir, "test-data/res/impact_betweeness_tab.tsv")
   )
 }
-print(opt)
+#' print(opt)
 
 suppressPackageStartupMessages({
   source(paste0(tool_dir, "funcs_ionflow.R"))

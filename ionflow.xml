@@ -170,7 +170,7 @@ Pipeline for processing and analysis of ionomics data
 Description
 -----------
 
-This galaxy tool wraps R package *IonFlow_* to process metabolomics data to 
+This galaxy tool wraps R package IonFlow_ to process metabolomics data to 
 aid reproducible data sharing and big data initiatives.
 
 The pipeline describes the processing and the analysis of Ionomics data, 

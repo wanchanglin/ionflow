@@ -1,45 +1,5 @@
 "Cluster"	"Position"	"nGenes"
-"Cluster 2 (722 genes): "	"Low impact, low betweenness"	508
-"Cluster 2 (722 genes): "	"Low impact, high betweenness"	172
-"Cluster 2 (722 genes): "	"High impact, low betweenness"	32
-"Cluster 15 (28 genes): K(-), Mn(-), Mo(-)"	"High impact, low betweenness"	28
-"Cluster 16 (37 genes): Cd(+)"	"High impact, low betweenness"	23
-"Cluster 7 (28 genes): Na(-)"	"High impact, low betweenness"	21
-"Cluster 56 (20 genes): K(-), Mn(-)"	"High impact, low betweenness"	19
-"Cluster 25 (19 genes): Cd(+), Na(-)"	"High impact, low betweenness"	18
-"Cluster 18 (46 genes): Na(+)"	"High impact, low betweenness"	17
-"Cluster 18 (46 genes): Na(+)"	"High impact, high betweenness"	16
-"Cluster 30 (14 genes): Cd(+), Mn(+), Mo(+), Ni(+), Na(-)"	"High impact, low betweenness"	14
-"Cluster 2 (722 genes): "	"High impact, high betweenness"	10
-"Cluster 3 (30 genes): Mo(+)"	"High impact, low betweenness"	10
-"Cluster 16 (37 genes): Cd(+)"	"High impact, high betweenness"	9
-"Cluster 91 (20 genes): Mo(-)"	"High impact, high betweenness"	9
-"Cluster 18 (46 genes): Na(+)"	"Low impact, low betweenness"	9
-"Cluster 40 (13 genes): S(-)"	"Low impact, low betweenness"	9
-"Cluster 3 (30 genes): Mo(+)"	"High impact, high betweenness"	7
-"Cluster 3 (30 genes): Mo(+)"	"Low impact, high betweenness"	7
-"Cluster 3 (30 genes): Mo(+)"	"Low impact, low betweenness"	6
-"Cluster 91 (20 genes): Mo(-)"	"High impact, low betweenness"	5
-"Cluster 16 (37 genes): Cd(+)"	"Low impact, low betweenness"	5
-"Cluster 18 (46 genes): Na(+)"	"Low impact, high betweenness"	4
-"Cluster 40 (13 genes): S(-)"	"High impact, high betweenness"	3
-"Cluster 91 (20 genes): Mo(-)"	"Low impact, high betweenness"	3
-"Cluster 7 (28 genes): Na(-)"	"Low impact, low betweenness"	3
-"Cluster 91 (20 genes): Mo(-)"	"Low impact, low betweenness"	3
-"Cluster 7 (28 genes): Na(-)"	"High impact, high betweenness"	2
-"Cluster 7 (28 genes): Na(-)"	"Low impact, high betweenness"	2
-"Cluster 25 (19 genes): Cd(+), Na(-)"	"High impact, high betweenness"	1
-"Cluster 56 (20 genes): K(-), Mn(-)"	"High impact, high betweenness"	1
-"Cluster 40 (13 genes): S(-)"	"High impact, low betweenness"	1
-"Cluster 15 (28 genes): K(-), Mn(-), Mo(-)"	"High impact, high betweenness"	0
-"Cluster 30 (14 genes): Cd(+), Mn(+), Mo(+), Ni(+), Na(-)"	"High impact, high betweenness"	0
-"Cluster 15 (28 genes): K(-), Mn(-), Mo(-)"	"Low impact, high betweenness"	0
-"Cluster 16 (37 genes): Cd(+)"	"Low impact, high betweenness"	0
-"Cluster 25 (19 genes): Cd(+), Na(-)"	"Low impact, high betweenness"	0
-"Cluster 30 (14 genes): Cd(+), Mn(+), Mo(+), Ni(+), Na(-)"	"Low impact, high betweenness"	0
-"Cluster 40 (13 genes): S(-)"	"Low impact, high betweenness"	0
-"Cluster 56 (20 genes): K(-), Mn(-)"	"Low impact, high betweenness"	0
-"Cluster 15 (28 genes): K(-), Mn(-), Mo(-)"	"Low impact, low betweenness"	0
-"Cluster 25 (19 genes): Cd(+), Na(-)"	"Low impact, low betweenness"	0
-"Cluster 30 (14 genes): Cd(+), Mn(+), Mo(+), Ni(+), Na(-)"	"Low impact, low betweenness"	0
-"Cluster 56 (20 genes): K(-), Mn(-)"	"Low impact, low betweenness"	0
+"Cluster 15 (114 genes): "	"Low impact, low betweenness"	67
+"Cluster 15 (114 genes): "	"High impact, low betweenness"	18
+"Cluster 15 (114 genes): "	"Low impact, high betweenness"	18
+"Cluster 15 (114 genes): "	"High impact, high betweenness"	11

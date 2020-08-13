@@ -9,8 +9,9 @@ Galaxy tool for processing and analysis of Ionomics data,
 
 - Install [conda](https://docs.conda.io/en/latest/miniconda.html) under
   Linux. `conda` is used to install `requirements` of this tool, i.e. R
-  packages used: `optparse`, `WriteXLS`, `xcms`, `data.table`,
-  `reshape`, `lattice`, `impute` and `pcaMethods`. 
+  packages used: `optparse`, `reshape2`, `plyr`, `dplyr`, `tidyr`,
+  `ggplot2`, `ggrepel`, `corrplot`, `gplots`, `pheatmap`, `network`, `sna`,
+  `GGally`, `qgraph`, `org.Sc.sgd.db`, `GO.db` and `GOstats`
 
 - Use `git` to clone this tool
 
@@ -31,13 +32,18 @@ Galaxy tool for processing and analysis of Ionomics data,
     </section>
     
     <section id="MyTools" name="My Tools">
-      <tool file="/path/to/dimsp/ionflow.xml" />
+      <tool file="/path/to/ionflow/ionflow.xml" />
     </section>
 
   </toolbox>
   ```
 
 - Test data are in `test-data`.
+  - `iondata.tsv`: a full ionomics data set 
+  - `iondata_test.tsv`: a subset of `iondata.tsv`
+  - `user_std.tsv`: user defined standard deviation file with two columns
+  - `pre_defined_std.tsv`: user defined standard deviation file with one
+    column (not recommended. Use two column format instead) 
 
 ## Authors, contributors & contacts ##
 

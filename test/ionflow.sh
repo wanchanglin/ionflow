@@ -1,7 +1,7 @@
 # wl-09-08-2020 \ Sun: Rscript test code for Linux. 
 
 Rscript --vanilla ../ionflow.R \
-  --ion_file "../test-data/iondata.tsv" \
+  --ion_file "../test-data/iondata_test.tsv" \
   --std_file_sel "yes" \
   --std_file "../test-data/user_std.tsv" \
   --thres_clus "10.0" \

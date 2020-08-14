@@ -17,7 +17,7 @@
       <!-- <requirement type="package" version="1.6.4">r-qgraph</requirement> -->
       <requirement type="package" version="3.11.4">bioconductor-go.db</requirement>
       <requirement type="package" version="2.54.0">bioconductor-gostats</requirement>
-      <requirement type="package" version="3.11.1">bioconductor-org.sc.sgd.db</requirement>
+      <requirement type="package" version="3.10.0">bioconductor-org.sc.sgd.db</requirement>
     </requirements>
   </xml>
   <xml name="stdio">

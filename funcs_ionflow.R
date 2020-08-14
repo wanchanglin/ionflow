@@ -22,12 +22,6 @@
 #' wl-04-08-2020, Tue: re-write GeneClustering. Correct one mistake
 #' wl-14-08-2020, Fri: remove two R packages "pheatmap", "qgraph"
 
-pkgs <- c("reshape2", "plyr", "dplyr", "tidyr", "ggplot2", "ggrepel",
-          "corrplot", "gplots", "network", "sna", "GGally", 
-          "org.Sc.sgd.db", "GO.db", "GOstats")
-suppressPackageStartupMessages(invisible(lapply(pkgs, library, 
-                                                character.only = TRUE)))
-
 #' =======================================================================
 #'
 PreProcessing <- function(data = NULL, stdev = NULL) {

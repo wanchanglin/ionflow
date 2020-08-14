@@ -27,16 +27,17 @@ options(warn = -1) #' disable R warning. Turn back: options(warn=0)
 #' we need that to not crash galaxy with an UTF8 error on German LC settings.
 loc <- Sys.setlocale("LC_MESSAGES", "en_US.UTF-8")
 
-suppressPackageStartupMessages({
-  library(optparse)
-  ## library(WriteXLS)
-})
-
 #' wl-28-08-2018, Tue: Convert a string separated by comma into character vector
 str_vec <- function(x) {
   x <- unlist(strsplit(x, ","))
   x <- gsub("^[ \t]+|[ \t]+$", "", x) #' trim white spaces
 }
+
+pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2", "ggrepel",
+          "corrplot", "gplots", "network", "sna", "GGally", 
+          "org.Sc.sgd.db", "GO.db", "GOstats")
+suppressPackageStartupMessages(invisible(lapply(pkgs, library, 
+                                                character.only = TRUE)))
 
 ## ==== Command line or interactive setting ====
 if (com_f) {

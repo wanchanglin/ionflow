@@ -259,16 +259,14 @@ write.table(pre_proc$data.wide_symb, file = opt$data_wide_symb_out,
 #' non-interactive mode. use this dirt trick.
 pdf(file = opt$exp_anal_pdf, onefile = T) # ,width=15, height=10)
 exp_anal <- ExploratoryAnalysis(data = pre_proc$data.wide)
-dev.off()
 
-## pdf(file = opt$exp_anal_pdf, onefile = T) # ,width=15, height=10)
 ## dev.control(displaylist="enable")
 ## exp_anal$plot.Pearson_correlation
 ## exp_anal$plot.heatmap
 ## exp_anal$plot.pairwise_correlation_map
-## exp_anal$plot.regularized_partial_correlation_network
-## exp_anal$plot.PCA_Individual
-## dev.off()
+exp_anal$plot.correlation_network
+exp_anal$plot.PCA_Individual
+dev.off()
 
 ## ==== Gene Clustering ====
 gene_clus <- GeneClustering(data = pre_proc$data.wide,

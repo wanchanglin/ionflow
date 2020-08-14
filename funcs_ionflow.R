@@ -20,10 +20,11 @@
 #'   - PreProcessing: Change user provided sd format. Two columns: Ion and sd 
 #'   - Test on data subset: fewer batches and fewer Ion items
 #' wl-04-08-2020, Tue: re-write GeneClustering. Correct one mistake
+#' wl-14-08-2020, Fri: remove two R packages "pheatmap", "qgraph"
 
 pkgs <- c("reshape2", "plyr", "dplyr", "tidyr", "ggplot2", "ggrepel",
-          "corrplot", "gplots", "pheatmap", "network", "sna", "GGally", 
-          "qgraph", "org.Sc.sgd.db", "GO.db", "GOstats")
+          "corrplot", "gplots", "network", "sna", "GGally", 
+          "org.Sc.sgd.db", "GO.db", "GOstats")
 suppressPackageStartupMessages(invisible(lapply(pkgs, library, 
                                                 character.only = TRUE)))
 
@@ -230,6 +231,7 @@ ExploratoryAnalysis <- function(data = NULL) {
                  lower.col = "black", upper.col = col3(100))
   p_corr <- recordPlot()
 
+  ## -------------------> PCA
   #' wl-14-07-2020, Tue: Original (trust) pca computation if there is no NAs.
   dat <- t(data[, -1])
   pca <- prcomp(dat, center = T, scale. = F)
@@ -251,7 +253,7 @@ ExploratoryAnalysis <- function(data = NULL) {
   PCA_loadings <- PCA_loadings[, 1:2]
 
   #' PCA plot using ggplot2
-  pca_plot <-
+  pca_p <-
     ggplot(data = pca_scores[, 1:2], aes(x = PC1, y = PC2)) +
     geom_point(color = "steelblue", size = 3, alpha = 0.4) +
     geom_text_repel(aes(label = row.names(pca_scores)), size = 4) +
@@ -261,12 +263,17 @@ ExploratoryAnalysis <- function(data = NULL) {
     ylab(dfn[2]) +
     labs(title = "PCA")
 
-  pca_plot
+  ## pca_p
 
   ## -------------------> HEATMAP
-  pheatmap(data[, -1], show_rownames = F, cluster_cols = T, cluster_rows = T,
-           legend = T, fontsize = 15, clustering_method = "ward.D",
-           scale = "row")
+  ## wl-14-08-2020, Fri:  use ggplots 
+  heatmap.2(as.matrix(data[, -1]), scale = "row", col = bluered(100), 
+            trace = "none", density.info = "none",
+            hclustfun = function(x) hclust(x, method="ward.D"))
+  ## library(pheatmap)
+  ## pheatmap(data[, -1], show_rownames = F, cluster_cols = T, cluster_rows = T,
+  ##          legend = T, fontsize = 15, clustering_method = "ward.D",
+  ##          scale = "row")
   pheat <- recordPlot()
 
   ## -------------------> PAIRWISE CORRELATION MAP
@@ -276,24 +283,48 @@ ExploratoryAnalysis <- function(data = NULL) {
           main = "")
   pcm <- recordPlot()
 
-  ## -------------------> Regularized partial correlation network MAP
-  ## wl-06-07-2020, Mon: 'cor_auto' is from package qgraph(lavaan)
-  ## wl-28-07-2020, Tue: cad and corr are the same
-  cad <- cor_auto(data[, -1]) 
-  suppressWarnings(qgraph(cad,
-    graph = "glasso", layout = "spring",
-    tuning = 0.25, sampleSize = nrow(data[, -1])
-  ))
-  Graph_lasso <- recordPlot()
+  #' -------------------> Regularized partial correlation network MAP
+  #' wl-13-08-2020, Thu: there is no 'qgraph' in conda forge and bio conda.
+  #' Have to plot the correlation network instead.
+  if (T) {
+    ## wl-14-08-2020, Fri: debug code only 
+    ## library(glasso)
+    ## corr_reg <- glasso(corr, rho = 0.01)
+    ## net <- network::network(corr_reg$w, directed = FALSE)
+    net <- network::network(corr, directed = FALSE)
+
+    #' set edge attributes
+    net %e% "weight"     <- corr
+    net %e% "weight_abs" <- abs(corr)*6
+    net %e% "color" <- ifelse(net %e% "weight" > 0, "lightgreen", "coral")
+    ## set.edge.value(net, "weight", corr)
+    ## list.network.attributes(net)
+    ## list.edge.attributes(net)
+    ## list.vertex.attributes(net)
+    net_p <- 
+      ggnet2(net, label = TRUE, mode = "spring",
+             node.size = 10, edge.size = "weight_abs", edge.color = "color")
+    ## net_p
+  } else {
+    ## wl-06-07-2020, Mon: 'cor_auto' is from package qgraph(lavaan)
+    ## wl-28-07-2020, Tue: cad and corr are the same
+    cad <- cor_auto(data[, -1]) 
+    suppressWarnings(qgraph(cad,
+                            graph = "glasso", layout = "spring",
+                            tuning = 0.25, sampleSize = nrow(data[, -1])
+                            ))
+    Graph_lasso <- recordPlot()
+  }
 
   ## -------------------> Output
   res <- list()
   res$plot.Pearson_correlation <- p_corr
-  res$plot.PCA_Individual <- pca_plot
+  res$plot.PCA_Individual <- pca_p
   res$data.PCA_loadings <- PCA_loadings
   res$plot.heatmap <- pheat
   res$plot.pairwise_correlation_map <- pcm
-  res$plot.regularized_partial_correlation_network <- Graph_lasso
+  ## res$plot.regularized_partial_correlation_network <- Graph_lasso
+  res$plot.correlation_network <- net_p
   return(res)
 }
 

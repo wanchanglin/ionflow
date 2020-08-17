@@ -108,7 +108,7 @@ wl-10-08-2020, Mon: commence
     <data format="tabular" name="data_wide_out" 
           label="Pre-processed data in wide format on ${on_string}"/>
     <data format="tabular" name="data_wide_symb_out" 
-          label="Symbolization datain wide format on ${on_string}"/>
+          label="Symbolization data in wide format on ${on_string}"/>
 
     <data format="pdf" name="exp_anal_pdf" 
           label="Explanatation analysis plots for Ions on ${on_string}" />
@@ -164,22 +164,41 @@ wl-10-08-2020, Mon: commence
 
   <!-- =============================================================== -->
 <help>
-Pipeline for processing and analysis of ionomics data
-=====================================================
+IonFlow  Pipeline
+=================
 
 Description
 -----------
 
-This galaxy tool wraps R package IonFlow_ to process metabolomics data to 
+This galaxy tool wraps R package IonFlow_ to process ionomics data to 
 aid reproducible data sharing and big data initiatives.
 
-The pipeline describes the processing and the analysis of Ionomics data, 
-including:
+The pipeline includes:
 
-- Pre-processing
-- Exploratory analysis
-- Clustering which also includes the GO Slim annotation and the GO terms enrichment
-- Network analysis
+Pre-processing
+  This procedure uses quantile (boxplot) method to perform outlier
+  detection, median shift for batch correction, standard derivation of each
+  ion for standardisation after logarithm transformation.  The processed
+  concentration data and a symbolization profile data are returned for
+  further analysis.
+
+Exploratory analysis
+  It includes PCA analysis, hierarchical clustering for both ion and
+  knockout, and correlation analysis with heatmap and network analysis.
+
+Gene Clustering
+  This stage uses hierarchical clustering based on symbolised profile. The
+  genes located in the clustering centre with number large than a threshold
+  are then used for the GO Slim annotation and the GO terms enrichment
+  analysis.
+
+Gene Network
+  This part uses hierarchical clustering based on the symbolised profile to
+  select genes located in the clustering centre with number large than a
+  threshold for correlation analysis. Genes with correlation coefficient
+  large than a threshold are then used for network analysis. Some network
+  analysis stats such as impact and betweenness are also returned.
+
 
 .. _IonFlow: https://github.com/AlinaPeluso/MetaboFlow
 
@@ -188,40 +207,35 @@ Inputs
 
 **\1. Ionomics data**
 
-The input file is an ion data table in tubular format. The following is an example 
-with the first two columns of knockout name and batch ID and other columns are ions. 
+The input file is an ionomics data table in tubular format. The following is
+an example with the first two columns of knockout name and batch ID and
+other columns are ions. 
 
 
- +----------+-----------+-----------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
- | Knockout |  Batch_ID |   Ca      |Cd     |Cu     |Fe      |K         |Mg       |Mo     |Na       |Ni     | P        |S         |
- +----------+-----------+-----------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
- | YDL227C  |  14       |   59.549  | 0.953 | 2.202 | 10.942 | 3448.070 | 693.992 | 1.603 | 259.816 | 1.573 | 4963.315 | 556.397  |
- +----------+---+-------+-----------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
- | YDL227C  |  14       |   62.258  | 0.927 | 2.067 | 26.262 | 3493.741 | 705.008 | 2.691 | 273.640 | 4.443 | 4874.101 | 553.229  |
- +----------+---+-------+-----------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
- | YDL227C  |  14       |   65.075  | 0.875 | 2.048 | 10.244 | 3317.611 | 691.411 | 1.878 | 278.167 | 1.448 | 4608.300 | 535.609  |
- +----------+---+-------+-----------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
- | YDL227C  |  14       |   56.886  | 0.985 | 2.203 |  9.206 | 3330.854 | 702.734 | 1.396 | 268.609 | 1.640 | 5119.736 | 546.230  |
- +----------+-----------+-----------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
+ +----------+----------+---------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
+ | Knockout | Batch_ID | Ca      | Cd    | Cu    | Fe     | K        | Mg      | Mo    | Na      | Ni    | P        | S        |
+ +----------+----------+---------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
+ | YDL227C  | 14       | 59.549  | 0.953 | 2.202 | 10.942 | 3448.070 | 693.992 | 1.603 | 259.816 | 1.573 | 4963.315 | 556.397  |
+ +----------+--+-------+---------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
+ | YDL227C  | 14       | 62.258  | 0.927 | 2.067 | 26.262 | 3493.741 | 705.008 | 2.691 | 273.640 | 4.443 | 4874.101 | 553.229  |
+ +----------+--+-------+---------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
+ | YDL227C  | 14       | 65.075  | 0.875 | 2.048 | 10.244 | 3317.611 | 691.411 | 1.878 | 278.167 | 1.448 | 4608.300 | 535.609  |
+ +----------+--+-------+---------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
+ | YDL227C  | 14       | 56.886  | 0.985 | 2.203 |  9.206 | 3330.854 | 702.734 | 1.396 | 268.609 | 1.640 | 5119.736 | 546.230  |
+ +----------+----------+---------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
 
 |
 
-**\2. std values**
+**\2. STD values**
 
-Standard devivation values can be provide by user or calculate from ion data
-set. These values are used to standardize ion data. The use defined std file 
-has tabular format:
+Standard derivation values can be provide by user or calculated from ion
+data set. These values are used to standardize ion data. The user defined
+std file has tabular format such as:
 
   +------+----------+
   |  Ion |   sd     |
   +------+----------+
   |  Ca  | 0.150    |
-  +------+----------+
-  |  Cd  | 0.057    |
-  +------+----------+
-  |  Co  | 0.058    |
-  +------+----------+
-  |  Cu  | 0.073    |
   +------+----------+
   |  Fe  | 0.163    |
   +------+----------+
@@ -229,45 +243,78 @@ has tabular format:
   +------+----------+
   |  Mg  | 0.059    |
   +------+----------+
-  |  Mn  | 0.077    |
-  +------+----------+
-  |  Mo  | 0.114    |
-  +------+----------+
   |  Na  | 0.107    |
   +------+----------+
   |  Ni  | 0.078    |
   +------+----------+
-  |  P   | 0.059    |
-  +------+----------+
-  |  S   | 0.080    |
-  +------+----------+
   |  Zn  | 0.067    |
   +------+----------+
 
-
-    |
-
+|
 
 Parameters
 ----------
 
 **\1. Threshold for cluster**
 
-    The default is 10.
+The threshold is for the gene number in a cluster centre with the default
+value of 10. Genes located in a cluster center with gene number large than
+the threshold will be used for further analysis, such as annotation and
+network analysis.
 
 **\2. Threshold for annotation**
   
-    The default is 5.
+The threshold is for the percentage of the genes in a cluster centre used
+for annotation. The default is 5 percent. Genes with percentage large than
+threshold will be annotated. 
 
 **\3. Threshold for correlation**
 
-    The default is 0.6.
-
+The threshold is the correlation coefficient cut-off for correlation network
+analysis. Only those large than the threshold will be used in the network
+analysis. The default is 0.6 in the range of 0 and 1.
 
 
 Outputs
 ----------
 
+**\1. Pre-processing**
+
+The output includes:
+
+- A PDF file for the plots:  dot-plot with ion vs batch and distribution
+  plot of ions.
+- A tabular file for statistical summary of data set 
+- A tabular file for outlier table
+- A tabular file for processed data set
+- A tabular file for the symbolisation data set
+
+**\2. Exploratory analysis**
+
+A single PDF file is output with plots:
+
+- correlation map
+- heatmap with dendrogram,
+- correlation heatmap with dendrogram 
+- correlation network graph
+- PCA plot
+
+**\3. Gene Clustering**
+
+PDF and tubular files include:
+
+- A PDF file for gene clustering in separate cluster centre
+- A tabular for clustering table
+- A tabular file for annotation table
+- A tabular file for enrichment table
+
+**\4. Gene Network**
+
+Three files are returned:
+
+- A PDF file for plots: network graph and impact scatter plot
+- A tabular file for impact and betweenness table
+- A tabular file for impact and betweenness contingency table
 
 </help>
   <citations>

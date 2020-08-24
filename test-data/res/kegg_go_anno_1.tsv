@@ -1,0 +1,357 @@
+"Cluster"	"Term"	"Ontology"	"Count"	"Percent"
+"Cluster 2 (722 genes)"	"cellular bud"	"Cellular component"	38	5.26315789473684
+"Cluster 2 (722 genes)"	"cytoplasm"	"Cellular component"	461	63.8504155124654
+"Cluster 2 (722 genes)"	"DNA binding"	"Molecular function"	38	5.26315789473684
+"Cluster 2 (722 genes)"	"endomembrane system"	"Cellular component"	97	13.4349030470914
+"Cluster 2 (722 genes)"	"endoplasmic reticulum"	"Cellular component"	67	9.2797783933518
+"Cluster 2 (722 genes)"	"hydrolase activity"	"Molecular function"	89	12.3268698060942
+"Cluster 2 (722 genes)"	"meiotic cell cycle"	"Biological process"	49	6.78670360110803
+"Cluster 2 (722 genes)"	"membrane"	"Cellular component"	196	27.1468144044321
+"Cluster 2 (722 genes)"	"mitochondrial envelope"	"Cellular component"	37	5.12465373961219
+"Cluster 2 (722 genes)"	"mitochondrion"	"Cellular component"	118	16.3434903047091
+"Cluster 2 (722 genes)"	"nucleus"	"Cellular component"	191	26.4542936288089
+"Cluster 2 (722 genes)"	"plasma membrane"	"Cellular component"	55	7.61772853185596
+"Cluster 2 (722 genes)"	"response to chemical"	"Biological process"	59	8.17174515235457
+"Cluster 2 (722 genes)"	"site of polarized growth"	"Cellular component"	45	6.23268698060942
+"Cluster 2 (722 genes)"	"transferase activity"	"Molecular function"	81	11.218836565097
+"Cluster 2 (722 genes)"	"vacuole"	"Cellular component"	56	7.75623268698061
+"Cluster 2 (722 genes)"	"Metabolic pathways"	"KEGG"	59	8.17174515235457
+"Cluster 3 (30 genes)"	"carbohydrate metabolic process"	"Biological process"	3	10
+"Cluster 3 (30 genes)"	"chromatin organization"	"Biological process"	4	13.3333333333333
+"Cluster 3 (30 genes)"	"cofactor metabolic process"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"cytoplasm"	"Cellular component"	21	70
+"Cluster 3 (30 genes)"	"cytoplasmic vesicle"	"Cellular component"	3	10
+"Cluster 3 (30 genes)"	"DNA binding"	"Molecular function"	3	10
+"Cluster 3 (30 genes)"	"endomembrane system"	"Cellular component"	8	26.6666666666667
+"Cluster 3 (30 genes)"	"endoplasmic reticulum"	"Cellular component"	5	16.6666666666667
+"Cluster 3 (30 genes)"	"generation of precursor metabolites and energy"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"Golgi apparatus"	"Cellular component"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"Golgi vesicle transport"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"hydrolase activity"	"Molecular function"	5	16.6666666666667
+"Cluster 3 (30 genes)"	"lipid metabolic process"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"meiotic cell cycle"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"membrane"	"Cellular component"	9	30
+"Cluster 3 (30 genes)"	"mitochondrion"	"Cellular component"	4	13.3333333333333
+"Cluster 3 (30 genes)"	"nucleic acid binding transcription factor activity"	"Molecular function"	3	10
+"Cluster 3 (30 genes)"	"nucleobase-containing small molecule metabolic process"	"Biological process"	3	10
+"Cluster 3 (30 genes)"	"nucleotidyltransferase activity"	"Molecular function"	3	10
+"Cluster 3 (30 genes)"	"nucleus"	"Cellular component"	11	36.6666666666667
+"Cluster 3 (30 genes)"	"nucleus organization"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"oxidoreductase activity"	"Molecular function"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"regulation of organelle organization"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"response to chemical"	"Biological process"	5	16.6666666666667
+"Cluster 3 (30 genes)"	"response to heat"	"Biological process"	3	10
+"Cluster 3 (30 genes)"	"response to oxidative stress"	"Biological process"	4	13.3333333333333
+"Cluster 3 (30 genes)"	"response to starvation"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"ribosome"	"Cellular component"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"sporulation"	"Biological process"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"transcription from RNA polymerase II promoter"	"Biological process"	3	10
+"Cluster 3 (30 genes)"	"transferase activity"	"Molecular function"	8	26.6666666666667
+"Cluster 3 (30 genes)"	"transferase activity, transferring glycosyl groups"	"Molecular function"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"Purine metabolism"	"KEGG"	3	10
+"Cluster 3 (30 genes)"	"Pyrimidine metabolism"	"KEGG"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"Nicotinate and nicotinamide metabolism"	"KEGG"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"Sulfur metabolism"	"KEGG"	2	6.66666666666667
+"Cluster 3 (30 genes)"	"Metabolic pathways"	"KEGG"	5	16.6666666666667
+"Cluster 7 (28 genes)"	"ATPase activity"	"Molecular function"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"cell wall organization or biogenesis"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"cellular amino acid metabolic process"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"cellular bud"	"Cellular component"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"cellular response to DNA damage stimulus"	"Biological process"	3	10.7142857142857
+"Cluster 7 (28 genes)"	"chromosome"	"Cellular component"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"conjugation"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"cytoplasm"	"Cellular component"	19	67.8571428571429
+"Cluster 7 (28 genes)"	"DNA recombination"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"DNA repair"	"Biological process"	3	10.7142857142857
+"Cluster 7 (28 genes)"	"endocytosis"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"hydrolase activity"	"Molecular function"	6	21.4285714285714
+"Cluster 7 (28 genes)"	"meiotic cell cycle"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"membrane"	"Cellular component"	6	21.4285714285714
+"Cluster 7 (28 genes)"	"methyltransferase activity"	"Molecular function"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"nucleobase-containing small molecule metabolic process"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"nucleus"	"Cellular component"	9	32.1428571428571
+"Cluster 7 (28 genes)"	"organelle fission"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"phosphatase activity"	"Molecular function"	3	10.7142857142857
+"Cluster 7 (28 genes)"	"plasma membrane"	"Cellular component"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"protein alkylation"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"protein binding, bridging"	"Molecular function"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"protein phosphorylation"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"proteolysis involved in cellular protein catabolic process"	"Biological process"	3	10.7142857142857
+"Cluster 7 (28 genes)"	"response to chemical"	"Biological process"	3	10.7142857142857
+"Cluster 7 (28 genes)"	"response to heat"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"response to osmotic stress"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"signaling"	"Biological process"	4	14.2857142857143
+"Cluster 7 (28 genes)"	"site of polarized growth"	"Cellular component"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"structural molecule activity"	"Molecular function"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"transferase activity"	"Molecular function"	6	21.4285714285714
+"Cluster 7 (28 genes)"	"transferase activity, transferring glycosyl groups"	"Molecular function"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"transmembrane transport"	"Biological process"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"vacuole"	"Cellular component"	3	10.7142857142857
+"Cluster 7 (28 genes)"	"Purine metabolism"	"KEGG"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"Pyrimidine metabolism"	"KEGG"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"Methane metabolism"	"KEGG"	2	7.14285714285714
+"Cluster 7 (28 genes)"	"Metabolic pathways"	"KEGG"	4	14.2857142857143
+"Cluster 7 (28 genes)"	"Biosynthesis of secondary metabolites"	"KEGG"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"cellular respiration"	"Biological process"	4	14.2857142857143
+"Cluster 15 (28 genes)"	"cofactor metabolic process"	"Biological process"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"cytoplasm"	"Cellular component"	25	89.2857142857143
+"Cluster 15 (28 genes)"	"generation of precursor metabolites and energy"	"Biological process"	4	14.2857142857143
+"Cluster 15 (28 genes)"	"hydrolase activity"	"Molecular function"	5	17.8571428571429
+"Cluster 15 (28 genes)"	"ion transport"	"Biological process"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"lyase activity"	"Molecular function"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"membrane"	"Cellular component"	17	60.7142857142857
+"Cluster 15 (28 genes)"	"mitochondrial envelope"	"Cellular component"	18	64.2857142857143
+"Cluster 15 (28 genes)"	"mitochondrial translation"	"Biological process"	6	21.4285714285714
+"Cluster 15 (28 genes)"	"mitochondrion"	"Cellular component"	23	82.1428571428571
+"Cluster 15 (28 genes)"	"mitochondrion organization"	"Biological process"	13	46.4285714285714
+"Cluster 15 (28 genes)"	"nucleobase-containing small molecule metabolic process"	"Biological process"	3	10.7142857142857
+"Cluster 15 (28 genes)"	"nucleus"	"Cellular component"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"oxidoreductase activity"	"Molecular function"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"protein complex biogenesis"	"Biological process"	8	28.5714285714286
+"Cluster 15 (28 genes)"	"protein maturation"	"Biological process"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"regulation of organelle organization"	"Biological process"	4	14.2857142857143
+"Cluster 15 (28 genes)"	"regulation of translation"	"Biological process"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"ribosome"	"Cellular component"	4	14.2857142857143
+"Cluster 15 (28 genes)"	"RNA catabolic process"	"Biological process"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"structural constituent of ribosome"	"Molecular function"	3	10.7142857142857
+"Cluster 15 (28 genes)"	"structural molecule activity"	"Molecular function"	3	10.7142857142857
+"Cluster 15 (28 genes)"	"transmembrane transporter activity"	"Molecular function"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"unfolded protein binding"	"Molecular function"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"Oxidative phosphorylation"	"KEGG"	3	10.7142857142857
+"Cluster 15 (28 genes)"	"Porphyrin and chlorophyll metabolism"	"KEGG"	2	7.14285714285714
+"Cluster 15 (28 genes)"	"Metabolic pathways"	"KEGG"	4	14.2857142857143
+"Cluster 16 (37 genes)"	"carbohydrate metabolic process"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"cell cortex"	"Cellular component"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"cellular response to DNA damage stimulus"	"Biological process"	5	13.5135135135135
+"Cluster 16 (37 genes)"	"chromatin organization"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"chromosome"	"Cellular component"	4	10.8108108108108
+"Cluster 16 (37 genes)"	"chromosome segregation"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"cytoplasm"	"Cellular component"	23	62.1621621621622
+"Cluster 16 (37 genes)"	"cytoplasmic vesicle"	"Cellular component"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"cytoskeleton"	"Cellular component"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"cytoskeleton organization"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"DNA binding"	"Molecular function"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"DNA recombination"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"DNA repair"	"Biological process"	4	10.8108108108108
+"Cluster 16 (37 genes)"	"endomembrane system"	"Cellular component"	5	13.5135135135135
+"Cluster 16 (37 genes)"	"endoplasmic reticulum"	"Cellular component"	3	8.10810810810811
+"Cluster 16 (37 genes)"	"enzyme regulator activity"	"Molecular function"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"Golgi apparatus"	"Cellular component"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"Golgi vesicle transport"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"hydrolase activity"	"Molecular function"	5	13.5135135135135
+"Cluster 16 (37 genes)"	"membrane"	"Cellular component"	7	18.9189189189189
+"Cluster 16 (37 genes)"	"mitochondrion"	"Cellular component"	7	18.9189189189189
+"Cluster 16 (37 genes)"	"mitotic cell cycle"	"Biological process"	6	16.2162162162162
+"Cluster 16 (37 genes)"	"mRNA binding"	"Molecular function"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"nuclease activity"	"Molecular function"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"nucleolus"	"Cellular component"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"nucleus"	"Cellular component"	12	32.4324324324324
+"Cluster 16 (37 genes)"	"organelle fission"	"Biological process"	4	10.8108108108108
+"Cluster 16 (37 genes)"	"plasma membrane"	"Cellular component"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"protein targeting"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"regulation of cell cycle"	"Biological process"	4	10.8108108108108
+"Cluster 16 (37 genes)"	"regulation of organelle organization"	"Biological process"	3	8.10810810810811
+"Cluster 16 (37 genes)"	"response to chemical"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"RNA binding"	"Molecular function"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"RNA catabolic process"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"site of polarized growth"	"Cellular component"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"transcription from RNA polymerase II promoter"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"transferase activity"	"Molecular function"	3	8.10810810810811
+"Cluster 16 (37 genes)"	"transmembrane transport"	"Biological process"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"transmembrane transporter activity"	"Molecular function"	3	8.10810810810811
+"Cluster 16 (37 genes)"	"vacuole"	"Cellular component"	4	10.8108108108108
+"Cluster 16 (37 genes)"	"vesicle organization"	"Biological process"	4	10.8108108108108
+"Cluster 16 (37 genes)"	"Metabolic pathways"	"KEGG"	2	5.40540540540541
+"Cluster 16 (37 genes)"	"Cell cycle - yeast"	"KEGG"	3	8.10810810810811
+"Cluster 16 (37 genes)"	"Meiosis - yeast"	"KEGG"	2	5.40540540540541
+"Cluster 18 (46 genes)"	"cell cortex"	"Cellular component"	4	8.69565217391304
+"Cluster 18 (46 genes)"	"cellular amino acid metabolic process"	"Biological process"	4	8.69565217391304
+"Cluster 18 (46 genes)"	"cellular bud"	"Cellular component"	4	8.69565217391304
+"Cluster 18 (46 genes)"	"cytoplasm"	"Cellular component"	36	78.2608695652174
+"Cluster 18 (46 genes)"	"endomembrane system"	"Cellular component"	9	19.5652173913043
+"Cluster 18 (46 genes)"	"endoplasmic reticulum"	"Cellular component"	8	17.3913043478261
+"Cluster 18 (46 genes)"	"hydrolase activity"	"Molecular function"	6	13.0434782608696
+"Cluster 18 (46 genes)"	"membrane"	"Cellular component"	17	36.9565217391304
+"Cluster 18 (46 genes)"	"mitochondrial envelope"	"Cellular component"	4	8.69565217391304
+"Cluster 18 (46 genes)"	"mitochondrion"	"Cellular component"	12	26.0869565217391
+"Cluster 18 (46 genes)"	"mitochondrion organization"	"Biological process"	4	8.69565217391304
+"Cluster 18 (46 genes)"	"mRNA binding"	"Molecular function"	3	6.52173913043478
+"Cluster 18 (46 genes)"	"nucleus"	"Cellular component"	9	19.5652173913043
+"Cluster 18 (46 genes)"	"oxidoreductase activity"	"Molecular function"	6	13.0434782608696
+"Cluster 18 (46 genes)"	"protein complex biogenesis"	"Biological process"	4	8.69565217391304
+"Cluster 18 (46 genes)"	"RNA binding"	"Molecular function"	3	6.52173913043478
+"Cluster 18 (46 genes)"	"site of polarized growth"	"Cellular component"	5	10.8695652173913
+"Cluster 18 (46 genes)"	"transferase activity"	"Molecular function"	6	13.0434782608696
+"Cluster 18 (46 genes)"	"vacuole"	"Cellular component"	4	8.69565217391304
+"Cluster 18 (46 genes)"	"Metabolic pathways"	"KEGG"	4	8.69565217391304
+"Cluster 18 (46 genes)"	"Biosynthesis of secondary metabolites"	"KEGG"	3	6.52173913043478
+"Cluster 25 (19 genes)"	"carbohydrate metabolic process"	"Biological process"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"carbohydrate transport"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"cell budding"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"cell cortex"	"Cellular component"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"cell wall"	"Cellular component"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"cell wall organization or biogenesis"	"Biological process"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"cellular bud"	"Cellular component"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"cellular ion homeostasis"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"cofactor metabolic process"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"cytoplasm"	"Cellular component"	15	78.9473684210526
+"Cluster 25 (19 genes)"	"cytoplasmic translation"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"cytoskeleton"	"Cellular component"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"cytoskeleton organization"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"endomembrane system"	"Cellular component"	3	15.7894736842105
+"Cluster 25 (19 genes)"	"endoplasmic reticulum"	"Cellular component"	3	15.7894736842105
+"Cluster 25 (19 genes)"	"generation of precursor metabolites and energy"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Golgi vesicle transport"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"guanyl-nucleotide exchange factor activity"	"Molecular function"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"ion binding"	"Molecular function"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"ion transport"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"kinase activity"	"Molecular function"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"lipid binding"	"Molecular function"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"membrane"	"Cellular component"	6	31.5789473684211
+"Cluster 25 (19 genes)"	"mitochondrial envelope"	"Cellular component"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"mitochondrion"	"Cellular component"	4	21.0526315789474
+"Cluster 25 (19 genes)"	"mitochondrion organization"	"Biological process"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"mitotic cell cycle"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"monocarboxylic acid metabolic process"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"nucleobase-containing small molecule metabolic process"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"nucleolus"	"Cellular component"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"nucleus"	"Cellular component"	3	15.7894736842105
+"Cluster 25 (19 genes)"	"organelle assembly"	"Biological process"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"peroxisome"	"Cellular component"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"peroxisome organization"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"plasma membrane"	"Cellular component"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"protein complex biogenesis"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"protein folding"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"protein modification by small protein conjugation or removal"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"protein phosphorylation"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"protein targeting"	"Biological process"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"protein transporter activity"	"Molecular function"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"regulation of cell cycle"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"ribosomal small subunit biogenesis"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"ribosome"	"Cellular component"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"ribosome assembly"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"RNA binding"	"Molecular function"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"RNA catabolic process"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"rRNA binding"	"Molecular function"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"rRNA processing"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"signaling"	"Biological process"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"site of polarized growth"	"Cellular component"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"structural constituent of ribosome"	"Molecular function"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"structural molecule activity"	"Molecular function"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"transferase activity"	"Molecular function"	3	15.7894736842105
+"Cluster 25 (19 genes)"	"transmembrane transport"	"Biological process"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"transmembrane transporter activity"	"Molecular function"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"unfolded protein binding"	"Molecular function"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"vacuole"	"Cellular component"	2	10.5263157894737
+"Cluster 25 (19 genes)"	"Glycolysis / Gluconeogenesis"	"KEGG"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Fructose and mannose metabolism"	"KEGG"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Galactose metabolism"	"KEGG"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Starch and sucrose metabolism"	"KEGG"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Amino sugar and nucleotide sugar metabolism"	"KEGG"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Metabolic pathways"	"KEGG"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Biosynthesis of secondary metabolites"	"KEGG"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Ribosome"	"KEGG"	1	5.26315789473684
+"Cluster 25 (19 genes)"	"Peroxisome"	"KEGG"	1	5.26315789473684
+"Cluster 30 (14 genes)"	"amino acid transport"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"cellular bud"	"Cellular component"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"chromosome"	"Cellular component"	2	14.2857142857143
+"Cluster 30 (14 genes)"	"cytoplasm"	"Cellular component"	7	50
+"Cluster 30 (14 genes)"	"DNA binding"	"Molecular function"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"endomembrane system"	"Cellular component"	2	14.2857142857143
+"Cluster 30 (14 genes)"	"endoplasmic reticulum"	"Cellular component"	2	14.2857142857143
+"Cluster 30 (14 genes)"	"Golgi apparatus"	"Cellular component"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"ion transport"	"Biological process"	2	14.2857142857143
+"Cluster 30 (14 genes)"	"kinase activity"	"Molecular function"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"lipid metabolic process"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"meiotic cell cycle"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"membrane"	"Cellular component"	6	42.8571428571429
+"Cluster 30 (14 genes)"	"mitochondrion"	"Cellular component"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"nucleic acid binding transcription factor activity"	"Molecular function"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"nucleus"	"Cellular component"	3	21.4285714285714
+"Cluster 30 (14 genes)"	"organelle fission"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"plasma membrane"	"Cellular component"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"protein folding"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"protein phosphorylation"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"protein targeting"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"protein transporter activity"	"Molecular function"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"response to chemical"	"Biological process"	2	14.2857142857143
+"Cluster 30 (14 genes)"	"response to heat"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"response to oxidative stress"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"ribosome"	"Cellular component"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"signaling"	"Biological process"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"site of polarized growth"	"Cellular component"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"transcription from RNA polymerase II promoter"	"Biological process"	2	14.2857142857143
+"Cluster 30 (14 genes)"	"transferase activity"	"Molecular function"	3	21.4285714285714
+"Cluster 30 (14 genes)"	"transmembrane transporter activity"	"Molecular function"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"vacuole"	"Cellular component"	2	14.2857142857143
+"Cluster 30 (14 genes)"	"Pentose phosphate pathway"	"KEGG"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"Glycerophospholipid metabolism"	"KEGG"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"Ether lipid metabolism"	"KEGG"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"Metabolic pathways"	"KEGG"	2	14.2857142857143
+"Cluster 30 (14 genes)"	"Biosynthesis of secondary metabolites"	"KEGG"	1	7.14285714285714
+"Cluster 30 (14 genes)"	"Meiosis - yeast"	"KEGG"	2	14.2857142857143
+"Cluster 40 (13 genes)"	"cellular amino acid metabolic process"	"Biological process"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"cytoplasm"	"Cellular component"	9	69.2307692307692
+"Cluster 40 (13 genes)"	"endomembrane system"	"Cellular component"	2	15.3846153846154
+"Cluster 40 (13 genes)"	"endoplasmic reticulum"	"Cellular component"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"Golgi apparatus"	"Cellular component"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"ligase activity"	"Molecular function"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"lyase activity"	"Molecular function"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"membrane"	"Cellular component"	3	23.0769230769231
+"Cluster 40 (13 genes)"	"mitochondrial envelope"	"Cellular component"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"mitochondrion"	"Cellular component"	3	23.0769230769231
+"Cluster 40 (13 genes)"	"mitochondrion organization"	"Biological process"	2	15.3846153846154
+"Cluster 40 (13 genes)"	"mRNA binding"	"Molecular function"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"nucleolus"	"Cellular component"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"nucleus"	"Cellular component"	2	15.3846153846154
+"Cluster 40 (13 genes)"	"peroxisome"	"Cellular component"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"protein binding, bridging"	"Molecular function"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"protein folding"	"Biological process"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"protein glycosylation"	"Biological process"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"protein targeting"	"Biological process"	2	15.3846153846154
+"Cluster 40 (13 genes)"	"ribosomal large subunit biogenesis"	"Biological process"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"RNA binding"	"Molecular function"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"transferase activity"	"Molecular function"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"transferase activity, transferring glycosyl groups"	"Molecular function"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"transmembrane transport"	"Biological process"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"transmembrane transporter activity"	"Molecular function"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"vacuole"	"Cellular component"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"Phenylalanine metabolism"	"KEGG"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"Various types of N-glycan biosynthesis"	"KEGG"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"Other types of O-glycan biosynthesis"	"KEGG"	1	7.69230769230769
+"Cluster 40 (13 genes)"	"Metabolic pathways"	"KEGG"	2	15.3846153846154
+"Cluster 56 (20 genes)"	"cellular amino acid metabolic process"	"Biological process"	3	15
+"Cluster 56 (20 genes)"	"cellular response to DNA damage stimulus"	"Biological process"	2	10
+"Cluster 56 (20 genes)"	"chromosome"	"Cellular component"	2	10
+"Cluster 56 (20 genes)"	"cytoplasm"	"Cellular component"	17	85
+"Cluster 56 (20 genes)"	"DNA recombination"	"Biological process"	2	10
+"Cluster 56 (20 genes)"	"ligase activity"	"Molecular function"	3	15
+"Cluster 56 (20 genes)"	"membrane"	"Cellular component"	4	20
+"Cluster 56 (20 genes)"	"mitochondrial envelope"	"Cellular component"	3	15
+"Cluster 56 (20 genes)"	"mitochondrial translation"	"Biological process"	9	45
+"Cluster 56 (20 genes)"	"mitochondrion"	"Cellular component"	17	85
+"Cluster 56 (20 genes)"	"mitochondrion organization"	"Biological process"	11	55
+"Cluster 56 (20 genes)"	"ribosome"	"Cellular component"	6	30
+"Cluster 56 (20 genes)"	"RNA binding"	"Molecular function"	2	10
+"Cluster 56 (20 genes)"	"RNA splicing"	"Biological process"	2	10
+"Cluster 56 (20 genes)"	"rRNA processing"	"Biological process"	2	10
+"Cluster 56 (20 genes)"	"structural constituent of ribosome"	"Molecular function"	6	30
+"Cluster 56 (20 genes)"	"structural molecule activity"	"Molecular function"	6	30
+"Cluster 56 (20 genes)"	"tRNA aminoacylation for protein translation"	"Biological process"	2	10
+"Cluster 56 (20 genes)"	"Aminoacyl-tRNA biosynthesis"	"KEGG"	2	10
+"Cluster 91 (20 genes)"	"cytoplasm"	"Cellular component"	16	80
+"Cluster 91 (20 genes)"	"endomembrane system"	"Cellular component"	3	15
+"Cluster 91 (20 genes)"	"Golgi apparatus"	"Cellular component"	2	10
+"Cluster 91 (20 genes)"	"hydrolase activity"	"Molecular function"	2	10
+"Cluster 91 (20 genes)"	"ion transport"	"Biological process"	2	10
+"Cluster 91 (20 genes)"	"membrane"	"Cellular component"	7	35
+"Cluster 91 (20 genes)"	"mitochondrial envelope"	"Cellular component"	4	20
+"Cluster 91 (20 genes)"	"mitochondrion"	"Cellular component"	8	40
+"Cluster 91 (20 genes)"	"mitochondrion organization"	"Biological process"	5	25
+"Cluster 91 (20 genes)"	"nuclear transport"	"Biological process"	2	10
+"Cluster 91 (20 genes)"	"nucleus"	"Cellular component"	3	15
+"Cluster 91 (20 genes)"	"oxidoreductase activity"	"Molecular function"	2	10
+"Cluster 91 (20 genes)"	"proteolysis involved in cellular protein catabolic process"	"Biological process"	2	10
+"Cluster 91 (20 genes)"	"transferase activity"	"Molecular function"	2	10
+"Cluster 91 (20 genes)"	"vacuole"	"Cellular component"	2	10
+"Cluster 91 (20 genes)"	"Metabolic pathways"	"KEGG"	3	15

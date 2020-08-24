@@ -28,19 +28,19 @@ if (F) {
   #' source("all_IonFlow.R")
   source("funcs_IonFlow.R")
   load(file="./test-data/IonData.rdata")
-  #' load(file="./test-data/pre_defined_sd.rdata")
-  load(file="./test-data/user_sd.rdata")
+  #' load(file="./test-data/pre_defined_std.rdata")
+  load(file="./test-data/user_std.rdata")
   load(file="./test-data/data_GOslim.rdata")
   load(file="./test-data/data_ORF2KEGG.rdata")
 }
 
 ## ==== Pre-processing ====
 #' data = IonData
-#' stdev = pre_defined_sd
+#' stdev = pre_defined_std
 
 #' pre_proc <- PreProcessing(data = IonData, stdev = NULL)
-#' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_sd)
-pre_proc <- PreProcessing(data = IonData, stdev = user_sd)
+#' pre_proc <- PreProcessing(data = IonData, stdev = pre_defined_std)
+pre_proc <- PreProcessing(data = IonData, stdev = user_std)
 
 # stats
 pre_proc$stats.raw_data
@@ -90,8 +90,8 @@ gene_clust$plot.profiles
 gene_net <- GeneNetwork(data = pre_proc$data.wide, 
                         data_symb = pre_proc$data.wide_symb)
 # stats
-gene_net$stats.impact_betweeness
-gene_net$stats.impact_betweeness_by_cluster
+gene_net$stats.impact_betweenness
+gene_net$stats.impact_betweenness_by_cluster
 # plots
 gene_net$plot.pnet
 gene_net$plot.impact_betweenees

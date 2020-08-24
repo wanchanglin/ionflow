@@ -638,11 +638,11 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   ## -------------------> Output
   res <- list()
   res$plot.pnet <- net_p                            # plot gene network
-  res$plot.impact_betweeness <- im_be_p             # plot impact betweenees
-  res$stats.impact_betweeness <- df.res3            # impact betweenees data
-  res$stats.impact_betweeness_by_cluster <- df.tab2 # plot position by cluster
+  res$plot.impact_betweenness <- im_be_p             # plot impact betweenees
+  res$stats.impact_betweenness <- df.res3            # impact betweenees data
+  res$stats.impact_betweenness_by_cluster <- df.tab2 # plot position by cluster
   ## wl-28-07-2020, Tue: return this one as well 
-  res$stats.impact_betweeness_tab <- df.tab         # contingency table
+  res$stats.impact_betweenness_tab <- df.tab         # contingency table
   return(res)
 }
 

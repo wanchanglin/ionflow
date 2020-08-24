@@ -1,6 +1,7 @@
 <!--
 wl-10-08-2020, Mon: commence
---> 
+wl-24-08-2020, Mon: first version
+-->
 
 <tool id="ionfow" name="IonFlow" version="0.1.0">
   <description>
@@ -15,12 +16,12 @@ wl-10-08-2020, Mon: commence
   <!-- =============================================================== -->
   <command detect_errors="exit_code">
     <![CDATA[
-    
+
       Rscript ${__tool_directory__}/ionflow.R
         --ion_file '$ion_file'
 
         ## use std file or not
-        --std_file_sel '$std.std_file_sel' 
+        --std_file_sel '$std.std_file_sel'
         #if $std.std_file_sel=='yes':
           --std_file '$std.std_file'
         #end if
@@ -29,7 +30,7 @@ wl-10-08-2020, Mon: commence
         --thres_clus '$thres_clus'
         --thres_anno '$thres_anno'
         --thres_corr '$thres_corr'
-        
+
         ## output: pre-processing
         --pre_proc_pdf  '$pre_proc_pdf'
         --df_stats_out  '$df_stats_out'
@@ -86,8 +87,8 @@ wl-10-08-2020, Mon: commence
 
     <param name="thres_anno" type="float" value="5.0" min="0" max="100"
            label="Specify annotation percentage threshold"
-           help="Percentage threshold for annotation (0 - 100).  
-                 Features large than threshold will be kept." /> 
+           help="Percentage threshold for annotation (0 - 100).
+                 Features large than threshold will be kept." />
 
     <param name="thres_corr" type="float" value="0.60" min="0" max="1"
            label="Specify correlation threshold"
@@ -133,31 +134,50 @@ wl-10-08-2020, Mon: commence
 
   <!-- =============================================================== -->
   <tests>
+    <!-- test on smaller data set -->
     <test>
       <param name="ion_file" value="iondata_test.tsv" />
       <param name="std_file_sel" value="yes" />
       <param name="std_file" value="user_std.tsv" />
+      <param name="thres_clus" value="5.0" />
+      <param name="thres_anno" value="10.0" />
+      <param name="thres_corr" value="0.75" />
+      <output name="pre_proc_pdf" file="res/pre_proc.pdf" compare="sim_size" />
+      <output name="df_stats_out" file="res/df_stats.tsv" compare="diff" />
+      <output name="outl_out" file="res/outl.tsv" compare="diff" />
+      <output name="data_wide_out" file="res/data_wide.tsv" compare="diff" />
+      <output name="data_wide_symb_out" file="res/data_wide_symb.tsv" compare="diff" />
+      <output name="exp_anal_pdf" file="res/exp_anal.pdf" compare="sim_size" />
+      <output name="gene_clus_pdf" file="res/gene_clus.pdf" compare="sim_size" />
+      <output name="clus_out" file="res/clus.tsv" compare="diff" />
+      <output name="anno_out" file="res/kegg_go_anno.tsv" compare="diff" />
+      <output name="enri_out" file="res/go_enri.tsv" compare="diff" />
+      <output name="gene_net_pdf" file="res/gene_net.pdf" compare="sim_size" />
+      <output name="imbe_out" file="res/impact_betweenness.tsv" compare="diff" />
+      <output name="imbe_tab_out" file="res/impact_betweenness_tab.tsv" />
+    </test>
 
+    <!-- test on full data set -->
+    <test>
+      <param name="ion_file" value="iondata.tsv" />
+      <param name="std_file_sel" value="yes" />
+      <param name="std_file" value="user_std.tsv" />
       <param name="thres_clus" value="10.0" />
       <param name="thres_anno" value="5.0" />
       <param name="thres_corr" value="0.6" />
-
-      <output name="pre_proc_pdf"       file="res/pre_proc.pdf" compare="sim_size" />
-      <output name="df_stats_out"       file="res/df_stats.tsv" compare="diff" />
-      <output name="outl_out"           file="res/outl.tsv" compare="diff" />
-      <output name="data_wide_out"      file="res/data_wide.tsv" compare="diff" />
-      <output name="data_wide_symb_out" file="res/data_wide_symb.tsv" compare="diff" />
-
-      <output name="exp_anal_pdf"  file="res/exp_anal.pdf" compare="sim_size" />
-
-      <output name="gene_clus_pdf" file="res/gene_clus.pdf" compare="sim_size" />
-      <output name="clus_out"      file="res/clus.tsv" compare="diff" />
-      <output name="anno_out"      file="res/kegg_go_anno.tsv" compare="diff" />
-      <output name="enri_out"      file="res/go_enri.tsv" compare="diff" />
-
-      <output name="gene_net_pdf" file="res/gene_net.pdf" compare="sim_size" />
-      <output name="imbe_out"     file="res/impact_betweeness.tsv" compare="diff" />
-      <output name="imbe_tab_out" file="res/impact_betweeness_tab.tsv" />
+      <output name="pre_proc_pdf" file="res/pre_proc_1.pdf" compare="sim_size" />
+      <output name="df_stats_out" file="res/df_stats_1.tsv" />
+      <output name="outl_out" file="res/outl_1.tsv" />
+      <output name="data_wide_out" file="res/data_wide_1.tsv" />
+      <output name="data_wide_symb_out" file="res/data_wide_symb_1.tsv" />
+      <output name="exp_anal_pdf" file="res/exp_anal_1.pdf" compare="sim_size" />
+      <output name="gene_clus_pdf" file="res/gene_clus_1.pdf" compare="sim_size" />
+      <output name="clus_out" file="res/clus_1.tsv" />
+      <output name="anno_out" file="res/kegg_go_anno_1.tsv" />
+      <output name="enri_out" file="res/go_enri_1.tsv" />
+      <output name="gene_net_pdf" file="res/gene_net_1.pdf" compare="sim_size" />
+      <output name="imbe_out" file="res/impact_betweenness_1.tsv" />
+      <output name="imbe_tab_out" file="res/impact_betweenness_tab_1.tsv" />
     </test>
 
   </tests>
@@ -170,7 +190,7 @@ IonFlow  Pipeline
 Description
 -----------
 
-This galaxy tool wraps R package IonFlow_ to process ionomics data to 
+This galaxy tool wraps R package IonFlow_ to process ionomics data to
 aid reproducible data sharing and big data initiatives.
 
 The pipeline includes:
@@ -209,7 +229,7 @@ Inputs
 
 The input file is an ionomics data table in tubular format. The following is
 an example with the first two columns of knockout name and batch ID and
-other columns are ions. 
+other columns are ions.
 
 
  +----------+----------+---------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
@@ -263,10 +283,10 @@ the threshold will be used for further analysis, such as annotation and
 network analysis.
 
 **\2. Threshold for annotation**
-  
+
 The threshold is for the percentage of the genes in a cluster centre used
 for annotation. The default is 5 percent. Genes with percentage large than
-threshold will be annotated. 
+threshold will be annotated.
 
 **\3. Threshold for correlation**
 
@@ -284,7 +304,7 @@ The output includes:
 
 - A PDF file for the plots:  dot-plot with ion vs batch and distribution
   plot of ions.
-- A tabular file for statistical summary of data set 
+- A tabular file for statistical summary of data set
 - A tabular file for outlier table
 - A tabular file for processed data set
 - A tabular file for the symbolisation data set

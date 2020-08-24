@@ -1,28 +1,24 @@
 "Cluster"	"Term"	"Ontology"	"Count"	"Percent"
-"Cluster 15 (114 genes)"	"cell cortex"	"Cellular component"	7	6.14035087719298
-"Cluster 15 (114 genes)"	"cellular amino acid metabolic process"	"Biological process"	7	6.14035087719298
-"Cluster 15 (114 genes)"	"cellular bud"	"Cellular component"	6	5.26315789473684
+"Cluster 10 (8 genes)"	"cellular amino acid metabolic process"	"Biological process"	1	12.5
+"Cluster 10 (8 genes)"	"cytoplasm"	"Cellular component"	4	50
+"Cluster 10 (8 genes)"	"DNA binding"	"Molecular function"	1	12.5
+"Cluster 10 (8 genes)"	"DNA recombination"	"Biological process"	1	12.5
+"Cluster 10 (8 genes)"	"hydrolase activity"	"Molecular function"	1	12.5
+"Cluster 10 (8 genes)"	"lyase activity"	"Molecular function"	1	12.5
+"Cluster 10 (8 genes)"	"membrane"	"Cellular component"	1	12.5
+"Cluster 10 (8 genes)"	"nuclease activity"	"Molecular function"	1	12.5
+"Cluster 10 (8 genes)"	"nucleic acid binding transcription factor activity"	"Molecular function"	1	12.5
+"Cluster 10 (8 genes)"	"nucleus"	"Cellular component"	3	37.5
+"Cluster 10 (8 genes)"	"response to chemical"	"Biological process"	1	12.5
+"Cluster 10 (8 genes)"	"transcription from RNA polymerase II promoter"	"Biological process"	1	12.5
+"Cluster 10 (8 genes)"	"Glycine, serine and threonine metabolism"	"KEGG"	1	12.5
+"Cluster 10 (8 genes)"	"Metabolic pathways"	"KEGG"	1	12.5
+"Cluster 10 (8 genes)"	"Biosynthesis of secondary metabolites"	"KEGG"	1	12.5
 "Cluster 15 (114 genes)"	"cytoplasm"	"Cellular component"	79	69.2982456140351
-"Cluster 15 (114 genes)"	"cytoskeleton"	"Cellular component"	6	5.26315789473684
-"Cluster 15 (114 genes)"	"DNA binding"	"Molecular function"	8	7.01754385964912
 "Cluster 15 (114 genes)"	"endomembrane system"	"Cellular component"	13	11.4035087719298
-"Cluster 15 (114 genes)"	"endoplasmic reticulum"	"Cellular component"	8	7.01754385964912
 "Cluster 15 (114 genes)"	"hydrolase activity"	"Molecular function"	21	18.4210526315789
-"Cluster 15 (114 genes)"	"ion transport"	"Biological process"	6	5.26315789473684
-"Cluster 15 (114 genes)"	"lipid metabolic process"	"Biological process"	6	5.26315789473684
 "Cluster 15 (114 genes)"	"membrane"	"Cellular component"	30	26.3157894736842
-"Cluster 15 (114 genes)"	"mitochondrial envelope"	"Cellular component"	6	5.26315789473684
 "Cluster 15 (114 genes)"	"mitochondrion"	"Cellular component"	21	18.4210526315789
 "Cluster 15 (114 genes)"	"nucleus"	"Cellular component"	37	32.4561403508772
-"Cluster 15 (114 genes)"	"oxidoreductase activity"	"Molecular function"	7	6.14035087719298
-"Cluster 15 (114 genes)"	"plasma membrane"	"Cellular component"	10	8.7719298245614
 "Cluster 15 (114 genes)"	"response to chemical"	"Biological process"	12	10.5263157894737
-"Cluster 15 (114 genes)"	"RNA binding"	"Molecular function"	6	5.26315789473684
-"Cluster 15 (114 genes)"	"signaling"	"Biological process"	7	6.14035087719298
-"Cluster 15 (114 genes)"	"site of polarized growth"	"Cellular component"	7	6.14035087719298
-"Cluster 15 (114 genes)"	"transcription from RNA polymerase II promoter"	"Biological process"	6	5.26315789473684
-"Cluster 15 (114 genes)"	"transferase activity"	"Molecular function"	11	9.64912280701754
-"Cluster 15 (114 genes)"	"transmembrane transporter activity"	"Molecular function"	8	7.01754385964912
-"Cluster 15 (114 genes)"	"vacuole"	"Cellular component"	7	6.14035087719298
 "Cluster 15 (114 genes)"	"Metabolic pathways"	"KEGG"	14	12.280701754386
-"Cluster 15 (114 genes)"	"Biosynthesis of secondary metabolites"	"KEGG"	7	6.14035087719298

@@ -7,12 +7,6 @@ Galaxy tool for processing and analysis of Ionomics data,
 
 - Install [Galaxy](https://github.com/galaxyproject/galaxy) under Linux.
 
-- Install [conda](https://docs.conda.io/en/latest/miniconda.html) under
-  Linux. `conda` is used to install `requirements` of this tool, i.e. R
-  packages used: `optparse`, `reshape2`, `plyr`, `dplyr`, `tidyr`,
-  `ggplot2`, `ggrepel`, `corrplot`, `gplots`, `pheatmap`, `network`, `sna`,
-  `GGally`, `qgraph`, `org.Sc.sgd.db`, `GO.db` and `GOstats`
-
 - Use `git` to clone this tool
 
   ```bash

@@ -42,7 +42,7 @@
 #'
 #' @examples \code{
 #' ### Run PreProcessing function
-#' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
+#' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_std)
 #'
 #' # stats
 #' pre_proc$stats.raw_data
@@ -269,7 +269,7 @@ PreProcessing = function(data=NULL,stdev=NULL) {
 #'
 #' @examples \code{
 #' ### Run PreProcessing function
-#' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
+#' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_std)
 #'
 #' ### Run ExploratoryAnalysis function
 #' exp_anal <- ExploratoryAnalysis(data=pre_proc$data.wide)
@@ -372,7 +372,7 @@ ExploratoryAnalysis = function(data=NULL) {
 #'
 #' @examples \code{
 #' ### Run PreProcessing function
-#' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
+#' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_std)
 #'
 #' ### Run GeneClustering function
 #' gene_clust <- GeneClustering(data=pre_proc$data.wide,
@@ -541,9 +541,9 @@ GeneClustering = function(data=NULL, data_symb=NULL) {
 #'   1) ion's concentration profiles (columns) for each gene's knockout (rows)
 #'   (wide format) e.g. \code{data.wide_symb} from the \code{PreProcessing_fn}
 #'
-#' @return \code{stats.impact_betweeness} statistics of the impact betweenees
+#' @return \code{stats.impact_betweenness} statistics of the impact betweenees
 #'   data
-#' @return \code{stats.impact_betweeness_by_cluster} statistics of the impact
+#' @return \code{stats.impact_betweenness_by_cluster} statistics of the impact
 #'   betweenees data by cluster
 #'
 #' @return \code{plot.pnet plot} of the gene's network
@@ -551,15 +551,15 @@ GeneClustering = function(data=NULL, data_symb=NULL) {
 #'
 #' @examples \code{
 #' ### Run PreProcessing function
-#' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_sd)
+#' pre_proc <- PreProcessing(data=IonData,stdev=pre_defined_std)
 #'
 #' ### Run GeneNetwork function
 #' gene_net <- GeneNetwork(data=pre_proc$data.wide,
 #'   data_symb=pre_proc$data.wide_symb)
 #'
 #' # stats
-#' gene_net$stats.impact_betweeness
-#' gene_net$stats.impact_betweeness_by_cluster
+#' gene_net$stats.impact_betweenness
+#' gene_net$stats.impact_betweenness_by_cluster
 #'
 #' # plots
 #' gene_net$plot.pnet
@@ -724,8 +724,8 @@ GeneNetwork = function(data=NULL, data_symb=NULL) {
   class(res) = "GeneNetwork"
   res$plot.pnet <- gNEt(dat=Net) # plot gene network
   res$plot.impact_betweenees <- gp1 # plot impact betweenees
-  res$stats.impact_betweeness <- df.res3 # impact betweenees data
-  res$stats.impact_betweeness_by_cluster <- df.tab2 # plot position by cluster
+  res$stats.impact_betweenness <- df.res3 # impact betweenees data
+  res$stats.impact_betweenness_by_cluster <- df.tab2 # plot position by cluster
 
   return(res)
 }

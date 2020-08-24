@@ -4,9 +4,9 @@ Rscript --vanilla ../ionflow.R \
   --ion_file "../test-data/iondata_test.tsv" \
   --std_file_sel "yes" \
   --std_file "../test-data/user_std.tsv" \
-  --thres_clus "10.0" \
-  --thres_anno "5.0" \
-  --thres_corr "0.6" \
+  --thres_clus "5.0" \
+  --thres_anno "10.0" \
+  --thres_corr "0.75" \
   --pre_proc_pdf "../test-data/res/pre_proc.pdf" \
   --df_stats_out "../test-data/res/df_stats.tsv" \
   --outl_out     "../test-data/res/outl.tsv" \
@@ -18,5 +18,5 @@ Rscript --vanilla ../ionflow.R \
   --anno_out "../test-data/res/kegg_go_anno.tsv" \
   --enri_out "../test-data/res/go_enri.tsv" \
   --gene_net_pdf "../test-data/res/gene_net.pdf" \
-  --imbe_out "../test-data/res/impact_betweeness.tsv" \
-  --imbe_tab_out "../test-data/res/impact_betweeness_tab.tsv"
+  --imbe_out "../test-data/res/impact_betweenness.tsv" \
+  --imbe_tab_out "../test-data/res/impact_betweenness_tab.tsv"

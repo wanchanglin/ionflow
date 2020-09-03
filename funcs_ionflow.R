@@ -21,25 +21,36 @@
 #'   - Test on data subset: fewer batches and fewer Ion items
 #' wl-04-08-2020, Tue: re-write GeneClustering. Correct one mistake
 #' wl-14-08-2020, Fri: remove two R packages "pheatmap", "qgraph"
+#' wl-01-09-2020, Tue: Change data prparation in PreProcessing
+#' wl-02-09-2020, Wed: change variable names in PreProcessing
 
 #' =======================================================================
 #'
-PreProcessing <- function(data = NULL, stdev = NULL) {
+PreProcessing <- function(data = NULL, stdev = NULL, var_id = 1,
+                          batch_id = 2, data_id = 3) {
 
   ## -------------------> Import data
   ## get raw data stats summary
-  res <- as.data.frame(t(sapply(data[, -c(1, 2)],function(x) {
+  ## wl-01-09-2020, Tue: update data set
+  data <- data[,c(var_id, batch_id, data_id:ncol(data))]
+  names(data)[1:2] <- c("Knockout", "Batch_ID") 
+  mat  <- data[, -c(1:2)]
+  ## mat <- data[, -c(1:(data_id - 1))]
+
+  res <- as.data.frame(t(sapply(mat,function(x) {
     c(round(summary(x),3), round(var(x),3))
   })))
   names(res)[ncol(res)]  <- "Variance"
-  res <- cbind(Ion=names(data[, -c(1, 2)]),res)
-  df.s <- res
+  res <- cbind(Ion=names(mat),res)
+  rownames(res) <- NULL 
+  df_raw <- res
 
   ## -------------------> Outlier detection
   ## wl-22-07-2020, Wed: more general for Ion contents
-  data_long <- reshape2::melt(data, id=c("Knockout", "Batch_ID"),
+  data_long <- reshape2::melt(data, id = c("Knockout", "Batch_ID"),
                               variable.name = "Ion",
                               value.name = "Concentration")
+
   ## wl-06-07-2020, Mon: convert to factors before using levels function.
   ## wl-30-07-2020, Thu: replace 'as.factor' with 'factor' in case level
   ##  updating
@@ -63,42 +74,42 @@ PreProcessing <- function(data = NULL, stdev = NULL) {
     data.frame(cbind(
       levels(data_long$Ion),
       table(data_long$Ion, data_long$Outlier),
-      round(table(data_long$Ion, data_long$Outlier)[, 2] / dim(data_long)[1] * 100, 2)
+      round(table(data_long$Ion, data_long$Outlier)[, 2] / 
+            dim(data_long)[1] * 100, 2)
     ))
   rownames(df_outlier) <- c()
   colnames(df_outlier) <- c("Ion", "no_outlier", "outlier", "outlier(%)")
 
   #' wl-23-07-2020, Thu: remove Knockout outliers in terms of Ion.
-  data_long_clean <- data_long[data_long$Outlier < 1, ]
+  data_long <- data_long[data_long$Outlier < 1, ]
+  data_long <- subset(data_long, select = -Outlier)
   ## wl-23-07-2020, Thu: NAs in wide format due to outlier removal.
-  ## con.tab(data_long_clean)  #' NAs: 28 in 1454 Knockout
+  ## con.tab(data_long)  #' NAs: 28 in 1454 Knockout
 
   ## -------------------> Median batch correction
-  data_long_clean$logConcentration <- log(data_long_clean$Concentration)
+  data_long$log <- log(data_long$Concentration)
 
   #' wl-23-07-2020, Thu: remove median of each batch in each Ion
-  data_long_clean_scaled <- plyr::ddply(data_long_clean, "Ion", function(x) {
+  data_long <- plyr::ddply(data_long, "Ion", function(x) {
     res <- plyr::ddply(x, "Batch_ID", function(y){
-      med <- median(y$logConcentration)
-      y$logConcentration_corr <- y$logConcentration - med
+      med <- median(y$log)
+      y$log_corr <- y$log - med
       y
     })
   })
 
-  #' get stats of logConcentration_corr
-  res <- plyr::ddply(data_long_clean_scaled, "Ion", function(x) {
-    c(round(summary(x$logConcentration_corr), 3),
-      round(var(x$logConcentration_corr),3))
+  #' get stats of log_corr
+  res <- plyr::ddply(data_long, "Ion", function(x) {
+    c(round(summary(x$log_corr), 3), round(var(x$log_corr), 3))
   })
   names(res)[ncol(res)]  <- "Variance"
-  df.mbc <- res
+  df_bat <- res
 
   ## -------------------> Standardisation
 
   #' wl-08-07-2020, Wed: Use plyr::ddplyr. sds is for Ion
   if (is.null(stdev)) {
-    sds <- plyr::ddply(data_long_clean_scaled, "Ion",
-                       function(x) sd(x$logConcentration_corr))
+    sds <- plyr::ddply(data_long, "Ion", function(x) sd(x$log_corr))
     nam <- sds[,1]
     sds <- as.numeric(as.vector(sds[,2]))
     names(sds) <- nam
@@ -116,73 +127,64 @@ PreProcessing <- function(data = NULL, stdev = NULL) {
 
   #' wl-21-07-2020, Tue: Normalise corr based ion std. Factor always gives
   #' trouble
-  dat <- data_long_clean_scaled[,c("Ion","logConcentration_corr")]
+  dat <- data_long[,c("Ion","log_corr")]
   dat$Ion <- as.character(dat$Ion)
   tmp  <- apply(dat,1, function(x){
     idx <- as.character(x[1]) == names(sds)
     as.numeric(x[2])/sds[idx]
   })
-  data_long_clean_scaled_norm <- cbind(data_long_clean_scaled,
-                                       logConcentration_corr_norm = tmp)
+  data_long <- cbind(data_long, log_corr_norm = tmp)
 
   #' really need to sort? (keep consistent with original code)
-  data_long_clean_scaled_norm <-
-    data_long_clean_scaled_norm[order(data_long_clean_scaled_norm$Knockout),]
+  data_long <- data_long[order(data_long$Knockout),]
+  rownames(data_long) <- NULL
 
-  #' wl-22-07-2020, Wed: get summary of logConcentration_corr_norm
-  res <- plyr::ddply(data_long_clean_scaled_norm, "Ion", function(x) {
-    c(round(summary(x$logConcentration_corr_norm), 3),
-      round(var(x$logConcentration_corr_norm),3))
+  #' wl-22-07-2020, Wed: get summary of log_corr_norm
+  res <- plyr::ddply(data_long, "Ion", function(x) {
+    c(round(summary(x$log_corr_norm), 3), round(var(x$log_corr_norm), 3))
   })
   names(res)[ncol(res)]  <- "Variance"
-  df.mbc2 <- res
+  df_std <- res
 
   ## -------------------> symbolization
-  data_long_clean_scaled_norm$symb <-
-    ifelse((data_long_clean_scaled_norm$logConcentration_corr_norm > -3) &
-           (data_long_clean_scaled_norm$logConcentration_corr_norm < 3),
-           0, ifelse(data_long_clean_scaled_norm$logConcentration_corr_norm >= 3,
-                     1, -1))
+  data_long$symb <-
+    ifelse((data_long$log_corr_norm > -3) & (data_long$log_corr_norm < 3),
+           0, ifelse(data_long$log_corr_norm >= 3, 1, -1))
 
   ## -------------------> Aggregation of the batch replicas
   ## wl-13-07-2020, Mon: add prefix and change * as +
-  dat <- data_long_clean_scaled_norm[, c("Knockout", "Ion",
-                                         "logConcentration_corr_norm", "symb")]
-  data_long_clean_scaled_norm_unique <-
+  dat <- data_long[, c("Knockout", "Ion", "log_corr_norm", "symb")]
+  data_long_unique <-
     data.frame(stats::aggregate(. ~ Knockout + Ion, dat, median))
-
-  data_long_clean_scaled_norm_unique$symb <-
-    ifelse((data_long_clean_scaled_norm_unique$symb < 0.5) &
-           (data_long_clean_scaled_norm_unique$symb > -0.5),
-           0, ifelse(data_long_clean_scaled_norm_unique$symb >= 0.5, 1, -1))
+  ## update symb
+  data_long_unique$symb <-
+    ifelse((data_long_unique$symb < 0.5) & (data_long_unique$symb > -0.5),
+           0, ifelse(data_long_unique$symb >= 0.5, 1, -1))
 
   #' wl-23-07-2020, Thu: The missing values are from outlier detection
   #' wl-13-07-2020, Mon: Fill in structural(aggregation) missing values
-  data_wide_clean_scaled_norm_unique <-
-    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion,
+  data_wide_unique <-
+    reshape2::dcast(data_long_unique, Knockout ~ Ion,
                     # fill = 0, #' wl: keep it or not?
                     fun.aggregate = mean,
-                    value.var = "logConcentration_corr_norm")
-  data_wide_clean_scaled_norm_unique_symb <-
-    reshape2::dcast(data_long_clean_scaled_norm_unique, Knockout ~ Ion,
+                    value.var = "log_corr_norm")
+  data_wide_unique_symb <-
+    reshape2::dcast(data_long_unique, Knockout ~ Ion,
                     # fill = 0, #' wl: keep it or not?
                     fun.aggregate = mean,
                     value.var = "symb")
 
-  #' sum(is.na(data_wide_clean_scaled_norm_unique))
-  #' dim(data_wide_clean_scaled_norm_unique)
-  #' View(data_wide_clean_scaled_norm_unique)
+  #' sum(is.na(data_wide_unique))
+  #' dim(data_wide_unique)
 
   #' remove NAs
-  data_wide_clean_scaled_norm_unique <- 
-    na.omit(data_wide_clean_scaled_norm_unique)
-  data_wide_clean_scaled_norm_unique_symb <- 
-    na.omit(data_wide_clean_scaled_norm_unique_symb)
+  data_wide_unique <- na.omit(data_wide_unique)
+  data_wide_unique_symb <- na.omit(data_wide_unique_symb)
 
+  #' wl-02-09-2020, Wed: change 'log_corr' to 'log_corr_norm'
   p1 <-
-    ggplot(data = data_long_clean_scaled,
-           aes(x = factor(Batch_ID), y = logConcentration_corr,
-               col = factor(Batch_ID))) +
+    ggplot(data = data_long,
+           aes(x = factor(Batch_ID), y = log_corr_norm, col = factor(Batch_ID))) +
     geom_point(shape = 1) +
     facet_wrap(~Ion) +
     xlab("Batch.ID") +
@@ -191,8 +193,7 @@ PreProcessing <- function(data = NULL, stdev = NULL) {
     theme(axis.text.x = element_blank())
 
   p2 <-
-    ggplot(data = data_long_clean_scaled_norm_unique,
-           aes(x = logConcentration_corr_norm)) +
+    ggplot(data = data_long_unique, aes(x = log_corr_norm)) +
     geom_histogram(binwidth = .1) +
     facet_wrap(~Ion) +
     xlab("log(Concentration) (z-score)") +
@@ -200,17 +201,17 @@ PreProcessing <- function(data = NULL, stdev = NULL) {
     geom_vline(xintercept = c(-3, 3), col = "red")
 
   ## -------------------> Output
-  res <- list()
-  res$stats.raw_data <- df.s                        # raw data
-  res$stats.outliers <- df_outlier                  # outliers
-  res$stats.median_batch_corrected_data <- df.mbc   # median batch corrected data
-  res$stats.standardised_data <- df.mbc2            # standardised data
-  res$dataR.long <- data_long_clean_scaled_norm        # with Batch_ID
-  res$data.long <- data_long_clean_scaled_norm_unique  # without Batch_ID
-  res$data.wide <- data_wide_clean_scaled_norm_unique
-  res$data.wide_symb <- data_wide_clean_scaled_norm_unique_symb
-  res$plot.logConcentration_by_batch <- p1
-  res$plot.logConcentration_z_scores <- p2
+  res                   <- list()
+  res$stats.raw_data    <- df_raw                        # raw data
+  res$stats.outliers    <- df_outlier                    # outliers
+  res$stats.batch_data  <- df_bat                        # batch corrected data
+  res$stats.stand_data  <- df_std                        # standardised data
+  res$data.long_bat     <- data_long                     # with Batch_ID
+  res$data.long         <- data_long_unique              # without Batch_ID
+  res$data.wide         <- data_wide_unique
+  res$data.wide_symb    <- data_wide_unique_symb
+  res$plot.dot          <- p1
+  res$plot.hist         <- p2
   return(res)
 }
 
@@ -349,7 +350,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
 
   mat_long <- 
     reshape2::melt(mat, id=c("Knockout", "cluster"), variable.name = "Ion",
-                   value.name = "logConcentration_corr_norm")
+                   value.name = "log_corr_norm")
   
   res <- sapply(mat_long$cluster,function(x){
     tmp <- df_sub[df_sub$cluster==x, ]
@@ -359,7 +360,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
 
   clus_p <-
     ggplot(data = mat_long,
-           aes(x = Ion, y = logConcentration_corr_norm)) +
+           aes(x = Ion, y = log_corr_norm)) +
     facet_wrap(~cluster) +
     geom_line(aes(group = Knockout)) +
     stat_summary(fun.data = "mean_se", color = "red") +
@@ -492,7 +493,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   #' wl-26-07-2020, Sun: remove the largest clusters?
   ## Cluster 2 (largest cluster) contains genes with no phenotype hence not
   ## considered (input to 0)
-  if (F) df_sub <- df_sub[-which.max(df_sub[,2]),]
+  if (T) df_sub <- df_sub[-which.max(df_sub[,2]),]
 
   rownames(df_sub) <- c()
 

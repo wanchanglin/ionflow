@@ -1,7 +1,10 @@
-# wl-09-08-2020 \ Sun: Rscript test code for Linux. 
+# wl-09-08-2020, Sun: Rscript test code for Linux. 
 
 Rscript --vanilla ../ionflow.R \
   --ion_file "../test-data/iondata_test.tsv" \
+  --var_id "1" \
+  --batch_id "2" \
+  --data_id "3" \
   --std_file_sel "yes" \
   --std_file "../test-data/user_std.tsv" \
   --thres_clus "5.0" \

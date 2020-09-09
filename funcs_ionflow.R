@@ -1,23 +1,24 @@
 #' wl-02-07-2020, Thu: Put package files together
 #' wl-06-07-2020, Mon:
 #'  - Find '<<-'. Should be '<-'
-#'  - Global data sets: data_GOslim and data_ORF2KEGG are used in GeneClustering. 
+#'  - Global data sets: data_GOslim and data_ORF2KEGG are used in
+#'    GeneClustering.
 #' wl-12-07-2020, Sun: Find where NAs come from (caused by reshape2:dcast)
 #' wl-13-07-2020, Mon: Handle NAs in PreProcessing
-#' wl-14-07-2020, Tue: 
-#'   - Fix a bug in GeneNetwork. 
+#' wl-14-07-2020, Tue:
+#'   - Fix a bug in GeneNetwork.
 #'   - Option for PCA computation: use R core package stats
-#' wl-17-07-2020, Fri: Find more bugs in network analysis. 
+#' wl-17-07-2020, Fri: Find more bugs in network analysis.
 #' wl-22-07-2020, Wed: Re-write PreProcessing function. Add option to omit NAs
 #'   in wide format.
-#' wl-23-07-2020, Thu: Debug function for converting long to widedata format.  
+#' wl-23-07-2020, Thu: Debug function for converting long to widedata format.
 #'   Also check NAs in wide format. If use 'length', the zero is NAs in
 #'   wide format.
 #' wl-25-07-2020, Sat: Simplify GeneClustering
 #' wl-27-07-2020, Mon: Simplify GeneNetWork
-#' wl-30-07-2020, Thu: 
+#' wl-30-07-2020, Thu:
 #'   - GeneNetwork: Keep the largest cluster
-#'   - PreProcessing: Change user provided sd format. Two columns: Ion and sd 
+#'   - PreProcessing: Change user provided sd format. Two columns: Ion and sd
 #'   - Test on data subset: fewer batches and fewer Ion items
 #' wl-04-08-2020, Tue: re-write GeneClustering. Correct one mistake
 #' wl-14-08-2020, Fri: remove two R packages "pheatmap", "qgraph"
@@ -33,7 +34,7 @@ PreProcessing <- function(data = NULL, stdev = NULL, var_id = 1,
   ## get raw data stats summary
   ## wl-01-09-2020, Tue: update data set
   data <- data[,c(var_id, batch_id, data_id:ncol(data))]
-  names(data)[1:2] <- c("Knockout", "Batch_ID") 
+  names(data)[1:2] <- c("Knockout", "Batch_ID")
   mat  <- data[, -c(1:2)]
   ## mat <- data[, -c(1:(data_id - 1))]
 
@@ -42,7 +43,7 @@ PreProcessing <- function(data = NULL, stdev = NULL, var_id = 1,
   })))
   names(res)[ncol(res)]  <- "Variance"
   res <- cbind(Ion=names(mat),res)
-  rownames(res) <- NULL 
+  rownames(res) <- NULL
   df_raw <- res
 
   ## -------------------> Outlier detection
@@ -74,7 +75,7 @@ PreProcessing <- function(data = NULL, stdev = NULL, var_id = 1,
     data.frame(cbind(
       levels(data_long$Ion),
       table(data_long$Ion, data_long$Outlier),
-      round(table(data_long$Ion, data_long$Outlier)[, 2] / 
+      round(table(data_long$Ion, data_long$Outlier)[, 2] /
             dim(data_long)[1] * 100, 2)
     ))
   rownames(df_outlier) <- c()
@@ -113,7 +114,7 @@ PreProcessing <- function(data = NULL, stdev = NULL, var_id = 1,
     nam <- sds[,1]
     sds <- as.numeric(as.vector(sds[,2]))
     names(sds) <- nam
-  } else if (ncol(stdev) == 1){   
+  } else if (ncol(stdev) == 1){
     ## wl-30-07-2020, Thu: do NOT use one column. Alway with two columns:
     ## Ion and std.
     sds <- as.numeric(as.vector(stdev[, 1]))
@@ -184,7 +185,8 @@ PreProcessing <- function(data = NULL, stdev = NULL, var_id = 1,
   #' wl-02-09-2020, Wed: change 'log_corr' to 'log_corr_norm'
   p1 <-
     ggplot(data = data_long,
-           aes(x = factor(Batch_ID), y = log_corr_norm, col = factor(Batch_ID))) +
+           aes(x = factor(Batch_ID), y = log_corr_norm,
+               col = factor(Batch_ID))) +
     geom_point(shape = 1) +
     facet_wrap(~Ion) +
     xlab("Batch.ID") +
@@ -202,12 +204,12 @@ PreProcessing <- function(data = NULL, stdev = NULL, var_id = 1,
 
   ## -------------------> Output
   res                   <- list()
-  res$stats.raw_data    <- df_raw                        # raw data
-  res$stats.outliers    <- df_outlier                    # outliers
-  res$stats.batch_data  <- df_bat                        # batch corrected data
-  res$stats.stand_data  <- df_std                        # standardised data
-  res$data.long_bat     <- data_long                     # with Batch_ID
-  res$data.long         <- data_long_unique              # without Batch_ID
+  res$stats.raw_data    <- df_raw                  # raw data
+  res$stats.outliers    <- df_outlier              # outliers
+  res$stats.batch_data  <- df_bat                  # batch corrected data
+  res$stats.stand_data  <- df_std                  # standardised data
+  res$data.long_bat     <- data_long               # with Batch_ID
+  res$data.long         <- data_long_unique        # without Batch_ID
   res$data.wide         <- data_wide_unique
   res$data.wide_symb    <- data_wide_unique_symb
   res$plot.dot          <- p1
@@ -222,7 +224,7 @@ ExploratoryAnalysis <- function(data = NULL) {
   ## -------------------> Correlation
   col3 <- colorRampPalette(c("steelblue4", "white", "firebrick"))
 
-  corrplot.mixed(cor(data[, -1], use = "complete.obs"), number.cex = .7, 
+  corrplot.mixed(cor(data[, -1], use = "complete.obs"), number.cex = .7,
                  lower.col = "black", upper.col = col3(100))
   p_corr <- recordPlot()
 
@@ -261,8 +263,8 @@ ExploratoryAnalysis <- function(data = NULL) {
   ## pca_p
 
   ## -------------------> HEATMAP
-  ## wl-14-08-2020, Fri:  use ggplots 
-  heatmap.2(as.matrix(data[, -1]), scale = "row", col = bluered(100), 
+  ## wl-14-08-2020, Fri:  use ggplots
+  heatmap.2(as.matrix(data[, -1]), scale = "row", col = bluered(100),
             trace = "none", density.info = "none",
             hclustfun = function(x) hclust(x, method="ward.D"))
   ## library(pheatmap)
@@ -282,7 +284,7 @@ ExploratoryAnalysis <- function(data = NULL) {
   #' wl-13-08-2020, Thu: there is no 'qgraph' in conda forge and bio conda.
   #' Have to plot the correlation network instead.
   if (T) {
-    ## wl-14-08-2020, Fri: debug code only 
+    ## wl-14-08-2020, Fri: debug code only
     ## library(glasso)
     ## corr_reg <- glasso(corr, rho = 0.01)
     ## net <- network::network(corr_reg$w, directed = FALSE)
@@ -296,14 +298,14 @@ ExploratoryAnalysis <- function(data = NULL) {
     ## list.network.attributes(net)
     ## list.edge.attributes(net)
     ## list.vertex.attributes(net)
-    net_p <- 
+    net_p <-
       ggnet2(net, label = TRUE, mode = "spring",
              node.size = 10, edge.size = "weight_abs", edge.color = "color")
     ## net_p
   } else {
     ## wl-06-07-2020, Mon: 'cor_auto' is from package qgraph(lavaan)
     ## wl-28-07-2020, Tue: cad and corr are the same
-    cad <- cor_auto(data[, -1]) 
+    cad <- cor_auto(data[, -1])
     suppressWarnings(qgraph(cad,
                             graph = "glasso", layout = "spring",
                             tuning = 0.25, sampleSize = nrow(data[, -1])
@@ -341,17 +343,17 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
   df_sub <- df[df$nGenes > thres_clus, ]
   rownames(df_sub) <- c()
 
-  #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number 
+  #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number
   idx <- clus %in% df_sub$cluster
   #' sum(idx)
 
   mat <- data[idx,]
   mat$cluster <- clus[idx]
 
-  mat_long <- 
+  mat_long <-
     reshape2::melt(mat, id=c("Knockout", "cluster"), variable.name = "Ion",
                    value.name = "log_corr_norm")
-  
+
   res <- sapply(mat_long$cluster,function(x){
     tmp <- df_sub[df_sub$cluster==x, ]
     tmp <- paste0("Cluster ", tmp[1], " (", tmp[2], " genes)")
@@ -380,7 +382,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
 
     res <- data_GOslim %>%
       dplyr::mutate(Ontology = setNames(c("Biological process",
-                                          "Cellular component", 
+                                          "Cellular component",
                                           "Molecular function"),
                                         c("P", "C", "F"))[Ontology]) %>%
       dplyr::filter(ORFs %in% inputGeneSet) %>%
@@ -407,14 +409,14 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
   #' wl-25-07-2020, Sat: filter annotation results. Should set threshold for
   #' Percent?
   kego <- lapply(kego, function(x){
-    ## x[(x$Percent > 5) & 
+    ## x[(x$Percent > 5) &
     ##   (x$Ontology %in% c("Biological process", "Cellular component",
     ##                      "Molecular function")), ]
-    x[x$Percent > thres_anno,]  
+    x[x$Percent > thres_anno,]
   })
 
-  #' wl-04-08-2020, Tue: bind together 
-  kego <- dplyr::bind_rows(kego, .id = "Cluster" )  
+  #' wl-04-08-2020, Tue: bind together
+  kego <- dplyr::bind_rows(kego, .id = "Cluster" )
 
   ## -------------------> GO TERMS ENRICHMENT
 
@@ -439,7 +441,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
       hyperGTest(params)
     })
     names(res) <- ont
-    
+
     #' extract some results and move out filtering
     res_1 <- lapply(ont, function(y){
       hgOver <- res[[y]]
@@ -450,23 +452,23 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
                                   expectedCounts = expectedCounts(hgOver),
                                   geneCounts = geneCounts(hgOver),
                                   universeCounts = universeCounts(hgOver)),
-                            c("GO_ID", "Description", "Pvalue", "OddsRatio", 
+                            c("GO_ID", "Description", "Pvalue", "OddsRatio",
                               "ExpCount", "Count", "CountUniverse")),
                   Ontology = y) ## %>% dplyr::filter(Pvalue <= 0.05 & Count > 1)
     })
-   res_2 <- do.call("rbind", res_1) 
+   res_2 <- do.call("rbind", res_1)
   })
-  
+
   names(goen) <- paste0("Cluster ", df_sub[[1]], " (", df_sub[[2]], " genes)")
 
   #' binding and filtering
   goen <- lapply(goen, "[", -c(4, 5, 8)) %>%
-    dplyr::bind_rows(.id = "Cluster" ) %>% 
+    dplyr::bind_rows(.id = "Cluster" ) %>%
     dplyr::filter(Pvalue <= 0.05 & Count > 1)
 
   ## -------------------> Output
   res <- list()
-  res$stats.clusters <- df_sub               # selected clusters 
+  res$stats.clusters <- df_sub               # selected clusters
   res$plot.profiles <- clus_p                # plot cluster profiles
   res$stats.Kegg_Goslim_annotation <- kego   # KEGG AND GO SLIM ANNOTATION
   res$stats.Goterms_enrichment <- goen       # GO TERMS ENRICHMENT
@@ -475,7 +477,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
 
 #' =======================================================================
 #'
-GeneNetwork <- function(data = NULL, data_symb = NULL, 
+GeneNetwork <- function(data = NULL, data_symb = NULL,
                         thres_clus = 10, thres_corr = 0.6) {
 
   ## Cluster of gene with same profile
@@ -494,12 +496,14 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   ## Cluster 2 (largest cluster) contains genes with no phenotype hence not
   ## considered (input to 0)
   if (T) df_sub <- df_sub[-which.max(df_sub[,2]),]
+  #' wl-09-09-2020, Wed: if it true, the small data set may fail in network
+  #  analysis
 
   rownames(df_sub) <- c()
 
-  #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number 
+  #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number
   index <- clus %in% df_sub$cluster
- 
+
   ## cluster labels with info of accumulation/decumulation of Ions
   ## (high/lower abundance)
   ## Assign label
@@ -545,11 +549,11 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   ## Generate network
   net <- network::network(A, directed = FALSE)
 
-  #' wl-28-07-2020, Tue: add an vertex attribute and use 'Set2' in 
-  #'  RColorBrewer but the max. number of colors is 8 in 'Set2' 
-  #' wl-29-07-2020, Wed: Some layouts: circle, fruchtermanreingold, 
+  #' wl-28-07-2020, Tue: add an vertex attribute and use 'Set2' in
+  #'  RColorBrewer but the max. number of colors is 8 in 'Set2'
+  #' wl-29-07-2020, Wed: Some layouts: circle, fruchtermanreingold,
   #'  kamadakawai, spring
-  net %v% "Label" <- df.symb$Label 
+  net %v% "Label" <- df.symb$Label
   tmp <- unique(df.symb$Label)
   ## fix a bug (may from ggnet2)
   if (length(tmp) != 1) {
@@ -559,7 +563,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
     cpy <- "Set2"
   }
   net_p <- GGally::ggnet2(net, mode = "fruchtermanreingold",
-                          color = "Label", 
+                          color = "Label",
                           palette =  cpy,
                           edge.alpha = 0.5, size = 2, color.legend = "Label",
                           legend.size = 10, legend.position = "right")
@@ -570,27 +574,41 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   impact <- apply(data[index, -1], 1, norm, type = "2") # L2 norm
 
   df.res <- data.frame(
-    Knockout = data$Knockout[index],
-    impact = round(impact, 3),
-    betweenness = round(btw, 3),
-    log.betweenness = round(log(btw + 1), 3),
-    pos = factor(ifelse((impact < quantile(impact, .75)) & (log(btw + 1) < quantile(log(btw + 1), .75)), 1,
-      ifelse((impact < quantile(impact, .75)) & (log(btw + 1) > quantile(log(btw + 1), .75)), 2,
-        ifelse((impact > quantile(impact, .75)) & (log(btw + 1) < quantile(log(btw + 1), .75)), 3, 4)
-      )
-    )),
-    pos.label = factor(ifelse((impact < quantile(impact, .75)) & (log(btw + 1) < quantile(log(btw + 1), .75)), "Low impact, low betweenness",
-      ifelse((impact < quantile(impact, .75)) & (log(btw + 1) > quantile(log(btw + 1), .75)), "Low impact, high betweenness",
-        ifelse((impact > quantile(impact, .75)) & (log(btw + 1) < quantile(log(btw + 1), .75)), "High impact, low betweenness", "High impact, high betweenness")
-      )
-    ))
+      Knockout = data$Knockout[index],
+      impact = round(impact, 3),
+      betweenness = round(btw, 3),
+      log.betweenness = round(log(btw + 1), 3),
+      pos = factor(ifelse((impact < quantile(impact, .75)) &
+                          (log(btw + 1) < quantile(log(btw + 1), .75)), 1,
+                   ifelse((impact < quantile(impact, .75)) &
+                          (log(btw + 1) > quantile(log(btw + 1), .75)), 2,
+                   ifelse((impact > quantile(impact, .75)) &
+                          (log(btw + 1) < quantile(log(btw + 1), .75)), 3, 4)
+                   )
+                   )),
+      pos.label = factor(ifelse((impact < quantile(impact, .75)) &
+                                (log(btw + 1) < quantile(log(btw + 1), .75)),
+                                "Low impact, low betweenness",
+                         ifelse((impact < quantile(impact, .75)) &
+                                (log(btw + 1) > quantile(log(btw + 1), .75)),
+                                "Low impact, high betweenness",
+                         ifelse((impact > quantile(impact, .75)) &
+                                (log(btw + 1) < quantile(log(btw + 1), .75)),
+                                "High impact, low betweenness",
+                                "High impact, high betweenness")
+                         )
+                         ))
   )
   rownames(df.res) <- data$Knockout[index]
 
-  q1 <- row.names(subset(df.res, (impact < quantile(impact, .75)) & (log.betweenness < quantile(log.betweenness, .75))))
-  q2 <- row.names(subset(df.res, (impact < quantile(impact, .75)) & (log.betweenness > quantile(log.betweenness, .75))))
-  q3 <- row.names(subset(df.res, (impact > quantile(impact, .75)) & (log.betweenness < quantile(log.betweenness, .75))))
-  q4 <- row.names(subset(df.res, (impact > quantile(impact, .75)) & (log.betweenness > quantile(log.betweenness, .75))))
+  q1 <- row.names(subset(df.res, (impact < quantile(impact, .75)) &
+                                 (log.betweenness < quantile(log.betweenness, .75))))
+  q2 <- row.names(subset(df.res, (impact < quantile(impact, .75)) &
+                                 (log.betweenness > quantile(log.betweenness, .75))))
+  q3 <- row.names(subset(df.res, (impact > quantile(impact, .75)) &
+                                 (log.betweenness < quantile(log.betweenness, .75))))
+  q4 <- row.names(subset(df.res, (impact > quantile(impact, .75)) &
+                                 (log.betweenness > quantile(log.betweenness, .75))))
 
   #' idx <- unique(c(sample(q1,6),sample(q2,6),sample(q3,6),sample(q4,6)))
   #' wl-27-07-2020, Mon: random choose at least 24 genes to show in plot
@@ -608,7 +626,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   im_be_p <-
     ggplot(data = df.res, aes(x = impact, y = log.betweenness)) +
     geom_point(aes(col = pos.label), alpha = .3, size = 3) +
-    scale_color_manual(values = c("plum4", "palegreen4", "indianred", 
+    scale_color_manual(values = c("plum4", "palegreen4", "indianred",
                                   "cornflowerblue")) +
     theme_linedraw() +
     theme_light() +
@@ -617,7 +635,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
     theme(legend.title = element_blank()) +
     geom_text_repel(data = df.idx, aes(label = Knockout), size = 3.5) +
     geom_vline(xintercept = quantile(df.res$impact, .75), linetype = "dashed") +
-    geom_hline(yintercept = quantile(df.res$log.betweenness, .75), 
+    geom_hline(yintercept = quantile(df.res$log.betweenness, .75),
                linetype = "dashed") +
     xlab("Impact") +
     ylab("Log(betweenness+1)")
@@ -629,7 +647,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   gene.cluster <- df.symb[, c("Knockout", "Label")]
   names(gene.cluster) <- c("Knockout", "Cluster")
   df.res3 <- merge(df.res2, gene.cluster, by = "Knockout", all.x = TRUE)
-  
+
   #' wl-28-07-2020, Tue: better to return df.tab instead of df.tab2
   df.tab <- data.frame(table(df.res3$Cluster, df.res3$Position))
   names(df.tab) <- c("Cluster", "Position", "nGenes")
@@ -642,7 +660,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   res$plot.impact_betweenness <- im_be_p             # plot impact betweenees
   res$stats.impact_betweenness <- df.res3            # impact betweenees data
   res$stats.impact_betweenness_by_cluster <- df.tab2 # plot position by cluster
-  ## wl-28-07-2020, Tue: return this one as well 
+  ## wl-28-07-2020, Tue: return this one as well
   res$stats.impact_betweenness_tab <- df.tab         # contingency table
   return(res)
 }

@@ -3,6 +3,9 @@
 
 Rscript --vanilla ../ionflow.R \
   --ion_file "../test-data/iondata.tsv" \
+  --var_id "1" \
+  --batch_id "2" \
+  --data_id "3" \
   --std_file_sel "yes" \
   --std_file "../test-data/user_std.tsv" \
   --thres_clus "10.0" \

@@ -7,6 +7,7 @@
 #' wl-09-08-2020, Sun: recordPlot has problem for command line mode.
 #' wl-10-08-2020, Mon: sort out the base graphics saving via non-interactive
 #'  mode.
+#' wl-02-09-2020, Wed: change for PreProcessing
 
 ## ==== General settings ====
 rm(list = ls(all = T))
@@ -73,6 +74,12 @@ if (com_f) {
         type = "character",
         help = "ion concentration file in tabular format"
       ),
+      make_option("--var_id", type = "integer", default = 1,
+                  help = "Column index of variable"),
+      make_option("--batch_id", type = "integer", default = 2,
+                  help = "Column index of batch ID"),
+      make_option("--data_id", type = "integer", default = 3,
+                  help = "Start column index of data matrix"),
       make_option("--std_file_sel",
         type = "character", default = "no",
         help = "Load user defined std file or not"
@@ -174,6 +181,9 @@ if (com_f) {
 
     #' Input
     ion_file = paste0(tool_dir, "test-data/iondata_test.tsv"),
+    var_id = 1,
+    batch_id = 2,
+    data_id = 3,
     std_file_sel = "no",
     std_file = paste0(tool_dir, "test-data/user_std.tsv"),
 
@@ -204,7 +214,7 @@ if (com_f) {
     imbe_tab_out = paste0(tool_dir, "test-data/res/impact_betweenness_tab.tsv")
   )
 }
-#' print(opt)
+print(opt)
 
 suppressPackageStartupMessages({
   source(paste0(tool_dir, "funcs_ionflow.R"))
@@ -230,18 +240,20 @@ if (opt$std_file_sel == "yes") {
 
 ## ==== Pre-processing ====
 
-pre_proc <- PreProcessing(data = ion_data, stdev = std_data)
+pre_proc <- PreProcessing(data = ion_data, stdev = std_data,
+                          var_id = opt$var_id, batch_id = opt$batch_id,
+                          data_id = opt$data_id)
 
 #' save plot in pdf
 pdf(file = opt$pre_proc_pdf, onefile = T, width=15, height=10)
-plot(pre_proc$plot.logConcentration_by_batch)
-plot(pre_proc$plot.logConcentration_z_scores)
+plot(pre_proc$plot.dot)
+plot(pre_proc$plot.hist)
 dev.off()
 
 #' bind stats
 df_stats <- list(raw_data = pre_proc$stats.raw_data,
-                 bat_corr_data = pre_proc$stats.median_batch_corrected_data,
-                 std_data = pre_proc$stats.standardised_data)
+                 bat_data = pre_proc$stats.batch_data,
+                 std_data = pre_proc$stats.stand_data)
 df_stats <- dplyr::bind_rows(df_stats, .id = "Data_Set")
 row.names(df_stats) = NULL
 

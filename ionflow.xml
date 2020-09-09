@@ -1,6 +1,7 @@
 <!--
 wl-10-08-2020, Mon: commence
 wl-24-08-2020, Mon: first version
+wl-09-09-2020, Wed: add input data index for varaible, batch id and data
 -->
 
 <tool id="ionfow" name="IonFlow" version="0.1.0">
@@ -19,11 +20,14 @@ wl-24-08-2020, Mon: first version
 
       Rscript ${__tool_directory__}/ionflow.R
         --ion_file '$ion_file'
+        --var_id '$pre_proc.var_id'
+        --batch_id '$pre_proc.batch_id'
+        --data_id '$pre_proc.data_id'
 
         ## use std file or not
-        --std_file_sel '$std.std_file_sel'
-        #if $std.std_file_sel=='yes':
-          --std_file '$std.std_file'
+        --std_file_sel '$pre_proc.std.std_file_sel'
+        #if $pre_proc.std.std_file_sel=='yes':
+           --std_file '$pre_proc.std.std_file'
         #end if
 
         ## Clustering and network analysis
@@ -61,25 +65,41 @@ wl-24-08-2020, Mon: first version
            help="Ion data table with columns of Ions and rows of knockout. 
                  The first two columns must be names of knowckout and batch ID." />
 
-    <conditional name="std">
-      <param name="std_file_sel" type="select"
-             label="Use user defined ion std file or not" 
-             help="Use manul std values or calculation from ion data for 
-                   standardisation.">
-        <option value="yes" selected="true">Use defined file</option>
-        <option value="no">Caculate from data set</option>
-      </param>
+    <section name="pre_proc" title="Pre Processing" >
 
-      <when value="yes">
-        <param name="std_file" type="data"  format="tabular" 
-               label="STD file" 
-               help="A data matrix containing only two columns. The fisrt 
-                     column is the names of ion and the second one is std i
-                     values. " />
-      </when>
-      <when value="no">
-      </when>
-    </conditional>
+      <param name="var_id" type="integer" value="1"
+             label="Specify variable column index of input data"
+             help="Indicate which column will be the variable (Knockout)." />
+
+      <param name="batch_id" type="integer" value="2"
+             label="Specify batch ID column index of input data"
+             help="Indicate which column will be batch ID." />
+
+      <param name="data_id" type="integer" value="3"
+             label="Specify data start column index of input data"
+             help="Indicate which column will be the start of data matrix." />
+
+      <conditional name="std">
+        <param name="std_file_sel" type="select"
+              label="Use user defined ion std file or not" 
+              help="Use manul std values or calculation from ion data for 
+                    standardisation.">
+          <option value="yes" selected="true">Use defined file</option>
+          <option value="no">Caculate from data set</option>
+        </param>
+
+        <when value="yes">
+          <param name="std_file" type="data"  format="tabular" 
+                label="STD file" 
+                help="A data matrix containing only two columns. The fisrt 
+                      column is the names of ion and the second one is std i
+                      values. " />
+        </when>
+        <when value="no">
+        </when>
+      </conditional>
+
+    </section>
 
     <param name="thres_clus" type="float" value="10" 
             label="Specify clustering threshold"
@@ -134,7 +154,6 @@ wl-24-08-2020, Mon: first version
 
   <!-- =============================================================== -->
   <tests>
-    <!-- test on smaller data set -->
     <test>
       <param name="ion_file" value="iondata_test.tsv" />
       <param name="std_file_sel" value="yes" />
@@ -156,30 +175,6 @@ wl-24-08-2020, Mon: first version
       <output name="imbe_out" file="res/impact_betweenness.tsv" compare="diff" />
       <output name="imbe_tab_out" file="res/impact_betweenness_tab.tsv" />
     </test>
-
-    <!-- test on full data set -->
-    <test>
-      <param name="ion_file" value="iondata.tsv" />
-      <param name="std_file_sel" value="yes" />
-      <param name="std_file" value="user_std.tsv" />
-      <param name="thres_clus" value="10.0" />
-      <param name="thres_anno" value="5.0" />
-      <param name="thres_corr" value="0.6" />
-      <output name="pre_proc_pdf" file="res/pre_proc_1.pdf" compare="sim_size" />
-      <output name="df_stats_out" file="res/df_stats_1.tsv" />
-      <output name="outl_out" file="res/outl_1.tsv" />
-      <output name="data_wide_out" file="res/data_wide_1.tsv" />
-      <output name="data_wide_symb_out" file="res/data_wide_symb_1.tsv" />
-      <output name="exp_anal_pdf" file="res/exp_anal_1.pdf" compare="sim_size" />
-      <output name="gene_clus_pdf" file="res/gene_clus_1.pdf" compare="sim_size" />
-      <output name="clus_out" file="res/clus_1.tsv" />
-      <output name="anno_out" file="res/kegg_go_anno_1.tsv" />
-      <output name="enri_out" file="res/go_enri_1.tsv" />
-      <output name="gene_net_pdf" file="res/gene_net_1.pdf" compare="sim_size" />
-      <output name="imbe_out" file="res/impact_betweenness_1.tsv" />
-      <output name="imbe_tab_out" file="res/impact_betweenness_tab_1.tsv" />
-    </test>
-
   </tests>
 
   <!-- =============================================================== -->

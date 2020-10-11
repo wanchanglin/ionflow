@@ -42,5 +42,6 @@ Galaxy tool for processing and analysis of Ionomics data,
 ## Authors, contributors & contacts ##
 
 - Wanchang Lin (w.lin@imperial.ac.uk), Imperial College London
+- Jacopo Iacovacci (j.iacovacci@imperial.ac.uk), Imperial College London
 - Robert Glen (r.glen@imperial.ac.uk), Imperial College London
 - Julian Griffin (julian.griffin@imperial.ac.uk), Imperial College London

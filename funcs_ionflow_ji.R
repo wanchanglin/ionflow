@@ -1,6 +1,6 @@
 
 #' =======================================================================
-#'
+#' wl-12-10-2020, Mon: p_symd is never used. Should remove.
 PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
                           method_norm = c("median", "median+std", "none"),
                           control_lines = NULL,

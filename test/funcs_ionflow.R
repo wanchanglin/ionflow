@@ -1,29 +1,43 @@
+#' wl-02-07-2020, Thu: Put package files together
+#' wl-06-07-2020, Mon:
+#'  - Find '<<-'. Should be '<-'
+#'  - Global data sets: data_GOslim and data_ORF2KEGG are used in
+#'    GeneClustering.
+#' wl-12-07-2020, Sun: Find where NAs come from (caused by reshape2:dcast)
+#' wl-13-07-2020, Mon: Handle NAs in PreProcessing
+#' wl-14-07-2020, Tue:
+#'   - Fix a bug in GeneNetwork.
+#'   - Option for PCA computation: use R core package stats
+#' wl-17-07-2020, Fri: Find more bugs in network analysis.
+#' wl-22-07-2020, Wed: Re-write PreProcessing function. Add option to omit NAs
+#'   in wide format.
+#' wl-23-07-2020, Thu: Debug function for converting long to widedata format.
+#'   Also check NAs in wide format. If use 'length', the zero is NAs in
+#'   wide format.
+#' wl-25-07-2020, Sat: Simplify GeneClustering
+#' wl-27-07-2020, Mon: Simplify GeneNetWork
+#' wl-30-07-2020, Thu:
+#'   - GeneNetwork: Keep the largest cluster
+#'   - PreProcessing: Change user provided sd format. Two columns: Ion and sd
+#'   - Test on data subset: fewer batches and fewer Ion items
+#' wl-04-08-2020, Tue: re-write GeneClustering. Correct one mistake
+#' wl-14-08-2020, Fri: remove two R packages "pheatmap", "qgraph"
+#' wl-01-09-2020, Tue: Change data prparation in PreProcessing
+#' wl-02-09-2020, Wed: change variable names in PreProcessing
 
 #' =======================================================================
-#' wl-12-10-2020, Mon: p_symd is never used. Should remove.
-PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
-                          method_norm = c("median", "median+std", "none"),
-                          control_lines = NULL,
-                          control_use = c("control", "all", "control out"),
-                          method_outliers = c("mad", "IQR", "log.FC.dist", "none"),
-                          n_thrs = 4,
-                          stand_method = c("std", "mad", "custom"),
-                          stdev = NULL, symb_thr = 4, p_symb = 0.5
-                          ) {
+#'
+PreProcessing <- function(data = NULL, stdev = NULL, var_id = 1,
+                          batch_id = 2, data_id = 3) {
 
   ## -------------------> Import data
-  # ji: get sample id
-  data$sample_id <- rownames(data)
+  ## get raw data stats summary
+  ## wl-01-09-2020, Tue: update data set
+  data <- data[, c(var_id, batch_id, data_id:ncol(data))]
+  names(data)[1:2] <- c("Knockout", "Batch_ID")
+  mat  <- data[, -c(1:2)]
+  ## mat <- data[, -c(1:(data_id - 1))]
 
-  data <- data[, c(var_id, ncol(data), batch_id, data_id:(ncol(data) - 1))]
-  names(data)[1:3] <- c("Line", "Sample_ID", "Batch_ID")
-  mat  <- data[, -c(1:3)]
-
-  ## ji: Remove samples with zeros or negative or missing values
-  data <- data[!is.na(sum(mat)), ]
-  data <- data[!(sum(mat <= 0) > 0), ]
-
-  # get summary stats
   res <- as.data.frame(t(sapply(mat, function(x) {
     c(round(summary(x), 3), round(var(x), 3))
   })))
@@ -32,160 +46,143 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   rownames(res) <- NULL
   df_raw <- res
 
-  # data long format
-  data_long <- reshape2::melt(data, id = c("Line", "Batch_ID"),
+  ## -------------------> Outlier detection
+  ## wl-22-07-2020, Wed: more general for Ion contents
+  data_long <- reshape2::melt(data, id = c("Knockout", "Batch_ID"),
                               variable.name = "Ion",
                               value.name = "Concentration")
 
-  # convert to factors before using levels function.
-  data_long$Line <- factor(data_long$Line)
+  ## wl-06-07-2020, Mon: convert to factors before using levels function.
+  ## wl-30-07-2020, Thu: replace 'as.factor' with 'factor' in case level
+  ##  updating
+  data_long$Knockout <- factor(data_long$Knockout)
   data_long$Ion <- factor(data_long$Ion)
   ion_name <- levels(data_long$Ion)
 
+  #' wl-23-07-2020, Thu: get Knockout outliers based on Ion
+  data_long <- plyr::ddply(data_long, "Ion", function(x) {
+    lowerq <- quantile(x$Concentration, na.rm = T)[2]
+    upperq <- quantile(x$Concentration, na.rm = T)[4]
+    iqr <- upperq - lowerq
+    extreme.t.upper <- (iqr * 3) + upperq
+    extreme.t.lower <- lowerq - (iqr * 3)
+    x$Outlier <- ifelse((x$Concentration > extreme.t.upper) |
+                        (x$Concentration < extreme.t.lower), 1, 0)
+    return(x)
+  })
+
+  df_outlier <-
+    data.frame(cbind(
+      levels(data_long$Ion),
+      table(data_long$Ion, data_long$Outlier),
+      round(table(data_long$Ion, data_long$Outlier)[, 2] /
+            dim(data_long)[1] * 100, 2)
+    ))
+  rownames(df_outlier) <- c()
+  colnames(df_outlier) <- c("Ion", "no_outlier", "outlier", "outlier(%)")
+
+  #' wl-23-07-2020, Thu: remove Knockout outliers in terms of Ion.
+  data_long <- data_long[data_long$Outlier < 1, ]
+  data_long <- subset(data_long, select = -Outlier)
+  #' wl-23-07-2020, Thu: NAs in wide format due to outlier removal.
+  #' con.tab(data_long)  #' NAs: 28 in 1454 Knockout
+
   ## -------------------> Median batch correction
-  data_long$control <- rep(1, length(data_long$Concentration))
   data_long$log <- log(data_long$Concentration)
 
-  # control use in batch correction
-  if (length(control_lines) > 0) {
-    if (control_use == "all") { }
-    if (control_use == "control") {
-      data_long$control[!(data_long$Line %in% control_lines)] <- 0
-    }
-    if (control_use == "control.out") {
-      data_long$control[data_long$Line %in% control_lines] <- 0
-    }
-  }
-
-  # batch correction methods
-  if (method_norm == "median") {
-    data_long <- plyr::ddply(data_long, "Ion", function(x) {
-      res <- plyr::ddply(x, "Batch_ID", function(y) {
-        med <- median(y$log[y$control == 1])
-        y$log_corr <- y$log - med
-        y
-      })
+  #' wl-23-07-2020, Thu: remove median of each batch in each Ion
+  data_long <- plyr::ddply(data_long, "Ion", function(x) {
+    res <- plyr::ddply(x, "Batch_ID", function(y) {
+      med <- median(y$log)
+      y$log_corr <- y$log - med
+      y
     })
-  }
-  if (method_norm == "median+std") {
-    data_long <- plyr::ddply(data_long, "Ion", function(x) {
-      res <- plyr::ddply(x, "Batch_ID", function(y) {
-        med <- median(y$log[y$control == 1])
-        st_de <- sd(y$log[y$control == 1])
-        y$log_corr <- y$log - med - st_de
-        y
-      })
-    })
-  }
-  if (method_norm == "none") {
-    data_long$log_corr <- data_long$log
-  }
+  })
 
-  # get correction stats
+  #' get stats of log_corr
   res <- plyr::ddply(data_long, "Ion", function(x) {
     c(round(summary(x$log_corr), 3), round(var(x$log_corr), 3))
   })
   names(res)[ncol(res)]  <- "Variance"
   df_bat <- res
 
-  ## -------------------> Outlier detection
-  # ji: outlier detection methods
-  if (method_outliers == "IQR") {
-    data_long <- plyr::ddply(data_long, "Ion", function(x) {
-      res <- plyr::ddply(x, "Batch_ID", function(y) {
-        lowerq <- quantile(y$log_corr, na.rm = T)[2]
-        upperq <- quantile(y$log_corr, na.rm = T)[4]
-        iqr <- upperq - lowerq
-        extreme.t.upper <- (iqr * n_thrs) + upperq
-        extreme.t.lower <- lowerq - (iqr * n_thrs)
-        y$Outlier <- ifelse((y$log_corr > extreme.t.upper) |
-                              (y$log_corr < extreme.t.lower), 1, 0)
-        return(y)
-      })
-    })
-  }
-  if (method_outliers == "mad") {
-    data_long <- plyr::ddply(data_long, "Ion", function(x) {
-      res <- plyr::ddply(x, "Batch_ID", function(y) {
-        med_dev <- mad(y$log_corr)
-        extreme.t.upper <- (med_dev * n_thrs)
-        extreme.t.lower <- - (med_dev * n_thrs)
-        y$Outlier <- ifelse((y$log_corr > extreme.t.upper) |
-                              (y$log_corr < extreme.t.lower), 1, 0)
-        return(y)
-      })
-    })
-  }
-  if (method_outliers == "log.FC.dist") {
-    data_long <- plyr::ddply(data_long, "Ion", function(x) {
-      res <- plyr::ddply(x, "Batch_ID", function(y) {
-        extreme.t.upper <- n_thrs
-        extreme.t.lower <- -n_thrs
-        y$Outlier <- ifelse((y$log_corr > extreme.t.upper) |
-                              (y$log_corr < extreme.t.lower), 1, 0)
-        return(y)
-      })
-    })
-  }
-  if (method_outliers == "none") {
-    data_long$Outlier <- rep(0, length(data_long$Line))
-  }
-
-  df_outlier <-
-    data.frame(cbind(
-        levels(data_long$Ion),
-        table(data_long$Ion, data_long$Outlier),
-        round(table(data_long$Ion, data_long$Outlier)[, 2] /
-              dim(data_long)[1] * 100, 2)
-    ))
-  rownames(df_outlier) <- c()
-  colnames(df_outlier) <- c("Ion", "no_outlier", "outlier", "outlier(%)")
-
-  # ji: remove samples with at least an outlier value
-  samples_to_exclude <- unique(data_long$Sample_ID[data_long$Outlier == 1])
-  data_long <- data_long[!(data_long$Sample_ID %in% samples_to_exclude), ]
-
   ## -------------------> Standardisation
-  # ji: standardisation methods
-  if (stand_method == "std") {
+
+  #' wl-08-07-2020, Wed: Use plyr::ddplyr. sds is for Ion
+  if (is.null(stdev)) {
     sds <- plyr::ddply(data_long, "Ion", function(x) sd(x$log_corr))
     nam <- sds[, 1]
     sds <- as.numeric(as.vector(sds[, 2]))
     names(sds) <- nam
-  }
-  if (stand_method == "mad") {
-    sds <- plyr::ddply(data_long, "Ion", function(x) mad(x$log_corr))
-    nam <- sds[, 1]
-    sds <- as.numeric(as.vector(sds[, 2]))
-    names(sds) <- nam
-  }
-  if (stand_method == "custom") {
-    # specific 2-columns format for vector of sd
+  } else if (ncol(stdev) == 1) {
+    ## wl-30-07-2020, Thu: do NOT use one column. Alway with two columns:
+    ## Ion and std.
+    sds <- as.numeric(as.vector(stdev[, 1]))
+    names(sds) <- ion_name     ## problem if the size is not consistent.
+  } else {
     sds <- stdev
     nam <- sds[, 1]
     sds <- as.numeric(as.vector(sds[, 2]))
     names(sds) <- nam
   }
 
-  # ji: aggregate measurements at gene level (median)
-  data_wide_gene_log_norm <-
-    reshape2::dcast(data_long, Line ~ Ion,
-                    fun.aggregate = median, value.var = "log_corr")
+  #' wl-21-07-2020, Tue: Normalise corr based ion std. Factor always gives
+  #' trouble
+  dat <- data_long[, c("Ion", "log_corr")]
+  dat$Ion <- as.character(dat$Ion)
+  tmp  <- apply(dat, 1, function(x) {
+    idx <- as.character(x[1]) == names(sds)
+    as.numeric(x[2]) / sds[idx]
+  })
+  data_long <- cbind(data_long, log_corr_norm = tmp)
 
-  # ji: normalise by stds
-  data_wide_gene_z_score <- data_wide_gene_log_norm
-  data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)] <-
-    data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)] / sds
+  #' really need to sort? (keep consistent with original code)
+  data_long <- data_long[order(data_long$Knockout), ]
+  rownames(data_long) <- NULL
 
-  ## -------------------> Symbolisation
-  symb_profiles <- data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)]
-  symb_profiles[(symb_profiles > -symb_thr) & (symb_profiles < symb_thr)]  <- 0
-  symb_profiles[symb_profiles >= symb_thr]  <- 1
-  symb_profiles[symb_profiles <= -symb_thr]  <- -1
+  #' wl-22-07-2020, Wed: get summary of log_corr_norm
+  res <- plyr::ddply(data_long, "Ion", function(x) {
+    c(round(summary(x$log_corr_norm), 3), round(var(x$log_corr_norm), 3))
+  })
+  names(res)[ncol(res)]  <- "Variance"
+  df_std <- res
 
-  data_wide_gene_symb <- cbind(data_wide_gene_z_score$Line, symb_profiles)
+  ## -------------------> symbolization
+  data_long$symb <-
+    ifelse((data_long$log_corr_norm > -3) & (data_long$log_corr_norm < 3),
+           0, ifelse(data_long$log_corr_norm >= 3, 1, -1))
 
-  # stats
+  ## -------------------> Aggregation of the batch replicas
+  ## wl-13-07-2020, Mon: add prefix and change * as +
+  dat <- data_long[, c("Knockout", "Ion", "log_corr_norm", "symb")]
+  data_long_unique <-
+    data.frame(stats::aggregate(. ~ Knockout + Ion, dat, median))
+  ## update symb
+  data_long_unique$symb <-
+    ifelse((data_long_unique$symb < 0.5) & (data_long_unique$symb > -0.5),
+           0, ifelse(data_long_unique$symb >= 0.5, 1, -1))
+
+  #' wl-23-07-2020, Thu: The missing values are from outlier detection
+  #' wl-13-07-2020, Mon: Fill in structural(aggregation) missing values
+  data_wide_unique <-
+    reshape2::dcast(data_long_unique, Knockout ~ Ion,
+                    # fill = 0, #' wl: keep it or not?
+                    fun.aggregate = mean,
+                    value.var = "log_corr_norm")
+  data_wide_unique_symb <-
+    reshape2::dcast(data_long_unique, Knockout ~ Ion,
+                    # fill = 0, #' wl: keep it or not?
+                    fun.aggregate = mean,
+                    value.var = "symb")
+
+  #' sum(is.na(data_wide_unique))
+  #' dim(data_wide_unique)
+
+  #' remove NAs
+  data_wide_unique <- na.omit(data_wide_unique)
+  data_wide_unique_symb <- na.omit(data_wide_unique_symb)
+
+  #' wl-02-09-2020, Wed: change 'log_corr' to 'log_corr_norm'
   p1 <-
     ggplot(data = data_long,
            aes(x = factor(Batch_ID), y = log_corr_norm,
@@ -207,12 +204,12 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 
   ## -------------------> Output
   res                   <- list()
-  res$stats.raw_data    <- df_raw                        # raw data
-  res$stats.outliers    <- df_outlier                    # outliers
-  res$stats.batch_data  <- df_bat                        # batch corrected data
-  res$stats.stand_data  <- df_std                        # standardised data
-  res$data.long_bat     <- data_long                     # with Batch_ID
-  res$data.long         <- data_long_unique              # without Batch_ID
+  res$stats.raw_data    <- df_raw                  # raw data
+  res$stats.outliers    <- df_outlier              # outliers
+  res$stats.batch_data  <- df_bat                  # batch corrected data
+  res$stats.stand_data  <- df_std                  # standardised data
+  res$data.long_bat     <- data_long               # with Batch_ID
+  res$data.long         <- data_long_unique        # without Batch_ID
   res$data.wide         <- data_wide_unique
   res$data.wide_symb    <- data_wide_unique_symb
   res$plot.dot          <- p1
@@ -249,7 +246,7 @@ ExploratoryAnalysis <- function(data = NULL) {
 
   #' PCA loading
   PCA_loadings <- data.frame(pca$rotation)
-  rownames(PCA_loadings) <- data$Line
+  rownames(PCA_loadings) <- data$Knockout
   PCA_loadings <- PCA_loadings[, 1:2]
 
   #' PCA plot using ggplot2
@@ -330,22 +327,20 @@ ExploratoryAnalysis <- function(data = NULL) {
 
 #' =======================================================================
 #'
-GeneClustering <- function(data = NULL, data_symb = NULL,
-                           min_clust_size = 10, thres_anno = 5) {
+GeneClustering <- function(data = NULL, data_symb = NULL, thres_clus = 10,
+                           thres_anno = 5) {
 
   ## -------------------> Define clusters
-  # group together strings of symbols at zero Hamming distance
-  res.dist <- dist(data_symb[, -1], method = "manhattan")
+  res.dist <- dist(data_symb[, -1], method = "manhattan")  #' "euclidean"
   res.hc <- hclust(d = res.dist, method = "single")
-  #' ji-25-09-2020, Fri: !
-  clus <- cutree(res.hc, h = 0)
+  clus <- cutree(res.hc, h = 0) # distance 0
 
   data_symb$cluster <- clus
 
   ## -------------------> Subset cluster with more than 10 genes
   df <- as.data.frame(table(clus), stringsAsFactors = F)
   names(df) <- c("cluster", "nGenes")
-  df_sub <- df[df$nGenes > min_clust_size, ]
+  df_sub <- df[df$nGenes > thres_clus, ]
   rownames(df_sub) <- c()
 
   #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number
@@ -356,7 +351,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
   mat$cluster <- clus[idx]
 
   mat_long <-
-    reshape2::melt(mat, id=c("Line", "cluster"), variable.name = "Ion",
+    reshape2::melt(mat, id=c("Knockout", "cluster"), variable.name = "Ion",
                    value.name = "log_corr_norm")
 
   res <- sapply(mat_long$cluster,function(x){
@@ -369,22 +364,20 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
     ggplot(data = mat_long,
            aes(x = Ion, y = log_corr_norm)) +
     facet_wrap(~cluster) +
-    geom_line(aes(group = Line)) +
+    geom_line(aes(group = Knockout)) +
     stat_summary(fun.data = "mean_se", color = "red") +
     labs(x = "", y = "") +
     theme(legend.position = "none",
           axis.text.x = element_text(angle = 90, hjust = 1),
           axis.text = element_text(size = 10))
 
-#' =======================================================================
-#'
   ## -------------------> KEGG AND GO SLIM ANNOTATION
   mat <- data_symb[idx,]
   data_GOslim$Ontology <- as.character(data_GOslim$Ontology)
 
   kego <- plyr::dlply(mat, "cluster", function(x) {
     ## x <- subset(mat, cluster == "15")
-    inputGeneSet <- as.character(x$Line)
+    inputGeneSet <- as.character(x$Knockout)
     N <- length(inputGeneSet)
 
     res <- data_GOslim %>%
@@ -428,12 +421,12 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
   ## -------------------> GO TERMS ENRICHMENT
 
   #' wl-04-08-2020, Tue: re-write
-  universeGenes <- as.character(data_symb$Line)
+  universeGenes <- as.character(data_symb$Knockout)
   mat <- data_symb[idx,]
 
   goen <- plyr::dlply(mat, "cluster", function(x) {
     ## x <- subset(mat, cluster == "10")
-    inputGeneSet <- as.character(x$Line)
+    inputGeneSet <- as.character(x$Knockout)
     ont <- c("BP", "MF", "CC")         ## wl-04-08-2020, Tue: why three?
     res <- lapply(ont, function (y) {
       params <- new("GOHyperGParams",
@@ -485,42 +478,38 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
 #' =======================================================================
 #'
 GeneNetwork <- function(data = NULL, data_symb = NULL,
-                        min_clust_size = 10, thres_corr = 0.6,
-                        method_corr = c("pearson", "spearman", "kendall",
-                                        "cosine","mahal_cosine",
-                                        "hybrid_mahal_cosine")
-                        ) {
+                        thres_clus = 10, thres_corr = 0.6) {
 
   ## Cluster of gene with same profile
-  #' ji-22-09-2020, Tue: clustring already performed ?
   res.dist <- dist(data_symb[, -1], method = "manhattan")
   res.hc <- hclust(d = res.dist, method = "single")
-  #' ji-25-09-2020, Fri: equivalent to zero Hamming distance !
-  symb.clusters <- cutree(res.hc, h = 0) # distance 0
+  clus <- cutree(res.hc, h = 0) # distance 0
 
-  data_symb$clusters <- symb.clusters
+  data_symb$cluster <- clus
 
-  df <- as.data.frame(table(symb.clusters), stringsAsFactors = F)
+  df <- as.data.frame(table(clus), stringsAsFactors = F)
   names(df) <- c("cluster", "nGenes")
   ## filter clusters with threshold
-  df_sub <- df[df$nGenes > min_clust_size, ]
+  df_sub <- df[df$nGenes > thres_clus, ]
 
   #' wl-26-07-2020, Sun: remove the largest clusters?
   ## Cluster 2 (largest cluster) contains genes with no phenotype hence not
   ## considered (input to 0)
   if (T) df_sub <- df_sub[-which.max(df_sub[, 2]), ]
+  #' wl-09-09-2020, Wed: if it true, the small data set may fail in network
+  #  analysis
 
   rownames(df_sub) <- c()
 
   #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number
-  index <- symb.clusters %in% df_sub$cluster
+  index <- clus %in% df_sub$cluster
 
   ## cluster labels with info of accumulation/decumulation of Ions
   ## (high/lower abundance)
   ## Assign label
   df.symb <- data_symb[index, ]
   lab <- plyr::ddply(df.symb, "cluster", function(x) {
-    mat <- x[, !names(df.symb) %in% c("Line", "cluster")]
+    mat <- x[, !names(df.symb) %in% c("Knockout", "cluster")]
     res <- NULL
     if (length(names(which(colSums(mat == 1) > 0))) > 0) {
       res <- paste0(names(which(colSums(mat == 1) > 0)), "(+)")
@@ -533,7 +522,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   names(lab)[2] <- "label"
 
   #' update df_sub with labels
-  df_sub <- cbind(df_sub, label=lab[, 2])
+  df_sub <- cbind(df_sub, label = lab[, 2])
 
   #' get cluster+gene+label names
   label <- sapply(df.symb$cluster, function(x) {
@@ -544,17 +533,8 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   df.symb$Label <- label
 
   ## Compute empirical correlation matrix
-  if (method_corr == "pearson" ||
-      method_corr == "spearman" ||
-      method_corr == "kendall")
-    corrGenes <- cor(t(as.matrix(data[, -1])), method = method_corr,
-                    use = "pairwise.complete.obs")
-  else if (method_corr == "cosine")
-    corrGenes <- cosine(t(as.matrix(data[, -1])))
-  else if (method_corr == "mahal_cosine")
-    corrGenes <- cosM(t(as.matrix(data[, -1])), node = "normal")
-  else if (method_corr == "hybrid_mahal_cosine")
-    corrGenes <- cosM(t(as.matrix(data[, -1])), node = "hybrid")
+  corrGenes <- cor(t(as.matrix(data[, -1])), method = "pearson",
+                   use = "pairwise.complete.obs")
 
   ## Subset correlation matrix based on the cluster filtering
   A <- corrGenes[index, index]
@@ -594,27 +574,41 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   impact <- apply(data[index, -1], 1, norm, type = "2") # L2 norm
 
   df.res <- data.frame(
-    Line = data$Line[index],
-    impact = round(impact, 3),
-    betweenness = round(btw, 3),
-    log.betweenness = round(log(btw + 1), 3),
-    pos = factor(ifelse((impact < quantile(impact, .75)) & (log(btw + 1) < quantile(log(btw + 1), .75)), 1,
-      ifelse((impact < quantile(impact, .75)) & (log(btw + 1) > quantile(log(btw + 1), .75)), 2,
-        ifelse((impact > quantile(impact, .75)) & (log(btw + 1) < quantile(log(btw + 1), .75)), 3, 4)
-      )
-    )),
-    pos.label = factor(ifelse((impact < quantile(impact, .75)) & (log(btw + 1) < quantile(log(btw + 1), .75)), "Low impact, low betweenness",
-      ifelse((impact < quantile(impact, .75)) & (log(btw + 1) > quantile(log(btw + 1), .75)), "Low impact, high betweenness",
-        ifelse((impact > quantile(impact, .75)) & (log(btw + 1) < quantile(log(btw + 1), .75)), "High impact, low betweenness", "High impact, high betweenness")
-      )
-    ))
+      Knockout = data$Knockout[index],
+      impact = round(impact, 3),
+      betweenness = round(btw, 3),
+      log.betweenness = round(log(btw + 1), 3),
+      pos = factor(ifelse((impact < quantile(impact, .75)) &
+                          (log(btw + 1) < quantile(log(btw + 1), .75)), 1,
+                   ifelse((impact < quantile(impact, .75)) &
+                          (log(btw + 1) > quantile(log(btw + 1), .75)), 2,
+                   ifelse((impact > quantile(impact, .75)) &
+                          (log(btw + 1) < quantile(log(btw + 1), .75)), 3, 4)
+                   )
+                   )),
+      pos.label = factor(ifelse((impact < quantile(impact, .75)) &
+                                (log(btw + 1) < quantile(log(btw + 1), .75)),
+                                "Low impact, low betweenness",
+                         ifelse((impact < quantile(impact, .75)) &
+                                (log(btw + 1) > quantile(log(btw + 1), .75)),
+                                "Low impact, high betweenness",
+                         ifelse((impact > quantile(impact, .75)) &
+                                (log(btw + 1) < quantile(log(btw + 1), .75)),
+                                "High impact, low betweenness",
+                                "High impact, high betweenness")
+                         )
+                         ))
   )
-  rownames(df.res) <- data$Line[index]
+  rownames(df.res) <- data$Knockout[index]
 
-  q1 <- row.names(subset(df.res, (impact < quantile(impact, .75)) & (log.betweenness < quantile(log.betweenness, .75))))
-  q2 <- row.names(subset(df.res, (impact < quantile(impact, .75)) & (log.betweenness > quantile(log.betweenness, .75))))
-  q3 <- row.names(subset(df.res, (impact > quantile(impact, .75)) & (log.betweenness < quantile(log.betweenness, .75))))
-  q4 <- row.names(subset(df.res, (impact > quantile(impact, .75)) & (log.betweenness > quantile(log.betweenness, .75))))
+  q1 <- row.names(subset(df.res, (impact < quantile(impact, .75)) &
+                                 (log.betweenness < quantile(log.betweenness, .75))))
+  q2 <- row.names(subset(df.res, (impact < quantile(impact, .75)) &
+                                 (log.betweenness > quantile(log.betweenness, .75))))
+  q3 <- row.names(subset(df.res, (impact > quantile(impact, .75)) &
+                                 (log.betweenness < quantile(log.betweenness, .75))))
+  q4 <- row.names(subset(df.res, (impact > quantile(impact, .75)) &
+                                 (log.betweenness > quantile(log.betweenness, .75))))
 
   #' idx <- unique(c(sample(q1,6),sample(q2,6),sample(q3,6),sample(q4,6)))
   #' wl-27-07-2020, Mon: random choose at least 24 genes to show in plot
@@ -639,7 +633,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
     theme(legend.position = "bottom") +
     guides(colour = guide_legend(nrow = 2)) +
     theme(legend.title = element_blank()) +
-    geom_text_repel(data = df.idx, aes(label = Line), size = 3.5) +
+    geom_text_repel(data = df.idx, aes(label = Knockout), size = 3.5) +
     geom_vline(xintercept = quantile(df.res$impact, .75), linetype = "dashed") +
     geom_hline(yintercept = quantile(df.res$log.betweenness, .75),
                linetype = "dashed") +
@@ -648,11 +642,11 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
 
   rownames(df.res) <- c()
   df.res2 <- df.res[, -c(4, 5)]
-  names(df.res2) <- c("Line", "Impact", "Betweenness", "Position")
+  names(df.res2) <- c("Knockout", "Impact", "Betweenness", "Position")
 
-  gene.cluster <- df.symb[, c("Line", "Label")]
-  names(gene.cluster) <- c("Line", "Cluster")
-  df.res3 <- merge(df.res2, gene.cluster, by = "Line", all.x = TRUE)
+  gene.cluster <- df.symb[, c("Knockout", "Label")]
+  names(gene.cluster) <- c("Knockout", "Cluster")
+  df.res3 <- merge(df.res2, gene.cluster, by = "Knockout", all.x = TRUE)
 
   #' wl-28-07-2020, Tue: better to return df.tab instead of df.tab2
   df.tab <- data.frame(table(df.res3$Cluster, df.res3$Position))
@@ -671,46 +665,3 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   return(res)
 }
 
-
-#' =======================================================================
-#' Mahalanobis Cosine
-#' Function to compute the mahalanobis cosine between pairs of objects in an
-#' n-by-m data matrix or data frame.
-cosM <- function(x, mode = c("normal", "hybrid")) {
-
-  library("pracma")
-  # compute covariance
-  Cov = cov(x, use = "pairwise.complete.obs")
-  n = dim(x)[1]
-  m = dim(x)[2]
-
-  # compute eigenvalues
-  Eig <- eigen(Cov)
-  score = mrdivide(x, t(Eig$vectors))
-
-  if (any(Eig$values < 0))
-    stop("Cov Not Positive SemiDefinite !")
-
-  # compute pairwise cosine similarity
-  C = zeros(1, m*(m-1) / 2)
-  d = 0
-  for (i in 1:(n-1)) {
-    for (j in (i+1):n) {
-      d = d+1
-      # inner product and norms
-      inner = 0
-      normx1 = 0
-      normy1 = 0
-      for (l in 1:m) {
-        if (mode == "normal") {
-          inner = score[i,l] * score[j,l] / Eig$values[l]
-        } else if (mode == "hybrid") {
-          inner = score[i,l] * score[j, l]
-        }
-        normx1 = normx1 + (score[i, l] * score[i, l] / Eig$values[l])
-        normy1 = normy1 + (score[j, l] * score[j, l] / Eig$values[l])
-      }
-      C[d] = inner / (sqrt(normx1) * sqrt(normy1))
-    }
-  }
-}

@@ -235,7 +235,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 
 #' =======================================================================
 #'
-ExploratoryAnalysis <- function(data = NULL) {
+ExploratoryAnalysis <- function(data = NULL){
 
   ## -------------------> Correlation
   col3 <- colorRampPalette(c("steelblue4", "white", "firebrick"))
@@ -596,9 +596,9 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   } else if (method_corr == "cosine") {
     corrGenes <- cosine(t(as.matrix(data[, -1])))
   } else if (method_corr == "mahal_cosine") {
-    corrGenes <- cosM(t(as.matrix(data[, -1])), node = "normal")
+    corrGenes <- cosM(t(as.matrix(data[, -1])), mode = "normal")
   } else if (method_corr == "hybrid_mahal_cosine") {
-    corrGenes <- cosM(t(as.matrix(data[, -1])), node = "hybrid")
+    corrGenes <- cosM(t(as.matrix(data[, -1])), mode = "hybrid")
   }
 
   ## Subset correlation matrix based on the cluster filtering

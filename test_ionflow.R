@@ -20,6 +20,19 @@ source("funcs_ionflow.R")
 ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko.tsv", header = T, sep = "\t")
 
 ## ==== Pre-processing ====
+data = ion_data 
+var_id = 1
+batch_id = 3
+data_id = 5
+method_norm = "median"
+control_lines =  "BY4741"
+control_use = "control"
+method_outliers = "mad"
+n_thrs = 3
+stand_method = "std"
+stdev = NULL
+symb_thr = 4
+
 pre_proc <- PreProcessing(data = ion_data, 
                           var_id = 1, batch_id = 3, data_id = 5,
                           method_norm = "median",
@@ -28,7 +41,7 @@ pre_proc <- PreProcessing(data = ion_data,
                           method_outliers = "mad",
                           n_thrs = 3,
                           stand_method = "std",
-                          stdev = NULL, symb_thr = 4, p_symb = 0.5)
+                          stdev = NULL, symb_thr = 4)
 
 #' names(pre_proc)
 #' [1] "stats.raw_data"    "stats.outliers"    "stats.batch_data"
@@ -42,8 +55,8 @@ head(pre_proc$data.long)
 head(pre_proc$data.gene.logFC)
 head(pre_proc$data.gene.zscores)
 head(pre_proc$data.gene.symb)
-#' pre_proc$plot.dot             #' wl-19-10-2020, Mon: problem. 
-#' pre_proc$plot.hist            #' wl-19-10-2020, Mon: problem. 
+pre_proc$plot.dot             #' wl-19-10-2020, Mon: problem. 
+pre_proc$plot.hist            #' wl-19-10-2020, Mon: problem. 
 
 ## ==== Exploratory analysis ====
 exp_anal <- ExploratoryAnalysis(data = pre_proc$data.gene.zscores)
@@ -79,7 +92,7 @@ data_ORF2KEGG <- read.table("./libraries/data_ORF2KEGG.tsv", sep = "\t", header 
 
 gene_clust <- GeneClustering(data = pre_proc$data.gene.zscores,
                              data_symb = pre_proc$data.gene.symb,
-                             thres_clus = 10, thres_anno = 5)
+                             min_clust_size = 10, thres_anno = 5)
 gene_clust$plot.profiles
 gene_clust$stats.clusters
 gene_clust$stats.Kegg_Goslim_annotation

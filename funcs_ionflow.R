@@ -1,6 +1,7 @@
 
 #' =======================================================================
 #' wl-12-10-2020, Mon: p_symd is never used. Should remove.
+#' wl-20-10-2020, Tue: fix several bugs
 PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
                           method_norm = c("median", "median+std", "none"),
                           control_lines = NULL,
@@ -8,7 +9,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
                           method_outliers = c("mad", "IQR", "log.FC.dist", "none"),
                           n_thrs = 4,
                           stand_method = c("std", "mad", "custom"),
-                          stdev = NULL, symb_thr = 4, p_symb = 0.5) {
+                          stdev = NULL, symb_thr = 4) {
 
 
   ## -------------------> Import data
@@ -23,7 +24,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   data <- data[!is.na(sum(mat)), ]
   data <- data[!(sum(mat <= 0) > 0), ]
 
-  # get summary stats
+  #' get summary stats
   res <- as.data.frame(t(sapply(mat, function(x) {
     c(round(summary(x), 3), round(var(x), 3))
   })))
@@ -32,13 +33,13 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   rownames(res) <- NULL
   df_raw <- res
 
-  # data long format
+  #' data long format
   data_long <- reshape2::melt(data,
     id = c("Line", "Sample_ID", "Batch_ID"), variable.name = "Ion",
     value.name = "Concentration"
   )
 
-  # convert to factors before using levels function.
+  #' convert to factors before using levels function.
   data_long$Line <- factor(data_long$Line)
   data_long$Ion <- factor(data_long$Ion)
   ion_name <- levels(data_long$Ion)
@@ -47,9 +48,11 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   data_long$control <- rep(1, length(data_long$Concentration))
   data_long$log <- log(data_long$Concentration)
 
-  # control use in batch correction
+  #' ji: control use in batch correction
+  #' wl-20-10-2020, Tue: select control variables: all, some or some-not.
+  #' dirt-trick: use control_lines to decide using control or not.
   if (length(control_lines) > 0) {
-    if (control_use == "all") {}
+    if (control_use == "all") { }
     if (control_use == "control") {
       data_long$control[!(data_long$Line %in% control_lines)] <- 0
     }
@@ -58,7 +61,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     }
   }
 
-  # batch correction methods
+  #' batch correction methods
   if (method_norm == "median") {
     data_long <- plyr::ddply(data_long, "Ion", function(x) {
       res <- plyr::ddply(x, "Batch_ID", function(y) {
@@ -82,7 +85,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     data_long$log_corr <- data_long$log
   }
 
-  # get correction stats
+  #' get correction stats
   res <- plyr::ddply(data_long, "Ion", function(x) {
     c(round(summary(x$log_corr), 3), round(var(x$log_corr), 3))
   })
@@ -90,7 +93,8 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   df_bat <- res
 
   ## -------------------> Outlier detection
-  # ji: outlier detection methods
+  
+  #' ji: outlier detection methods
   if (method_outliers == "IQR") {
     data_long <- plyr::ddply(data_long, "Ion", function(x) {
       res <- plyr::ddply(x, "Batch_ID", function(y) {
@@ -131,7 +135,6 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 
   if (method_outliers == "none") {
     data_long$Outlier <- rep(0, length(data_long$Line))
-
     df_outlier <- data.frame()
   } else {
     df_outlier <- data.frame(cbind(
@@ -149,6 +152,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   data_long <- data_long[!(data_long$Sample_ID %in% samples_to_exclude), ]
 
   ## -------------------> Standardisation
+
   #' ji: standardisation methods
   if (stand_method == "std") {
     sds <- plyr::ddply(data_long, "Ion", function(x) sd(x$log_corr))
@@ -181,20 +185,21 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)] <-
     data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)] / sds
 
-
   ## -------------------> Symbolisation
   symb_profiles <- data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)]
   symb_profiles[(symb_profiles > -symb_thr) & (symb_profiles < symb_thr)] <- 0
   symb_profiles[symb_profiles >= symb_thr] <- 1
   symb_profiles[symb_profiles <= -symb_thr] <- -1
 
-  data_wide_gene_symb <- cbind(data_wide_gene_z_score$Line, symb_profiles)
+  #' wl-20-10-2020, Tue: fix a bug
+  data_wide_gene_symb <- cbind(Line = data_wide_gene_z_score$Line,
+                               symb_profiles)
 
-  # stats
+  #' wl-20-10-2020, Tue: fix a bug
   p1 <-
     ggplot(
       data = data_long,
-      aes(x = factor(Batch_ID), y = log_corr_norm, col = factor(Batch_ID))
+      aes(x = factor(Batch_ID), y = log_corr, col = factor(Batch_ID))
     ) +
     geom_point(shape = 1) +
     facet_wrap(~Ion) +
@@ -203,10 +208,13 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     theme(legend.position = "none") +
     theme(axis.text.x = element_blank())
 
+  #' wl-20-10-2020, Tue: fix a bug
+  tmp <- data_wide_gene_z_score 
+  dat <- reshape2::melt(tmp, id = "Line")
   p2 <-
-    ggplot(data = data_wide_gene_z_score, aes(x = log_corr_norm)) +
+    ggplot(data = dat, aes(x = value)) +
     geom_histogram(binwidth = .1) +
-    facet_wrap(~Ion) +
+    facet_wrap(~variable) +
     xlab("Concentration (z-score)") +
     ylab("Frequency") +
     geom_vline(xintercept = c(-3, 3), col = "red")
@@ -216,7 +224,6 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   res$stats.raw_data     <- df_raw                    # raw data
   res$stats.outliers     <- df_outlier                # outliers
   res$stats.batch_data   <- df_bat                    # batch corrected data
-  # res$stats.stand_data <- df_std                    # standardised data
   res$data.long          <- data_long                 # with Batch_ID
   res$data.gene.logFC    <- data_wide_gene_log_norm
   res$data.gene.zscores  <- data_wide_gene_z_score
@@ -696,7 +703,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
 
   #' wl-19-10-2020, Mon: bug here. Need to go back to PreProcesing. The
   #' following line is temporary.
-  names(df.symb)[1] <- "Line" 
+  #' names(df.symb)[1] <- "Line" 
   gene.cluster <- df.symb[, c("Line", "Label")]
 
   names(gene.cluster) <- c("Line", "Cluster")

@@ -1,7 +1,6 @@
 
 #' =======================================================================
-#' wl-12-10-2020, Mon: p_symd is never used. Should remove.
-#' wl-20-10-2020, Tue: fix several bugs
+#'
 PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
                           method_norm = c("median", "median+std", "none"),
                           control_lines = NULL,
@@ -49,8 +48,6 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   data_long$log <- log(data_long$Concentration)
 
   #' ji: control use in batch correction
-  #' wl-20-10-2020, Tue: select control variables: all, some or some-not.
-  #' dirt-trick: use control_lines to decide using control or not.
   if (length(control_lines) > 0) {
     if (control_use == "all") { }
     if (control_use == "control") {
@@ -93,7 +90,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   df_bat <- res
 
   ## -------------------> Outlier detection
-  
+
   #' ji: outlier detection methods
   if (method_outliers == "IQR") {
     data_long <- plyr::ddply(data_long, "Ion", function(x) {
@@ -209,7 +206,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     theme(axis.text.x = element_blank())
 
   #' wl-20-10-2020, Tue: fix a bug
-  tmp <- data_wide_gene_z_score 
+  tmp <- data_wide_gene_z_score
   dat <- reshape2::melt(tmp, id = "Line")
   p2 <-
     ggplot(data = dat, aes(x = value)) +
@@ -236,10 +233,8 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 #' =======================================================================
 #'
 ExploratoryAnalysis <- function(data = NULL){
-
   ## -------------------> Correlation
   col3 <- colorRampPalette(c("steelblue4", "white", "firebrick"))
-
   corrplot.mixed(cor(data[, -1], use = "complete.obs"),
     number.cex = .7,
     lower.col = "black", upper.col = col3(100)
@@ -278,19 +273,10 @@ ExploratoryAnalysis <- function(data = NULL){
     ylab(dfn[2]) +
     labs(title = "PCA")
 
-  ## pca_p
-
   ## -------------------> HEATMAP
-  ## wl-14-08-2020, Fri:  use ggplots
-  heatmap.2(as.matrix(data[, -1]),
-    scale = "row", col = bluered(100),
-    trace = "none", density.info = "none",
-    hclustfun = function(x) hclust(x, method = "ward.D")
-  )
-  ## library(pheatmap)
-  ## pheatmap(data[, -1], show_rownames = F, cluster_cols = T, cluster_rows = T,
-  ##          legend = T, fontsize = 15, clustering_method = "ward.D",
-  ##          scale = "row")
+  pheatmap(data[, -1], show_rownames = F, cluster_cols = T, cluster_rows = T,
+           legend = T, fontsize = 15, clustering_method = "ward.D",
+           scale = "row")
   pheat <- recordPlot()
 
   ## -------------------> PAIRWISE CORRELATION MAP
@@ -337,14 +323,12 @@ ExploratoryAnalysis <- function(data = NULL){
     Graph_lasso <- recordPlot()
   }
 
-  ## -------------------> Output
   res <- list()
   res$plot.Pearson_correlation <- p_corr
   res$plot.PCA_Individual <- pca_p
   res$data.PCA_loadings <- PCA_loadings
   res$plot.heatmap <- pheat
   res$plot.pairwise_correlation_map <- pcm
-  ## res$plot.regularized_partial_correlation_network <- Graph_lasso
   res$plot.correlation_network <- net_p
   return(res)
 }
@@ -355,7 +339,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
                            min_clust_size = 10, thres_anno = 5) {
 
   ## -------------------> Define clusters
-  # group together strings of symbols at zero Hamming distance
+  #' group together strings of symbols at zero Hamming distance
   res.dist <- dist(data_symb[, -1], method = "manhattan")
   res.hc <- hclust(d = res.dist, method = "single")
   #' ji-25-09-2020, Fri: !
@@ -369,9 +353,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
   df_sub <- df[df$nGenes > min_clust_size, ]
   rownames(df_sub) <- c()
 
-  #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number
   idx <- clus %in% df_sub$cluster
-  #' sum(idx)
 
   mat <- data[idx, ]
   mat$cluster <- clus[idx]
@@ -386,7 +368,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
     tmp <- df_sub[df_sub$cluster == x, ]
     tmp <- paste0("Cluster ", tmp[1], " (", tmp[2], " genes)")
   })
-  mat_long$cluster <- res #' update cluster with gene numbers
+  mat_long$cluster <- res
 
   clus_p <-
     ggplot(
@@ -410,7 +392,6 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
   data_GOslim$Ontology <- as.character(data_GOslim$Ontology)
 
   kego <- plyr::dlply(mat, "cluster", function(x) {
-    ## x <- subset(mat, cluster == "15")
     inputGeneSet <- as.character(x$Line)
     N <- length(inputGeneSet)
 
@@ -446,12 +427,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
   })
   names(kego) <- paste0("Cluster ", df_sub[[1]], " (", df_sub[[2]], " genes)")
 
-  #' wl-25-07-2020, Sat: filter annotation results. Should set threshold for
-  #' Percent?
   kego <- lapply(kego, function(x) {
-    ## x[(x$Percent > 5) &
-    ##   (x$Ontology %in% c("Biological process", "Cellular component",
-    ##                      "Molecular function")), ]
     x[x$Percent > thres_anno, ]
   })
 
@@ -459,15 +435,12 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
   kego <- dplyr::bind_rows(kego, .id = "Cluster")
 
   ## -------------------> GO TERMS ENRICHMENT
-
-  #' wl-04-08-2020, Tue: re-write
   universeGenes <- as.character(data_symb$Line)
   mat <- data_symb[idx, ]
 
   goen <- plyr::dlply(mat, "cluster", function(x) {
-    ## x <- subset(mat, cluster == "10")
     inputGeneSet <- as.character(x$Line)
-    ont <- c("BP", "MF", "CC") ## wl-04-08-2020, Tue: why three?
+    ont <- c("BP", "MF", "CC")
     res <- lapply(ont, function(y) {
       params <- new("GOHyperGParams",
         geneIds = inputGeneSet,
@@ -483,7 +456,6 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
     })
     names(res) <- ont
 
-    #' extract some results and move out filtering
     res_1 <- lapply(ont, function(y) {
       hgOver <- res[[y]]
       tmp <- cbind(setNames(
@@ -502,7 +474,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
         )
       ),
       Ontology = y
-      ) ## %>% dplyr::filter(Pvalue <= 0.05 & Count > 1)
+      )
     })
     res_2 <- do.call("rbind", res_1)
   })
@@ -514,7 +486,6 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
     dplyr::bind_rows(.id = "Cluster") %>%
     dplyr::filter(Pvalue <= 0.05 & Count > 1)
 
-  ## -------------------> Output
   res <- list()
   res$stats.clusters <- df_sub # selected clusters
   res$plot.profiles <- clus_p # plot cluster profiles
@@ -524,7 +495,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
 }
 
 #' =======================================================================
-#' wl-19-10-2020, Mon: fix some bugs.
+#'
 GeneNetwork <- function(data = NULL, data_symb = NULL,
                         min_clust_size = 10, thres_corr = 0.6,
                         method_corr = c(
@@ -701,35 +672,158 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   df.res2 <- df.res[, -c(4, 5)]
   names(df.res2) <- c("Line", "Impact", "Betweenness", "Position")
 
-  #' wl-19-10-2020, Mon: bug here. Need to go back to PreProcesing. The
-  #' following line is temporary.
-  #' names(df.symb)[1] <- "Line" 
   gene.cluster <- df.symb[, c("Line", "Label")]
 
   names(gene.cluster) <- c("Line", "Cluster")
   df.res3 <- merge(df.res2, gene.cluster, by = "Line", all.x = TRUE)
 
-  #' wl-28-07-2020, Tue: better to return df.tab instead of df.tab2
   df.tab <- data.frame(table(df.res3$Cluster, df.res3$Position))
   names(df.tab) <- c("Cluster", "Position", "nGenes")
   df.tab <- dplyr::arrange(df.tab, desc(nGenes))
   df.tab2 <- df.tab %>% dplyr::group_by(Cluster) %>% top_n(1, nGenes)
 
-  ## -------------------> Output
   res <- list()
   res$plot.pnet <- net_p # plot gene network
   res$plot.impact_betweenness <- im_be_p # plot impact betweenees
   res$stats.impact_betweenness <- df.res3 # impact betweenees data
   res$stats.impact_betweenness_by_cluster <- df.tab2 # plot position by cluster
-  ## wl-28-07-2020, Tue: return this one as well
   res$stats.impact_betweenness_tab <- df.tab # contingency table
   return(res)
+}
+
+#' =======================================================================
+#' wl-03-10-2020, Sat:  KEGG enrichment analysis for symbolization data
+#'
+kegg_enrich <- function(data, min_clust_size = 10, pval = 0.05,
+                        annot_pkg =  "org.Sc.sgd.db") {
+
+  #' Define clusters
+  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size, f_max = F)
+
+  universe_genes <- as.character(data[, 1])
+
+  #' Update data for enrichment analysis
+  data$cluster <- clust$clus
+  mat <- data[clust$idx, ]
+
+  enrich <- plyr::dlply(mat, "cluster", function(x) {
+    input_gene_set <- as.character(x[, 1])
+    params <- new("KEGGHyperGParams",
+                  geneIds = input_gene_set,
+                  universeGeneIds = universe_genes,
+                  annotation = annot_pkg,
+                  categoryName = "KEGG",
+                  pvalueCutoff = 1,
+                  testDirection = "over")
+
+    over <- hyperGTest(params)
+  })
+
+  #' There is no explicit methods for getting manual summary table.
+  summ <- lapply(enrich, function(x) {
+    tmp <- summary(x)
+    if (nrow(tmp) == 0) tmp <- NULL #' wl-04-10-2020, Sun: it happens very often.
+    return(tmp)
+  })
+  summ <- summ[!sapply(summ,is.null)]
+
+  tab_sub <- clust$tab_sub
+  tmp <- names(summ)
+  idx <- tab_sub[, 1] %in% tmp
+  tab_sub <- tab_sub[idx, ]
+  names(summ) <- paste0("Cluster ", tab_sub[[1]], " (", tab_sub[[2]], " genes)")
+
+  #' binding and filtering
+  summ <- lapply(summ, "[", -c(3, 4)) %>%
+    dplyr::bind_rows(.id = "Cluster") %>%
+    dplyr::filter(Pvalue <= pval & Count > 1)
+
+  return(summ)
+}
+
+#' =======================================================================
+#' wl-03-10-2020, Sat:  GO enrichment analysis for symbolization data
+#'
+go_enrich <- function(data, min_clust_size = 10, pval = 0.05, ont = "BP",
+                      annot_pkg =  "org.Sc.sgd.db") {
+
+  ont <- match.arg(ont, c("BP", "MF", "CC"))
+
+  #' Define clusters
+  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size, f_max = F)
+
+  universe_genes <- as.character(data[, 1])
+
+  #' Update data for enrichment analysis
+  data$cluster <- clust$clus
+  mat <- data[clust$idx, ]
+
+  enrich <- plyr::dlply(mat, "cluster", function(x) {
+    input_gene_set <- as.character(x[, 1])
+    params <- new("GOHyperGParams",
+                  geneIds = input_gene_set,
+                  universeGeneIds = universe_genes,
+                  annotation = annot_pkg,
+                  categoryName = "GO",
+                  ontology = ont,
+                  pvalueCutoff = 1,
+                  conditional = T,
+                  testDirection = "over")
+
+    over <- hyperGTest(params)
+  })
+
+  summ <- lapply(enrich, function(x) {
+    Pvalue        <- round(pvalues(x), digit = 4)
+    ID            <- names(Pvalue)
+    Description   <- Term(ID)
+    OddsRatio     <- oddsRatios(x)
+    ExpCount      <- expectedCounts(x)
+    Count         <- geneCounts(x)
+    CountUniverse <- universeCounts(x)
+
+    tab <- cbind(ID, Description, Pvalue, OddsRatio, ExpCount, Count,
+                 CountUniverse)
+    rownames(tab) <- NULL
+    tab <- na.omit(tab)   #' wl-03-10-2020, Sat: this is why summary fails.
+    tab <- data.frame(tab, Ontology = ont)
+  })
+
+  names(summ) <- paste0("Cluster ", clust$tab_sub[[1]], " (",
+                        clust$tab_sub[[2]], " genes)")
+
+  summ <- lapply(summ, "[", -c(4, 5)) %>%
+    dplyr::bind_rows(.id = "Cluster") %>%
+    dplyr::filter(Pvalue <= pval & Count > 1)
+
+  return(summ)
+}
+
+#' =======================================================================
+#' wl-04-10-2020, Sun: Hierarchical clustering
+#'
+gene_clus <- function(x, min_clust_size = 10, f_max = FALSE) {
+  dis <- stats::dist(x, method = "manhattan")
+  hc <- hclust(d = dis, method = "single")
+  clus <- cutree(hc, h = 0)
+
+  tab <- as.data.frame(table(clus), stringsAsFactors = F)
+  names(tab) <- c("cluster", "nGenes")
+  tab_sub <- tab[tab$nGenes > min_clust_size, ]
+  if (f_max) tab_sub <- tab_sub[-which.max(tab_sub[, 2]), ]
+  tab_sub <- tab_sub[order(tab_sub$nGenes, decreasing = T), ]
+  rownames(tab_sub) <- NULL
+
+  idx <- clus %in% tab_sub$cluster
+
+  return(list(clus = clus, idx = idx, tab = tab, tab_sub = tab_sub))
 }
 
 #' =======================================================================
 #' Mahalanobis Cosine
 #' Function to compute the mahalanobis cosine between pairs of objects in an
 #' n-by-m data matrix or data frame.
+#'
 cosM <- function(x, mode = c("normal", "hybrid")) {
   #' library("pracma")
   #' compute covariance

@@ -1,6 +1,7 @@
 #' wl-11-10-2020, Sun: test PreProcessing
 #' wl-19-10-2020, Mon: test and debug jacopo's changes. Fix some bugs.
-#' wl-21-10-2020, Wed; test enrichment analysis
+#' wl-21-10-2020, Wed: test enrichment analysis
+#' wl-26-10-2020, Mon: test GeneNetwork with cosM
 
 ## ==== General settings ====
 rm(list = ls(all = T))
@@ -57,6 +58,8 @@ gene_net <- GeneNetwork(data = pre_proc$data.gene.zscores,
                         data_symb = pre_proc$data.gene.symb,
                         min_clust_size = 10, thres_corr = 0.6,
                         method_corr = "pearson")
+                        #' method_corr = "hybrid_mahal_cosine")
+                        #' method_corr = "mahal_cosine")
 
 gene_net$plot.pnet
 gene_net$plot.impact_betweenness
@@ -90,6 +93,7 @@ gene_clust$stats.Goterms_enrichment
 #' wl-21-10-2020, Wed: DEBUG stuff
 
 if (F) {
+
   #' for PreProcessing
   data = ion_data
   var_id = 1

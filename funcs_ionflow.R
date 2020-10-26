@@ -565,11 +565,11 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
     corrGenes <- cor(t(as.matrix(data[, -1])), method = method_corr,
                      use = "pairwise.complete.obs")
   } else if (method_corr == "cosine") {
-    corrGenes <- cosine(t(as.matrix(data[, -1])))
+    corrGenes <- cosine(t(as.matrix(data[, -1]))) #' wl-26-10-2020, Mon: where is cosine?
   } else if (method_corr == "mahal_cosine") {
-    corrGenes <- cosM(t(as.matrix(data[, -1])), mode = "normal")
+    corrGenes <- cosM(data[, -1], mode = "normal") # wl-26-10-2020, Mon: remove t
   } else if (method_corr == "hybrid_mahal_cosine") {
-    corrGenes <- cosM(t(as.matrix(data[, -1])), mode = "hybrid")
+    corrGenes <- cosM(data[, -1], mode = "hybrid") # wl-26-10-2020, Mon: remove t
   }
 
   ## Subset correlation matrix based on the cluster filtering
@@ -825,6 +825,7 @@ gene_clus <- function(x, min_clust_size = 10, f_max = FALSE) {
 #' n-by-m data matrix or data frame.
 #'
 cosM <- function(x, mode = c("normal", "hybrid")) {
+
   #' library("pracma")
   #' compute covariance
   Cov <- cov(x, use = "pairwise.complete.obs")
@@ -835,6 +836,7 @@ cosM <- function(x, mode = c("normal", "hybrid")) {
   Eig <- eigen(Cov)
   score <- mrdivide(as.matrix(x), t(Eig$vectors))
 
+  #' wl-25-10-2020, Sun: n must be larger than m othwise this script fails.
   if (any(Eig$values < 0)) {
     stop("Cov Not Positive SemiDefinite !")
   }
@@ -861,5 +863,16 @@ cosM <- function(x, mode = c("normal", "hybrid")) {
       C[d] <- inner / (sqrt(normx1) * sqrt(normy1))
     }
   }
-  return(C)
+
+  #' wl-25-10-2020, Sun: convert to symmetric matrix
+  if (T) { 
+    mat <- matrix(1, n, n)
+    mat[upper.tri(mat)] <- C
+    mat[lower.tri(mat)]  <- t(mat)[lower.tri(mat)]
+    dimnames(mat) <- list(rownames(x),rownames(x))
+    return(mat)
+  } else {
+    return(C)   
+  }
 }
+

@@ -565,11 +565,11 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
     corrGenes <- cor(t(as.matrix(data[, -1])), method = method_corr,
                      use = "pairwise.complete.obs")
   } else if (method_corr == "cosine") {
-    corrGenes <- cosine(t(as.matrix(data[, -1]))) #' wl-26-10-2020, Mon: where is cosine?
+    corrGenes <- cosine(t(as.matrix(data[, -1])))
   } else if (method_corr == "mahal_cosine") {
-    corrGenes <- cosM(data[, -1], mode = "normal") # wl-26-10-2020, Mon: remove t
+    corrGenes <- cosM(data[, -1], mode = "normal")
   } else if (method_corr == "hybrid_mahal_cosine") {
-    corrGenes <- cosM(data[, -1], mode = "hybrid") # wl-26-10-2020, Mon: remove t
+    corrGenes <- cosM(data[, -1], mode = "hybrid")
   }
 
   ## Subset correlation matrix based on the cluster filtering
@@ -820,13 +820,56 @@ gene_clus <- function(x, min_clust_size = 10, f_max = FALSE) {
 }
 
 #' =======================================================================
-#' Mahalanobis Cosine
+#' ji: Mahalanobis Cosine
 #' Function to compute the mahalanobis cosine between pairs of objects in an
 #' n-by-m data matrix or data frame.
+#' x <- iris[, -5]
+#' res <- cosM(x, mode = "normal")
 #'
 cosM <- function(x, mode = c("normal", "hybrid")) {
 
+  #' --------------------------------------------------------------------
   #' library("pracma")
+  #' pinv: Pseudoinverse (Moore-Penrose Generalized Inverse)
+  pinv <- function (A, tol = .Machine$double.eps^(2/3)) {
+    stopifnot(is.numeric(A), length(dim(A)) == 2, is.matrix(A))
+    s <- svd(A)
+    p <- (s$d > max(tol * s$d[1], 0))
+    if (all(p)) {
+      mp <- s$v %*% (1/s$d * t(s$u))
+    } else if (any(p)) {
+      mp <- s$v[, p, drop=FALSE] %*% (1/s$d[p] * t(s$u[, p, drop=FALSE]))
+    } else {
+      mp <- matrix(0, nrow=ncol(A), ncol=nrow(A))
+    }
+    return(mp)
+  }
+
+  mldivide <- function(A, B, pinv = TRUE) {
+    stopifnot( is.numeric(A) || is.complex(A), is.numeric(B) || is.complex(B))
+    if (is.vector(A)) A <- as.matrix(A)
+    if (is.vector(B)) B <- as.matrix(B)
+    if (nrow(A) != nrow(B)) {
+      stop("Matrices 'A' and 'B' must have the same number of rows.")
+    }
+    if (pinv) {
+      pinv(t(A) %*% A) %*% t(A) %*% B
+    } else {
+      qr.solve(A, B)
+    }
+  }
+
+  mrdivide <- function(A, B, pinv = TRUE) {
+    stopifnot( is.numeric(A) || is.complex(A), is.numeric(B) || is.complex(B))
+    if (is.vector(A)) A <- t(A)
+    if (is.vector(B)) B <- t(B)
+    if (ncol(A) != ncol(B)) {
+      stop("Matrices 'A' and 'B' must have the same number of columns.")
+    }
+    t(mldivide(t(B), t(A), pinv = pinv))
+  }
+  #' --------------------------------------------------------------------
+
   #' compute covariance
   Cov <- cov(x, use = "pairwise.complete.obs")
   n <- dim(x)[1]
@@ -866,13 +909,54 @@ cosM <- function(x, mode = c("normal", "hybrid")) {
 
   #' wl-25-10-2020, Sun: convert to symmetric matrix
   if (T) { 
-    mat <- matrix(1, n, n)
-    mat[upper.tri(mat)] <- C
-    mat[lower.tri(mat)]  <- t(mat)[lower.tri(mat)]
-    dimnames(mat) <- list(rownames(x),rownames(x))
+    #' wl's implementation
+    #' mat <- matrix(1, n, n)
+    #' mat[lower.tri(mat, diag = F)] <- C
+    #' mat[which(lower.tri(t(mat)), arr.ind = T)[, c(2,1)]] <- C
+
+    #' ji's implemetation
+    mat <- matrix(0, n, n)  
+    mat[lower.tri(mat, diag = F)] <- C
+    mat <- mat + t(mat)  
+    diag(mat) <- 1
+
+    dimnames(mat) <- list(rownames(x), rownames(x))
     return(mat)
   } else {
     return(C)   
   }
+
 }
 
+#' =======================================================================
+#' From R package "lsa"
+#' x <- iris[, -5]
+#' cosine(as.matrix(x)) 
+#' cosine(as.matrix(t(x))) 
+#'
+cosine <- function(x, y = NULL) {
+  if (is.matrix(x) && is.null(y)) {
+    co <- array(0, c(ncol(x), ncol(x)))
+    f <- colnames(x)
+    dimnames(co) <- list(f, f)
+    for (i in 2:ncol(x)) {
+      for (j in 1:(i - 1)) {
+        co[i, j] <- cosine(x[, i], x[, j])
+      }
+    }
+    co <- co + t(co)
+    diag(co) <- 1
+    return(as.matrix(co))
+  } else if (is.vector(x) && is.vector(y)) {
+    return(crossprod(x, y) / sqrt(crossprod(x) * crossprod(y)))
+  } else if (is.vector(x) && is.matrix(y)) {
+    co <- vector(mode = "numeric", length = ncol(y))
+    names(co) <- colnames(y)
+    for (i in 1:ncol(y)) {
+      co[i] <- cosine(x, y[, i])
+    }
+    return(co)
+  } else {
+    stop("argument mismatch. Either one matrix or two vectors needed as input.")
+  }
+}

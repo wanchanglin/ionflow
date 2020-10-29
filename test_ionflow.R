@@ -4,7 +4,7 @@
 #' wl-26-10-2020, Mon: test GeneNetwork with cosM
 
 ## ==== General settings ====
-rm(list = ls(all = T))
+rm(list = ls(all = T)) 
 
 tool_dir <- "~/my_galaxy/ionflow/"
 #' tool_dir <- "C:/R_lwc/my_galaxy/ionflow/"
@@ -12,7 +12,7 @@ tool_dir <- "~/my_galaxy/ionflow/"
 setwd(tool_dir)
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
           "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
-          "org.Sc.sgd.db", "GO.db", "GOstats", "pheatmap", "pracma")
+          "org.Sc.sgd.db", "GO.db", "GOstats", "pheatmap") #, "pracma")
 invisible(lapply(pkgs, library, character.only = TRUE))
 source("funcs_ionflow.R")
 
@@ -57,10 +57,11 @@ exp_anal <- ExploratoryAnalysis(data = pre_proc$data.gene.zscores)
 gene_net <- GeneNetwork(data = pre_proc$data.gene.zscores,
                         data_symb = pre_proc$data.gene.symb,
                         min_clust_size = 10, thres_corr = 0.6,
+                        #' method_corr = "cosine")
                         method_corr = "pearson")
                         #' method_corr = "hybrid_mahal_cosine")
                         #' method_corr = "mahal_cosine")
-
+X11()
 gene_net$plot.pnet
 gene_net$plot.impact_betweenness
 gene_net$stats.impact_betweenness

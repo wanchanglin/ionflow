@@ -1,4 +1,4 @@
-#' wl-11-10-2020, Sun: test PreProcessing
+#' 30-10-2020, Fri: human data
 
 ## ==== General settings ====
 rm(list = ls(all = T)) 
@@ -8,7 +8,7 @@ tool_dir <- "~/my_galaxy/ionflow/"
 setwd(tool_dir)
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
           "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
-          "org.Sc.sgd.db", "GO.db", "GOstats", "pheatmap")
+          "org.Hs.eg.db", "GO.db", "GOstats", "pheatmap")
 invisible(lapply(pkgs, library, character.only = TRUE))
 source("funcs_ionflow.R")
 
@@ -29,18 +29,29 @@ exp_anal <- ExploratoryAnalysis(data = data)
 gene_net <- GeneNetwork(data = data,
                         data_symb = data_symb,
                         min_clust_size = 5, thres_corr = 0.6,
-                        method_corr = "cosine")
-                        #' method_corr = "pearson")
+                        #' method_corr = "cosine")
+                        method_corr = "pearson")
                         #' method_corr = "hybrid_mahal_cosine")
                         #' method_corr = "mahal_cosine")
 gene_net$plot.pnet
 
 #' ==== GO/KEGG enrichment analysis ====
-library("org.Hs.eg.db")
 kegg_en <- kegg_enrich(data = data_symb, min_clust_size = 5,
                        pval = 0.05, annot_pkg =  "org.Hs.eg.db")
 kegg_en
 
-go_en  <- go_enrich(data = data_symb, min_clust_size = 10,
+go_en  <- go_enrich(data = data_symb, min_clust_size = 5,
                     pval = 0.05, ont = "BP", annot_pkg =  "org.Hs.eg.db")
 go_en
+
+#' ==== debug enrichment ====
+data = data_symb
+min_clust_size = 3
+pval = 0.05
+ont = "BP"
+annot_pkg =  "org.Hs.eg.db"
+
+genes <- data_symb[,1]
+(tmp <- select(org.Hs.eg.db, keys = genes, columns = "ENTREZID", keytype="SYMBOL"))
+tmp <- tmp[,2,drop = T]
+

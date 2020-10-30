@@ -2,6 +2,7 @@
 #' wl-19-10-2020, Mon: test and debug jacopo's changes. Fix some bugs.
 #' wl-21-10-2020, Wed: test enrichment analysis
 #' wl-26-10-2020, Mon: test GeneNetwork with cosM
+#' wl-30-10-2020, Fri: test some changes
 
 ## ==== General settings ====
 rm(list = ls(all = T)) 
@@ -21,9 +22,9 @@ source("funcs_ionflow.R")
 #' ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_ko.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_oe.tsv", header = T, sep = "\t")
-ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
+ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
 
 ## ==== Pre-processing ====
 pre_proc <- PreProcessing(data = ion_data,
@@ -44,8 +45,19 @@ head(pre_proc$data.gene.symb)
 #' pre_proc$plot.dot
 #' pre_proc$plot.hist
 
+#' ==== Filter data set ====
+data      <- pre_proc$data.gene.zscores
+data_symb <- pre_proc$data.gene.symb
+dim(data)
+
+#' Select phenotypes of interest
+idx       <- rowSums(abs(data_symb[, -1])) > 0
+data      <- data[idx, ]
+data_symb <- data_symb[idx, ]
+dim(data)
+
 ## ==== Exploratory analysis ====
-exp_anal <- ExploratoryAnalysis(data = pre_proc$data.gene.zscores)
+exp_anal <- ExploratoryAnalysis(data = data)
 #' exp_anal$plot.Pearson_correlation
 #' exp_anal$plot.PCA_Individual
 #' exp_anal$plot.heatmap
@@ -54,25 +66,25 @@ exp_anal <- ExploratoryAnalysis(data = pre_proc$data.gene.zscores)
 #' head(exp_anal$data.PCA_loadings)
 
 ## ==== Gene Network ====
-gene_net <- GeneNetwork(data = pre_proc$data.gene.zscores,
-                        data_symb = pre_proc$data.gene.symb,
-                        min_clust_size = 10, thres_corr = 0.6,
+
+gene_net <- GeneNetwork(data = data,
+                        data_symb = data_symb,
+                        min_clust_size = 5, thres_corr = 0.6,
                         #' method_corr = "cosine")
                         method_corr = "pearson")
                         #' method_corr = "hybrid_mahal_cosine")
                         #' method_corr = "mahal_cosine")
-X11()
 gene_net$plot.pnet
 gene_net$plot.impact_betweenness
 gene_net$stats.impact_betweenness
 gene_net$stats.impact_betweenness_tab
 
 #' ==== GO/KEGG enrichment analysis ====
-kegg_en <- kegg_enrich(data = pre_proc$data.gene.symb, min_clust_size = 10,
+kegg_en <- kegg_enrich(data = data_symb, min_clust_size = 10,
                        pval = 0.05)
 kegg_en
 
-go_en  <- go_enrich(data = pre_proc$data.gene.symb, min_clust_size = 10,
+go_en  <- go_enrich(data = data_symb, min_clust_size = 10,
                     pval = 0.05, ont = "BP")
 go_en
 
@@ -82,8 +94,8 @@ lib_dir <- paste0(tool_dir, "libraries/")
 data_GOslim <- read.table("./libraries/data_GOslim.tsv", sep = "\t", header = T)
 data_ORF2KEGG <- read.table("./libraries/data_ORF2KEGG.tsv", sep = "\t", header = T)
 
-gene_clust <- GeneClustering(data = pre_proc$data.gene.zscores,
-                             data_symb = pre_proc$data.gene.symb,
+gene_clust <- GeneClustering(data = data,
+                             data_symb = data_symb,
                              min_clust_size = 10, thres_anno = 5)
 gene_clust$plot.profiles
 gene_clust$stats.clusters

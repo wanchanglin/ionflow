@@ -11,7 +11,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
                           stdev = NULL, symb_thr = 4) {
 
 
-  ## -------------------> Import data
+  #' -------------------> Import data
   #' ji: get sample id
   data$sample_id <- rownames(data)
 
@@ -43,7 +43,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   data_long$Ion <- factor(data_long$Ion)
   ion_name <- levels(data_long$Ion)
 
-  ## -------------------> Median batch correction
+  #' -------------------> Median batch correction
   data_long$control <- rep(1, length(data_long$Concentration))
   data_long$log <- log(data_long$Concentration)
 
@@ -89,7 +89,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   names(res)[ncol(res)] <- "Variance"
   df_bat <- res
 
-  ## -------------------> Outlier detection
+  #' -------------------> Outlier detection
 
   #' ji: outlier detection methods
   if (method_outliers == "IQR") {
@@ -148,7 +148,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   samples_to_exclude <- unique(data_long$Sample_ID[data_long$Outlier == 1])
   data_long <- data_long[!(data_long$Sample_ID %in% samples_to_exclude), ]
 
-  ## -------------------> Standardisation
+  #' -------------------> Standardisation
 
   #' ji: standardisation methods
   if (stand_method == "std") {
@@ -182,7 +182,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)] <-
     data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)] / sds
 
-  ## -------------------> Symbolisation
+  #' -------------------> Symbolisation
   symb_profiles <- data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)]
   symb_profiles[(symb_profiles > -symb_thr) & (symb_profiles < symb_thr)] <- 0
   symb_profiles[symb_profiles >= symb_thr] <- 1
@@ -216,7 +216,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     ylab("Frequency") +
     geom_vline(xintercept = c(-3, 3), col = "red")
 
-  ## -------------------> Output
+  #' -------------------> Output
   res                    <- list()
   res$stats.raw_data     <- df_raw                    # raw data
   res$stats.outliers     <- df_outlier                # outliers
@@ -233,7 +233,8 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 #' =======================================================================
 #'
 ExploratoryAnalysis <- function(data = NULL){
-  ## -------------------> Correlation
+
+  #' -------------------> Correlation
   col3 <- colorRampPalette(c("steelblue4", "white", "firebrick"))
   corrplot.mixed(cor(data[, -1], use = "complete.obs"),
     number.cex = .7,
@@ -241,7 +242,7 @@ ExploratoryAnalysis <- function(data = NULL){
   )
   p_corr <- recordPlot()
 
-  ## -------------------> PCA
+  #' -------------------> PCA
   #' wl-14-07-2020, Tue: Original (trust) pca computation if there is no NAs.
   dat <- t(data[, -1])
   pca <- prcomp(dat, center = T, scale. = F)
@@ -273,13 +274,13 @@ ExploratoryAnalysis <- function(data = NULL){
     ylab(dfn[2]) +
     labs(title = "PCA")
 
-  ## -------------------> HEATMAP
+  #' -------------------> HEATMAP
   pheatmap(data[, -1], show_rownames = F, cluster_cols = T, cluster_rows = T,
            legend = T, fontsize = 15, clustering_method = "ward.D",
            scale = "row")
   pheat <- recordPlot()
 
-  ## -------------------> PAIRWISE CORRELATION MAP
+  #' -------------------> PAIRWISE CORRELATION MAP
   col <- colorRampPalette(c("skyblue4", "white", "plum4"))(20)
   corr <- cor(na.omit(data[, -1]))
   heatmap(
@@ -292,29 +293,25 @@ ExploratoryAnalysis <- function(data = NULL){
   #' wl-13-08-2020, Thu: there is no 'qgraph' in conda forge and bio conda.
   #' Have to plot the correlation network instead.
   if (T) {
-    ## wl-14-08-2020, Fri: debug code only
-    ## library(glasso)
-    ## corr_reg <- glasso(corr, rho = 0.01)
-    ## net <- network::network(corr_reg$w, directed = FALSE)
+    #' wl-14-08-2020, Fri: debug code only
+    #' library(glasso)
+    #' corr_reg <- glasso(corr, rho = 0.01)
+    #' net <- network::network(corr_reg$w, directed = FALSE)
     net <- network::network(corr, directed = FALSE)
 
     #' set edge attributes
     net %e% "weight" <- corr
     net %e% "weight_abs" <- abs(corr) * 6
     net %e% "color" <- ifelse(net %e% "weight" > 0, "lightgreen", "coral")
-    ## set.edge.value(net, "weight", corr)
-    ## list.network.attributes(net)
-    ## list.edge.attributes(net)
-    ## list.vertex.attributes(net)
     net_p <-
       ggnet2(net,
         label = TRUE, mode = "spring",
         node.size = 10, edge.size = "weight_abs", edge.color = "color"
       )
-    ## net_p
+    #' net_p
   } else {
-    ## wl-06-07-2020, Mon: 'cor_auto' is from package qgraph(lavaan)
-    ## wl-28-07-2020, Tue: cad and corr are the same
+    #' wl-06-07-2020, Mon: 'cor_auto' is from package qgraph(lavaan)
+    #' wl-28-07-2020, Tue: cad and corr are the same
     cad <- cor_auto(data[, -1])
     suppressWarnings(qgraph(cad,
       graph = "glasso", layout = "spring",
@@ -338,16 +335,14 @@ ExploratoryAnalysis <- function(data = NULL){
 GeneClustering <- function(data = NULL, data_symb = NULL,
                            min_clust_size = 10, thres_anno = 5) {
 
-  ## -------------------> Define clusters
-  #' group together strings of symbols at zero Hamming distance
+  #' -------------------> Define clusters
   res.dist <- dist(data_symb[, -1], method = "manhattan")
   res.hc <- hclust(d = res.dist, method = "single")
-  #' ji-25-09-2020, Fri: !
   clus <- cutree(res.hc, h = 0)
 
   data_symb$cluster <- clus
 
-  ## -------------------> Subset cluster with more than 10 genes
+  #' -------------------> Subset cluster with more than 10 genes
   df <- as.data.frame(table(clus), stringsAsFactors = F)
   names(df) <- c("cluster", "nGenes")
   df_sub <- df[df$nGenes > min_clust_size, ]
@@ -385,9 +380,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
       axis.text = element_text(size = 10)
     )
 
-  #' =======================================================================
-  #'
-  ## -------------------> KEGG AND GO SLIM ANNOTATION
+  #' -------------------> KEGG AND GO SLIM ANNOTATION
   mat <- data_symb[idx, ]
   data_GOslim$Ontology <- as.character(data_GOslim$Ontology)
 
@@ -434,7 +427,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
   #' wl-04-08-2020, Tue: bind together
   kego <- dplyr::bind_rows(kego, .id = "Cluster")
 
-  ## -------------------> GO TERMS ENRICHMENT
+  #' -------------------> GO TERMS ENRICHMENT
   universeGenes <- as.character(data_symb$Line)
   mat <- data_symb[idx, ]
 
@@ -503,36 +496,30 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
                           "cosine", "mahal_cosine", "hybrid_mahal_cosine"
                         )) {
 
-  #' wl-19-10-2020, Mon: add this line to make default
   method_corr <- match.arg(method_corr)
 
-  ## Cluster of gene with same profile
-  #' ji-22-09-2020, Tue: clustring already performed ?
+  #' Cluster of gene with same profile
   res.dist <- dist(data_symb[, -1], method = "manhattan")
   res.hc <- hclust(d = res.dist, method = "single")
-  #' ji-25-09-2020, Fri: equivalent to zero Hamming distance !
-  symb.cluster <- cutree(res.hc, h = 0) # distance 0
+  symb.cluster <- cutree(res.hc, h = 0)
 
   data_symb$cluster <- symb.cluster
 
   df <- as.data.frame(table(symb.cluster), stringsAsFactors = F)
   names(df) <- c("cluster", "nGenes")
-  ## filter clusters with threshold
+  #' filter clusters with threshold
   df_sub <- df[df$nGenes > min_clust_size, ]
 
-  #' wl-26-07-2020, Sun: remove the largest clusters?
-  ## Cluster 2 (largest cluster) contains genes with no phenotype hence not
-  ## considered (input to 0)
+  #' Cluster 2 (largest cluster) contains genes with no phenotype hence not
+  #' considered (input to 0)
   if (T) df_sub <- df_sub[-which.max(df_sub[, 2]), ]
 
   rownames(df_sub) <- c()
 
-  #' wl-24-07-2020, Fri: cluster index satisfing threshold of cluster number
   index <- symb.cluster %in% df_sub$cluster
 
-  ## cluster labels with info of accumulation/decumulation of Ions
-  ## (high/lower abundance)
-  ## Assign label
+  #' cluster labels with info of accumulation/decumulation of Ions
+  #' (high/lower abundance) Assign label
   df.symb <- data_symb[index, ]
   lab <- plyr::ddply(df.symb, "cluster", function(x) {
     mat <- x[, !names(df.symb) %in% c("Line", "cluster")]
@@ -558,7 +545,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   })
   df.symb$Label <- label
 
-  ## Compute empirical correlation matrix
+  #' Compute empirical correlation matrix
   if (method_corr == "pearson" ||
       method_corr == "spearman" ||
       method_corr == "kendall") {
@@ -572,26 +559,17 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
     corrGenes <- cosM(data[, -1], mode = "hybrid")
   }
 
-  ## Subset correlation matrix based on the cluster filtering
   A <- corrGenes[index, index]
-  ## Diagonal value (1's) put to 0 to avoid showing edges from/to the same gene
   diag(A) <- 0
 
-  ## Subset correlation matrix based on threshold=0.6
-  ## wl-27-07-2020, Mon: need another threshold?
   A <- (A > thres_corr)
   A <- ifelse(A == TRUE, 1, 0)
 
-  ## Generate network
+  #' Generate network
   net <- network::network(A, directed = FALSE)
 
-  #' wl-28-07-2020, Tue: add an vertex attribute and use 'Set2' in
-  #'  RColorBrewer but the max. number of colors is 8 in 'Set2'
-  #' wl-29-07-2020, Wed: Some layouts: circle, fruchtermanreingold,
-  #'  kamadakawai, spring
   net %v% "Label" <- df.symb$Label
   tmp <- unique(df.symb$Label)
-  ## fix a bug (may from ggnet2)
   if (length(tmp) != 1) {
     cpy <- rainbow(length(tmp))
     names(cpy) <- tmp
@@ -607,7 +585,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   )
   #' net_p
 
-  ## Impact and betweenness
+  #' Impact and betweenness
   btw <- sna::betweenness(A) # or use 'net' instead of 'A'
   impact <- apply(data[index, -1], 1, norm, type = "2") # L2 norm
 
@@ -634,10 +612,6 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   q3 <- row.names(subset(df.res, (impact > quantile(impact, .75)) & (log.betweenness < quantile(log.betweenness, .75))))
   q4 <- row.names(subset(df.res, (impact > quantile(impact, .75)) & (log.betweenness > quantile(log.betweenness, .75))))
 
-  #' idx <- unique(c(sample(q1,6),sample(q2,6),sample(q3,6),sample(q4,6)))
-  #' wl-27-07-2020, Mon: random choose at least 24 genes to show in plot
-  #' wl-17-07-2020, Fri: any or all of q1~q4 may be character(0)
-  #' wl-14-07-2020, Tue: potential bug in sample replacement
   N <- 6
   lst <- list(q1, q2, q3, q4) #' sapply(lst, length)
   idx <- lapply(lst, function(x) {
@@ -868,6 +842,7 @@ cosM <- function(x, mode = c("normal", "hybrid")) {
     }
     t(mldivide(t(B), t(A), pinv = pinv))
   }
+
   #' --------------------------------------------------------------------
 
   #' compute covariance
@@ -959,4 +934,16 @@ cosine <- function(x, y = NULL) {
   } else {
     stop("argument mismatch. Either one matrix or two vectors needed as input.")
   }
+}
+
+#' =======================================================================
+#' Get symbolisation profiles based on z-scores in wide format
+#'
+symbol_data <- function(x, symb_thr = 2) {
+  symb <- x[, 2:ncol(x)]
+  symb[(symb > -symb_thr) & (symb < symb_thr)] <- 0
+  symb[symb >= symb_thr] <- 1
+  symb[symb <= -symb_thr] <- -1
+  symb <- cbind(Line = x[, 1], symb)
+  return(symb)
 }

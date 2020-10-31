@@ -52,6 +52,36 @@ ont = "BP"
 annot_pkg =  "org.Hs.eg.db"
 
 genes <- data_symb[,1]
-(tmp <- select(org.Hs.eg.db, keys = genes, columns = "ENTREZID", keytype="SYMBOL"))
+(tmp <- select(org.Hs.eg.db, keys = genes, columns = "ENTREZID",
+               keytype="SYMBOL"))
 tmp <- tmp[,2,drop = T]
+(tmp <- tmp[!is.na(tmp)])
+tmp <- tmp[!duplicated(tmp)]
 
+(tmp_sel <- sample(tmp, 20))
+
+params <- new("GOHyperGParams",
+              geneIds = tmp_sel,
+              universeGeneIds = tmp,
+              annotation = annot_pkg,
+              categoryName = "GO",
+              ontology = ont,
+              pvalueCutoff = 1,
+              conditional = T,
+              testDirection = "over")
+
+over <- hyperGTest(params)
+bp <- summary(over)
+head(bp)
+
+params <- new("KEGGHyperGParams",
+              geneIds = tmp_sel,
+              universeGeneIds = tmp,
+              annotation = annot_pkg,
+              categoryName = "KEGG",
+              pvalueCutoff = 1,
+              testDirection = "over")
+
+over <- hyperGTest(params)
+bp <- summary(over)
+head(bp)

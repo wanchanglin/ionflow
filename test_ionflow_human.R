@@ -1,4 +1,5 @@
-#' 30-10-2020, Fri: human data
+#' wl-30-10-2020, Fri: human data
+#' wl-06-11-2020, Fri: test enrichment analysis for human database
 
 ## ==== General settings ====
 rm(list = ls(all = T)) 
@@ -14,19 +15,19 @@ source("funcs_ionflow.R")
 
 ## ==== Data preparation ====
 
-data <- read.table("./test-data/human_z_profiles.csv", header = T, sep = ",")
-data <- data[!duplicated(data$Gene), ]
-colnames(data)[1] <- "Line"
-dim(data)
+dat <- read.table("./test-data/human_z_profiles.csv", header = T, sep = ",")
+dat <- dat[!duplicated(dat$Gene), ]
+colnames(dat)[1] <- "Line"
+dim(dat)
 
-data_symb <- symbol_data(x = data, symb_thr = 2)
+data_symb <- symbol_data(x = dat, symb_thr = 2)
 
 ## ==== Exploratory analysis ====
-exp_anal <- ExploratoryAnalysis(data = data)
+exp_anal <- ExploratoryAnalysis(data = dat)
 
 ## ==== Gene Network ====
 
-gene_net <- GeneNetwork(data = data,
+gene_net <- GeneNetwork(data = dat,
                         data_symb = data_symb,
                         min_clust_size = 5, thres_corr = 0.6,
                         #' method_corr = "cosine")
@@ -37,51 +38,10 @@ gene_net$plot.pnet
 
 #' ==== GO/KEGG enrichment analysis ====
 kegg_en <- kegg_enrich(data = data_symb, min_clust_size = 5,
-                       pval = 0.05, annot_pkg =  "org.Hs.eg.db")
+                       pval = 0.05, annot_pkg = "org.Hs.eg.db")
 kegg_en
 
 go_en  <- go_enrich(data = data_symb, min_clust_size = 5,
-                    pval = 0.05, ont = "BP", annot_pkg =  "org.Hs.eg.db")
+                    pval = 0.05, ont = "BP", annot_pkg = "org.Hs.eg.db")
 go_en
 
-#' ==== debug enrichment ====
-data = data_symb
-min_clust_size = 3
-pval = 0.05
-ont = "BP"
-annot_pkg =  "org.Hs.eg.db"
-
-genes <- data_symb[,1]
-(tmp <- select(org.Hs.eg.db, keys = genes, columns = "ENTREZID",
-               keytype="SYMBOL"))
-tmp <- tmp[,2,drop = T]
-(tmp <- tmp[!is.na(tmp)])
-tmp <- tmp[!duplicated(tmp)]
-
-(tmp_sel <- sample(tmp, 20))
-
-params <- new("GOHyperGParams",
-              geneIds = tmp_sel,
-              universeGeneIds = tmp,
-              annotation = annot_pkg,
-              categoryName = "GO",
-              ontology = ont,
-              pvalueCutoff = 1,
-              conditional = T,
-              testDirection = "over")
-
-over <- hyperGTest(params)
-bp <- summary(over)
-head(bp)
-
-params <- new("KEGGHyperGParams",
-              geneIds = tmp_sel,
-              universeGeneIds = tmp,
-              annotation = annot_pkg,
-              categoryName = "KEGG",
-              pvalueCutoff = 1,
-              testDirection = "over")
-
-over <- hyperGTest(params)
-bp <- summary(over)
-head(bp)

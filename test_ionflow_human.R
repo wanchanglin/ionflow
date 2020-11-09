@@ -1,11 +1,11 @@
 #' wl-30-10-2020, Fri: human data
-#' wl-06-11-2020, Fri: test enrichment analysis for human database
+#' wl-06-11-2020, Fri: test enrichment analysis
+#' wl-09-11-2020, Mon: test GeneNetwork
 
 ## ==== General settings ====
 rm(list = ls(all = T)) 
 
-#' tool_dir <- "~/my_galaxy/ionflow/"
-tool_dir <- "C:/R_lwc/my_galaxy/ionflow/"
+tool_dir <- "~/my_galaxy/ionflow/"
 
 setwd(tool_dir)
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
@@ -20,12 +20,10 @@ dat <- dat[!duplicated(dat$Gene), ]
 colnames(dat)[1] <- "Line"
 dat_symb <- symbol_data(x = dat, symb_thr = 2)
 
-#' filtering: Select phenotypes of interest
-if (F) {
-  idx      <- rowSums(abs(dat_symb[, -1])) > 0
-  dat      <- dat[idx, ]
-  dat_symb <- dat_symb[idx, ]
-}
+## ==== Filtering: Select phenotypes of interest ====
+idx      <- rowSums(abs(dat_symb[, -1])) > 0
+dat      <- dat[idx, ]
+dat_symb <- dat_symb[idx, ]
 
 dim(dat)
 dim(dat_symb)
@@ -37,11 +35,12 @@ exp_anal <- ExploratoryAnalysis(data = dat)
 gene_net <- GeneNetwork(data = dat,
                         data_symb = dat_symb,
                         min_clust_size = 5, thres_corr = 0.6,
-                        method_corr = "pearson")
-                        #' method_corr = "cosine")
+                        #' method_corr = "pearson")
+                        method_corr = "cosine")
                         #' method_corr = "hybrid_mahal_cosine")
                         #' method_corr = "mahal_cosine")
-gene_net$plot.pnet
+gene_net$plot.pnet1
+gene_net$plot.pnet2
 
 #' ==== GO/KEGG enrichment analysis ====
 kegg_en <- kegg_enrich(data = dat_symb, min_clust_size = 5,

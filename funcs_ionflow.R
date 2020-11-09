@@ -576,14 +576,35 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   } else {
     cpy <- "Set2"
   }
-  net_p <- GGally::ggnet2(net,
+  net_p1 <- GGally::ggnet2(net,
     mode = "fruchtermanreingold",
     color = "Label",
     palette = cpy,
-    edge.alpha = 0.5, size = 2, color.legend = "Label",
+    edge.alpha = 0.5, size = 2, color.legend = "Symbolic Pheno",
     legend.size = 10, legend.position = "right"
   )
-  #' net_p
+  #' net_p1
+
+  #' wl-09-11-2020, Mon: node color controoled by community detection
+  tmp <- igraph::graph_from_adjacency_matrix(A, mode="undirected")
+  com <- igraph::cluster_louvain(tmp, weights = NULL)
+  mem <- as.factor(igraph::membership(com))
+
+  tmp <- unique(mem)
+  if (length(tmp) != 1) {
+    cpy <- rainbow(length(tmp))
+    names(cpy) <- tmp
+  } else {
+    cpy <- "Set2"
+  }
+  net_p2 <- GGally::ggnet2(net,
+    mode = "fruchtermanreingold",
+    color = mem,
+    palette = cpy,
+    edge.alpha = 0.5, size = 2, color.legend = "Network",
+    legend.size = 10, legend.position = "right"
+  )
+  #' net_p2
 
   #' Impact and betweenness
   btw <- sna::betweenness(A) # or use 'net' instead of 'A'
@@ -657,7 +678,8 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   df.tab2 <- df.tab %>% dplyr::group_by(Cluster) %>% top_n(1, nGenes)
 
   res <- list()
-  res$plot.pnet <- net_p # plot gene network
+  res$plot.pnet1 <- net_p1 # plot gene network with symbolic pheno
+  res$plot.pnet2 <- net_p2 # plot gene network with community detection
   res$plot.impact_betweenness <- im_be_p # plot impact betweenees
   res$stats.impact_betweenness <- df.res3 # impact betweenees data
   res$stats.impact_betweenness_by_cluster <- df.tab2 # plot position by cluster

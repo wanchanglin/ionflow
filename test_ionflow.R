@@ -1,20 +1,17 @@
 #' wl-11-10-2020, Sun: test PreProcessing
-#' wl-19-10-2020, Mon: test and debug jacopo's changes. Fix some bugs.
-#' wl-21-10-2020, Wed: test enrichment analysis
-#' wl-26-10-2020, Mon: test GeneNetwork with cosM
-#' wl-30-10-2020, Fri: test some changes
+#' wl-26-10-2020, Mon: test cosM
 #' wl-07-11-2020, Sat: test enrichment
+#' wl-09-11-2020, Mon: test GeneNetwork
 
 ## ==== General settings ====
 rm(list = ls(all = T)) 
 
-#' tool_dir <- "~/my_galaxy/ionflow/"
-tool_dir <- "C:/R_lwc/my_galaxy/ionflow/"
+tool_dir <- "~/my_galaxy/ionflow/"
 
 setwd(tool_dir)
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
           "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
-          "org.Sc.sgd.db", "GO.db", "GOstats", "pheatmap") #, "pracma")
+          "org.Sc.sgd.db", "GO.db", "GOstats", "pheatmap")
 invisible(lapply(pkgs, library, character.only = TRUE))
 source("funcs_ionflow.R")
 
@@ -22,16 +19,14 @@ source("funcs_ionflow.R")
 
 #' ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
-ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
+ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
 
 ## ==== Pre-processing ====
 pre_proc <- PreProcessing(data = ion_data,
                           var_id = 1, batch_id = 4, data_id = 5,
-                          method_norm = "median",
-                          method_outliers = "IQR",
-                          n_thrs = 3,
-                          stand_method = "std",
+                          method_norm = "median", method_outliers = "IQR",
+                          n_thrs = 3, stand_method = "std",
                           stdev = NULL, symb_thr = 2)
 
 head(pre_proc$data.gene.zscores)
@@ -45,18 +40,18 @@ head(pre_proc$data.gene.symb)
 #' pre_proc$plot.hist
 
 #' ==== Filter data set ====
-data      <- pre_proc$data.gene.zscores
-data_symb <- pre_proc$data.gene.symb
-dim(data)
+dat      <- pre_proc$data.gene.zscores
+dat_symb <- pre_proc$data.gene.symb
+dim(dat)
 
 #' Select phenotypes of interest
-idx       <- rowSums(abs(data_symb[, -1])) > 0
-data      <- data[idx, ]
-data_symb <- data_symb[idx, ]
-dim(data)
+idx       <- rowSums(abs(dat_symb[, -1])) > 0
+dat      <- dat[idx, ]
+dat_symb <- dat_symb[idx, ]
+dim(dat)
 
 ## ==== Exploratory analysis ====
-exp_anal <- ExploratoryAnalysis(data = data)
+exp_anal <- ExploratoryAnalysis(data = dat)
 #' exp_anal$plot.Pearson_correlation
 #' exp_anal$plot.PCA_Individual
 #' exp_anal$plot.heatmap
@@ -65,56 +60,27 @@ exp_anal <- ExploratoryAnalysis(data = data)
 #' head(exp_anal$data.PCA_loadings)
 
 ## ==== Gene Network ====
-gene_net <- GeneNetwork(data = data,
-                        data_symb = data_symb,
+gene_net <- GeneNetwork(data = dat,
+                        data_symb = dat_symb,
                         min_clust_size = 10, thres_corr = 0.60,
                         method_corr = "pearson")
                         #' method_corr = "cosine")
                         #' method_corr = "hybrid_mahal_cosine")
                         #' method_corr = "mahal_cosine")
-gene_net$plot.pnet
+
+gene_net$plot.pnet1    #' symbolic pheno (hclust)
+X11()
+gene_net$plot.pnet2    #' network (comminuty detection)
+
 gene_net$plot.impact_betweenness
 gene_net$stats.impact_betweenness
 gene_net$stats.impact_betweenness_tab
 
 #' ==== GO/KEGG enrichment analysis ====
-kegg_en <- kegg_enrich(data = data_symb, min_clust_size = 10,
+kegg_en <- kegg_enrich(data = dat_symb, min_clust_size = 10,
                        pval = 0.05)
 kegg_en
 
-go_en  <- go_enrich(data = data_symb, min_clust_size = 10,
+go_en  <- go_enrich(data = dat_symb, min_clust_size = 10,
                     pval = 0.05, ont = "BP")
 go_en
-
-## ==== Gene Clustering ====
-#' data for annotations
-lib_dir <- paste0(tool_dir, "libraries/")
-data_GOslim <- read.table("./libraries/data_GOslim.tsv", sep = "\t", header = T)
-data_ORF2KEGG <- read.table("./libraries/data_ORF2KEGG.tsv", sep = "\t", header = T)
-
-gene_clust <- GeneClustering(data = data,
-                             data_symb = data_symb,
-                             min_clust_size = 10, thres_anno = 5)
-gene_clust$plot.profiles
-gene_clust$stats.clusters
-gene_clust$stats.Kegg_Goslim_annotation
-gene_clust$stats.Goterms_enrichment
-
-## =========================================================================
-#' wl-21-10-2020, Wed: DEBUG stuff
-#' for PreProcessing
-if (F) {
-  data = ion_data
-  var_id = 1
-  batch_id = 2
-  data_id = 3
-  method_norm = "median"
-  #' control_lines =  "BY4741"    #' only for inome_ko'
-  control_lines = NULL
-  control_use = "control"
-  method_outliers = "mad"
-  n_thrs = 3
-  stand_method = "std"
-  stdev = NULL
-  symb_thr = 4
-}

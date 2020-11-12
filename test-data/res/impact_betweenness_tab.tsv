@@ -1,9 +1,9 @@
 "Cluster"	"Position"	"nGenes"
 "Cluster 22 (9 genes): Na(-)"	"Low impact, low betweenness"	4
-"Cluster 7 (6 genes): Mo(+)"	"Low impact, low betweenness"	3
-"Cluster 7 (6 genes): Mo(+)"	"High impact, high betweenness"	2
+"Cluster 7 (6 genes): Mo(+)"	"Low impact, low betweenness"	4
 "Cluster 22 (9 genes): Na(-)"	"High impact, low betweenness"	2
 "Cluster 22 (9 genes): Na(-)"	"Low impact, high betweenness"	2
 "Cluster 22 (9 genes): Na(-)"	"High impact, high betweenness"	1
 "Cluster 7 (6 genes): Mo(+)"	"High impact, low betweenness"	1
-"Cluster 7 (6 genes): Mo(+)"	"Low impact, high betweenness"	0
+"Cluster 7 (6 genes): Mo(+)"	"Low impact, high betweenness"	1
+"Cluster 7 (6 genes): Mo(+)"	"High impact, high betweenness"	0

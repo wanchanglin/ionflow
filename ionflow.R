@@ -9,7 +9,7 @@
 rm(list = ls(all = T))
 
 #' flag for command-line use or not. If false, only for debug interactively.
-com_f <- F
+com_f <- T
 
 #' galaxy will stop even if R has warning message
 options(warn = -1) #' disable R warning. Turn back: options(warn=0)
@@ -66,41 +66,53 @@ if (com_f) {
       ),
 
       #' input
-      make_option("--ion_file",
-        type = "character",
-        help = "ion concentration file in tabular format"
-      ),
+      make_option("--ion_file", type = "character",
+                  help = "ion concentration file in tabular format"),
       make_option("--var_id", type = "integer", default = 1,
                   help = "Column index of variable"),
       make_option("--batch_id", type = "integer", default = 2,
                   help = "Column index of batch ID"),
       make_option("--data_id", type = "integer", default = 3,
                   help = "Start column index of data matrix"),
-      make_option("--std_file_sel",
-        type = "character", default = "no",
-        help = "Load user defined std file or not"
-      ),
-      make_option("--std_file",
-        type = "character",
-        help = "user predifined std file with respect to ions"
-      ),
+      make_option("--method_norm", type = "character", default = "median",
+                  help = "Batch correction methods.  Support: median,
+                          median+std and none"),
+      make_option("--batch_control", type = "character", default = "no",
+                  help = "Use control lines for batch correction or not"),
+      make_option("--control_lines", type = "character", default = "",
+                  help = "Batch control lines"),
+      make_option("--control_use", type = "character", default = "control",
+                  help = "Select lines used for batch correction control.
+                          Three selection: control, all and control.out"),
+      make_option("--method_outliers", type = "character", default = "IQR",
+                  help = "Outlier detection method. Currently support:
+                          mad, IQR, log.FC.dist and none."),
+      make_option("--thres_outl", type = "double", default = 3.0,
+                  help = "Outlier detection threshold"),
+      make_option("--stand_method", type = "character", default = "std",
+                  help = "Standardisation method. Currently support:
+                          std, mad and custom."),
+      make_option("--std_file", type = "character",
+                  help = "user predifined std file with respect to ions"),
+      make_option("--thres_symb", type = "double", default = 2.0,
+                  help = "Symbolisation threshold"),
 
-      #' Clustering and network analysis
-      make_option("--thres_clus",
-        type = "double", default = 10.0,
-        help = "Clustering threshold for clustering and network. Clustering
-                centres large than threshold will be kept."
-      ),
-      make_option("--thres_anno",
-        type = "double", default = 5.0,
-        help = "Percentage threshold for annotation (0 - 100).
-                Features large than threshold will be kept."
-      ),
-      make_option("--thres_corr",
-        type = "double", default = 0.60,
-        help = "Correlation threshold for network analysis (0 - 1).
-                Features large than threshold will be kept."
-      ),
+      #' network and enrichment analysis
+      make_option("--min_clust_size", type = "double", default = 5.0,
+                  help = "Minimal cluster size."),
+      make_option("--thres_corr", type = "double", default = 0.60,
+                  help = "Similarity threshold for network analysis (0 - 1).
+                          Features large than threshold will be kept."),
+      make_option("--method_corr", type = "character", default = "pearson",
+                  help = "Similarity measure method. Currently support:
+                          pearson, spearman, kendall, cosine, mahal_cosine,
+                          hybrid_mahal_cosine"),
+      make_option("--pval", type = "double", default = 0.05,
+                  help = "P-values for enrichment analysis."),
+      make_option("--ont", type = "character", default = "BP",
+                  help = "Ontology method: BP, MF and CC."),
+      make_option("--annot_pkg", type = "character", default = "org.Sc.sgd.db",
+                  help = "Annotation package"),
 
       #' output: pre-processing
       make_option("--pre_proc_pdf",
@@ -131,24 +143,6 @@ if (com_f) {
         help = "Save plots from exploratory analysis"
       ),
 
-      #' output: gene clustering
-      make_option("--gene_clus_pdf",
-        type = "character", default = "gene_clus.pdf",
-        help = "Save plots from gene clustering"
-      ),
-      make_option("--clus_out",
-        type = "character", default = "clus.tsv",
-        help = "Save clustering stats tableq
-      ),
-      make_option("--anno_out",
-        type = "character", default = "kegg_go_anno.tsv",
-        help = "Save Kegg and GO annotation table"
-      ),
-      make_option("--enri_out",
-        type = "character", default = "go_enri.tsv",
-        help = "Save GO terms enrichment table"
-      ),
-
       #' output: gene network
       make_option("--gene_net_pdf",
         type = "character", default = "gene_net.pdf",
@@ -161,6 +155,16 @@ if (com_f) {
       make_option("--imbe_tab_out",
         type = "character", default = "impact_betweenness_tab.tsv",
         help = "Save impact and betweenness contingency table"
+      ),
+
+      #' output: enrichment analysis
+      make_option("--kegg_en_out",
+        type = "character", default = "kegg_en.tsv",
+        help = "Save Kegg enrichment analysis."
+      ),
+      make_option("--go_en_out",
+        type = "character", default = "go_en.tsv",
+        help = "Save GO enrichment table"
       )
     )
 
@@ -180,22 +184,22 @@ if (com_f) {
     batch_id = 2,
     data_id = 3,
     method_norm = "median",
-    control_lines = NULL,
+    batch_control = "no",
+    control_lines = "",
     control_use = "control",
     method_outliers = "IQR",
     thres_outl = 3,
     stand_method = "std",
-    thres_symb = 2,
     #' stdev = NULL,
-    std_file_sel = "no",
     std_file = paste0(tool_dir, "test-data/user_std.tsv"),
+    thres_symb = 2,
 
     #' network and enrichment analysis
     min_clust_size = 5.0,
     thres_corr = 0.6,
     method_corr = "pearson",
     pval = 0.05,
-    ont = "BP", 
+    ont = "BP",
     annot_pkg =  "org.Sc.sgd.db",
 
     #' output: pre-processing
@@ -225,29 +229,32 @@ suppressPackageStartupMessages({
 })
 
 ## ==== Data preparation ====
-
-#' Load data set
 ion_data <- read.table(opt$ion_file, header = T, sep = "\t")
 
-if (opt$std_file_sel == "yes") {
-  std_data <- read.table(opt$std_file, header = T, sep = "\t")
+if (opt$batch_control == "yes") {
+  control_lines <- opt$control_line
 } else {
-  std_data <- NULL
+  control_lines <- NULL
+}
+
+if (opt$stand_method == "custom") { #' if (lenth(opt$std_file) > 0) {
+  stdev <- read.table(opt$std_file, header = T, sep = "\t")
+} else {
+  stdev <- NULL
 }
 
 ## ==== Pre-processing ====
-
 pre_proc <- PreProcessing(data            = ion_data,
                           var_id          = opt$var_id,
                           batch_id        = opt$batch_id,
                           data_id         = opt$data_id,
                           method_norm     = opt$method_norm,
-                          control_lines   = opt$control_lines,
+                          control_lines   = control_lines,
                           control_use     = opt$control_use,
                           method_outliers = opt$method_outliers,
                           thres_outl      = opt$thres_outl,
                           stand_method    = opt$stand_method,
-                          stdev           = std_data,
+                          stdev           = stdev,
                           thres_symb      = opt$thres_symb)
 
 #' save plot in pdf

@@ -1,0 +1,6 @@
+"Cluster"	"ID"	"Description"	"Pvalue"	"Count"	"CountUniverse"	"Ontology"
+"Cluster 22 (9 genes)"	"GO:0044085"	"cellular component biogenesis"	"0.0093"	"5"	"16"	"BP"
+"Cluster 22 (9 genes)"	"GO:0030154"	"cell differentiation"	"0.0222"	"2"	"3"	"BP"
+"Cluster 22 (9 genes)"	"GO:0032502"	"developmental process"	"0.0228"	"2"	"3"	"BP"
+"Cluster 7 (6 genes)"	"GO:0061024"	"membrane organization"	"0.0286"	"2"	"3"	"BP"
+"Cluster 7 (6 genes)"	"GO:0055114"	"oxidation-reduction process"	"0.0499"	"2"	"4"	"BP"

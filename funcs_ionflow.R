@@ -6,9 +6,9 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
                           control_lines = NULL,
                           control_use = c("control", "all", "control out"),
                           method_outliers = c("mad", "IQR", "log.FC.dist", "none"),
-                          n_thrs = 4,
+                          thres_outl = 3,
                           stand_method = c("std", "mad", "custom"),
-                          stdev = NULL, symb_thr = 4) {
+                          stdev = NULL, thres_symb = 2) {
 
 
   #' -------------------> Import data
@@ -98,8 +98,8 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
         lowerq <- quantile(y$log_corr, na.rm = T)[2]
         upperq <- quantile(y$log_corr, na.rm = T)[4]
         iqr <- upperq - lowerq
-        extreme.t.upper <- (iqr * n_thrs) + upperq
-        extreme.t.lower <- lowerq - (iqr * n_thrs)
+        extreme.t.upper <- (iqr * thres_outl) + upperq
+        extreme.t.lower <- lowerq - (iqr * thres_outl)
         y$Outlier <- ifelse((y$log_corr > extreme.t.upper) |
           (y$log_corr < extreme.t.lower), 1, 0)
         return(y)
@@ -110,8 +110,8 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     data_long <- plyr::ddply(data_long, "Ion", function(x) {
       res <- plyr::ddply(x, "Batch_ID", function(y) {
         med_dev <- mad(y$log_corr)
-        extreme.t.upper <- (med_dev * n_thrs)
-        extreme.t.lower <- -(med_dev * n_thrs)
+        extreme.t.upper <- (med_dev * thres_outl)
+        extreme.t.lower <- -(med_dev * thres_outl)
         y$Outlier <- ifelse((y$log_corr > extreme.t.upper) |
           (y$log_corr < extreme.t.lower), 1, 0)
         return(y)
@@ -121,8 +121,8 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   if (method_outliers == "log.FC.dist") {
     data_long <- plyr::ddply(data_long, "Ion", function(x) {
       res <- plyr::ddply(x, "Batch_ID", function(y) {
-        extreme.t.upper <- n_thrs
-        extreme.t.lower <- -n_thrs
+        extreme.t.upper <- thres_outl
+        extreme.t.lower <- -thres_outl
         y$Outlier <- ifelse((y$log_corr > extreme.t.upper) |
           (y$log_corr < extreme.t.lower), 1, 0)
         return(y)
@@ -184,9 +184,9 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 
   #' -------------------> Symbolisation
   symb_profiles <- data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)]
-  symb_profiles[(symb_profiles > -symb_thr) & (symb_profiles < symb_thr)] <- 0
-  symb_profiles[symb_profiles >= symb_thr] <- 1
-  symb_profiles[symb_profiles <= -symb_thr] <- -1
+  symb_profiles[(symb_profiles > -thres_symb) & (symb_profiles < thres_symb)] <- 0
+  symb_profiles[symb_profiles >= thres_symb] <- 1
+  symb_profiles[symb_profiles <= -thres_symb] <- -1
 
   #' wl-20-10-2020, Tue: fix a bug
   data_wide_gene_symb <- cbind(Line = data_wide_gene_z_score$Line,
@@ -853,11 +853,11 @@ cosine <- function(x, y = NULL) {
 #' =======================================================================
 #' Get symbolisation profiles based on z-scores in wide format
 #'
-symbol_data <- function(x, symb_thr = 2) {
+symbol_data <- function(x, thres_symb = 2) {
   symb <- x[, 2:ncol(x)]
-  symb[(symb > -symb_thr) & (symb < symb_thr)] <- 0
-  symb[symb >= symb_thr] <- 1
-  symb[symb <= -symb_thr] <- -1
+  symb[(symb > -thres_symb) & (symb < thres_symb)] <- 0
+  symb[symb >= thres_symb] <- 1
+  symb[symb <= -thres_symb] <- -1
   symb <- cbind(Line = x[, 1], symb)
   return(symb)
 }

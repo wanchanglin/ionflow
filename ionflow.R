@@ -1,19 +1,15 @@
 #' wl-03-07-2020, Fri: Load packages here.
-#' wl-03-07-2020, Fri: qgraph loads plenty of R packages
 #' wl-06-07-2020, Mon: debug functions PreProcessing and ExploratoryAnalysis
-#' wl-30-07-2020, Thu: test on subset of IonData
 #' wl-07-08-2020, Fri: re-write for galaxy
-#' wl-08-08-2020, Sat: works for both in command line and interactive mode
 #' wl-09-08-2020, Sun: recordPlot has problem for command line mode.
-#' wl-10-08-2020, Mon: sort out the base graphics saving via non-interactive
-#'  mode.
 #' wl-02-09-2020, Wed: change for PreProcessing
+#' wl-12-11-2020, Thu: change for version 2
 
 ## ==== General settings ====
 rm(list = ls(all = T))
 
 #' flag for command-line use or not. If false, only for debug interactively.
-com_f <- T
+com_f <- F
 
 #' galaxy will stop even if R has warning message
 options(warn = -1) #' disable R warning. Turn back: options(warn=0)
@@ -34,9 +30,9 @@ str_vec <- function(x) {
   x <- gsub("^[ \t]+|[ \t]+$", "", x) #' trim white spaces
 }
 
-pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2", "ggrepel",
-          "corrplot", "gplots", "network", "sna", "GGally",
-          "org.Sc.sgd.db", "GO.db", "GOstats")
+pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
+          "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
+          "org.Sc.sgd.db", "GO.db", "GOstats", "pheatmap")
 suppressPackageStartupMessages(invisible(lapply(pkgs, library,
                                                 character.only = TRUE)))
 
@@ -142,7 +138,7 @@ if (com_f) {
       ),
       make_option("--clus_out",
         type = "character", default = "clus.tsv",
-        help = "Save clustering stats table"
+        help = "Save clustering stats tableq
       ),
       make_option("--anno_out",
         type = "character", default = "kegg_go_anno.tsv",
@@ -173,9 +169,8 @@ if (com_f) {
     args = commandArgs(trailingOnly = TRUE)
   )
 } else {
-  #' tool_dir <- "C:/R_lwc/my_galaxy/ionflow/"         #' for windows
-  #' tool_dir <- "~/my_galaxy/ionflow/"   #' for linux. Must be case-sensitive
-  tool_dir <- "~/R_lwc/r_data/icl/"       #' for linux. Must be case-sensitive
+  #' tool_dir <- "C:/R_lwc/my_galaxy/ionflow/"
+  tool_dir <- "~/my_galaxy/ionflow/"
 
   opt <- list(
 
@@ -184,13 +179,24 @@ if (com_f) {
     var_id = 1,
     batch_id = 2,
     data_id = 3,
+    method_norm = "median",
+    control_lines = NULL,
+    control_use = "control",
+    method_outliers = "IQR",
+    thres_outl = 3,
+    stand_method = "std",
+    thres_symb = 2,
+    #' stdev = NULL,
     std_file_sel = "no",
     std_file = paste0(tool_dir, "test-data/user_std.tsv"),
 
-    #' Clustering and network analysis
-    thres_clus = 10.0,
-    thres_anno = 5.0,
+    #' network and enrichment analysis
+    min_clust_size = 5.0,
     thres_corr = 0.6,
+    method_corr = "pearson",
+    pval = 0.05,
+    ont = "BP", 
+    annot_pkg =  "org.Sc.sgd.db",
 
     #' output: pre-processing
     pre_proc_pdf       = paste0(tool_dir, "test-data/res/pre_proc.pdf"),
@@ -202,16 +208,14 @@ if (com_f) {
     #' output: exploratory analysis
     exp_anal_pdf  = paste0(tool_dir, "test-data/res/exp_anal.pdf"),
 
-    #' output: gene clustering
-    gene_clus_pdf = paste0(tool_dir, "test-data/res/gene_clus.pdf"),
-    clus_out      = paste0(tool_dir, "test-data/res/clus.tsv"),
-    anno_out      = paste0(tool_dir, "test-data/res/kegg_go_anno.tsv"),
-    enri_out      = paste0(tool_dir, "test-data/res/go_enri.tsv"),
-
     #' output: gene network
     gene_net_pdf = paste0(tool_dir, "test-data/res/gene_net.pdf"),
     imbe_out     = paste0(tool_dir, "test-data/res/impact_betweenness.tsv"),
-    imbe_tab_out = paste0(tool_dir, "test-data/res/impact_betweenness_tab.tsv")
+    imbe_tab_out = paste0(tool_dir, "test-data/res/impact_betweenness_tab.tsv"),
+
+    #' output: enrichment analysis
+    kegg_en_out = paste0(tool_dir, "test-data/res/kegg_en.tsv"),
+    go_en_out   = paste0(tool_dir, "test-data/res/go_en.tsv")
   )
 }
 print(opt)
@@ -221,13 +225,6 @@ suppressPackageStartupMessages({
 })
 
 ## ==== Data preparation ====
-
-#' data for annotations
-lib_dir <- paste0(tool_dir, "libraries/")
-data_GOslim <- read.table(paste(lib_dir, "data_GOslim.tsv", sep = "/"),
-                          sep = "\t", header = T)
-data_ORF2KEGG <- read.table(paste(lib_dir, "data_ORF2KEGG.tsv", sep = "/"),
-                            sep = "\t", header = T)
 
 #' Load data set
 ion_data <- read.table(opt$ion_file, header = T, sep = "\t")
@@ -240,9 +237,18 @@ if (opt$std_file_sel == "yes") {
 
 ## ==== Pre-processing ====
 
-pre_proc <- PreProcessing(data = ion_data, stdev = std_data,
-                          var_id = opt$var_id, batch_id = opt$batch_id,
-                          data_id = opt$data_id)
+pre_proc <- PreProcessing(data            = ion_data,
+                          var_id          = opt$var_id,
+                          batch_id        = opt$batch_id,
+                          data_id         = opt$data_id,
+                          method_norm     = opt$method_norm,
+                          control_lines   = opt$control_lines,
+                          control_use     = opt$control_use,
+                          method_outliers = opt$method_outliers,
+                          thres_outl      = opt$thres_outl,
+                          stand_method    = opt$stand_method,
+                          stdev           = std_data,
+                          thres_symb      = opt$thres_symb)
 
 #' save plot in pdf
 pdf(file = opt$pre_proc_pdf, onefile = T, width=15, height=10)
@@ -252,8 +258,7 @@ dev.off()
 
 #' bind stats
 df_stats <- list(raw_data = pre_proc$stats.raw_data,
-                 bat_data = pre_proc$stats.batch_data,
-                 std_data = pre_proc$stats.stand_data)
+                 bat_data = pre_proc$stats.batch_data)
 df_stats <- dplyr::bind_rows(df_stats, .id = "Data_Set")
 row.names(df_stats) = NULL
 
@@ -261,51 +266,37 @@ row.names(df_stats) = NULL
 write.table(df_stats, file = opt$df_stats_out, sep = "\t", row.names = F)
 write.table(pre_proc$stats.outliers, file = opt$outl_out, sep = "\t",
             row.names = F)
-write.table(pre_proc$data.wide, file = opt$data_wide_out, sep = "\t",
+write.table(pre_proc$data.gene.zscores, file = opt$data_wide_out, sep = "\t",
             row.names = F)
-write.table(pre_proc$data.wide_symb, file = opt$data_wide_symb_out,
+write.table(pre_proc$data.gene.symb, file = opt$data_wide_symb_out,
             sep = "\t", row.names = F)
 
+#' ==== Filter data set ====
+dat      <- pre_proc$data.gene.zscores
+dat_symb <- pre_proc$data.gene.symb
+
+#' Select phenotypes of interest
+idx      <- rowSums(abs(dat_symb[, -1])) > 0
+dat      <- dat[idx, ]
+dat_symb <- dat_symb[idx, ]
+
 ## ==== Exploratory analysis ====
-
-#' wl-10-08-2020, Mon: Base graphics saving does not work for
-#' non-interactive mode. use this dirt trick.
 pdf(file = opt$exp_anal_pdf, onefile = T) # ,width=15, height=10)
-exp_anal <- ExploratoryAnalysis(data = pre_proc$data.wide)
-
-## dev.control(displaylist="enable")
-## exp_anal$plot.Pearson_correlation
-## exp_anal$plot.heatmap
-## exp_anal$plot.pairwise_correlation_map
+exp_anal <- ExploratoryAnalysis(data = dat)
 exp_anal$plot.correlation_network
 exp_anal$plot.PCA_Individual
 dev.off()
 
-## ==== Gene Clustering ====
-gene_clus <- GeneClustering(data = pre_proc$data.wide,
-                            data_symb = pre_proc$data.wide_symb,
-                            thres_clus = opt$thres_clus,
-                            thres_anno = opt$thres_anno)
-
-pdf(file = opt$gene_clus_pdf, onefile = T, width=15, height=10)
-gene_clus$plot.profiles
-dev.off()
-
-write.table(gene_clus$stats.clusters, file = opt$clus_out,
-            sep = "\t", row.names = FALSE)
-write.table(gene_clus$stats.Kegg_Goslim_annotation, file = opt$anno_out,
-            sep = "\t", row.names = FALSE)
-write.table(gene_clus$stats.Goterms_enrichment, file = opt$enri_out,
-            sep = "\t", row.names = FALSE)
-
 ## ==== Gene Network ====
-gene_net <- GeneNetwork(data = pre_proc$data.wide,
-                        data_symb = pre_proc$data.wide_symb,
-                        thres_clus = opt$thres_clus,
-                        thres_corr = opt$thres_corr)
+gene_net <- GeneNetwork(data           = dat,
+                        data_symb      = dat_symb,
+                        min_clust_size = opt$min_clust_size,
+                        thres_corr     = opt$thres_corr,
+                        method_corr    = opt$method_corr)
 
 pdf(file = opt$gene_net_pdf, onefile = T, width=15, height=10)
-gene_net$plot.pnet
+gene_net$plot.pnet1
+gene_net$plot.pnet2
 gene_net$plot.impact_betweenness
 dev.off()
 
@@ -314,3 +305,22 @@ write.table(gene_net$stats.impact_betweenness, file = opt$imbe_out,
 write.table(gene_net$stats.impact_betweenness_tab, file = opt$imbe_tab_out,
             sep = "\t", row.names = FALSE)
 
+#' ==== GO/KEGG enrichment analysis ====
+kegg_en  <- kegg_enrich(data           = dat_symb,
+                        min_clust_size = opt$min_clust_size,
+                        pval           = opt$pval,
+                        annot_pkg      = opt$annot_pkg)
+
+if (nrow(kegg_en) > 0) {
+  write.table(kegg_en, file = opt$kegg_en_out, sep = "\t", row.names = FALSE)
+}
+
+go_en  <- go_enrich(data           = dat_symb,
+                    min_clust_size = opt$min_clust_size,
+                    pval           = opt$pval,
+                    ont            = opt$ont,
+                    annot_pkg      = opt$annot_pkg)
+
+if (nrow(go_en) > 0) {
+  write.table(go_en, file = opt$go_en_out, sep = "\t", row.names = FALSE)
+}

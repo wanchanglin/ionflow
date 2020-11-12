@@ -17,22 +17,27 @@ source("funcs_ionflow.R")
 
 ## ==== Data preparation ====
 
-#' ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
+ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
-ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
 
 ## ==== Pre-processing ====
 pre_proc <- PreProcessing(data = ion_data,
-                          var_id = 1, batch_id = 4, data_id = 5,
-                          method_norm = "median", method_outliers = "IQR",
-                          n_thrs = 3, stand_method = "std",
-                          stdev = NULL, symb_thr = 2)
+                          var_id = 1, batch_id = 2, data_id = 3,
+                          method_norm = "median",
+                          control_lines = NULL,
+                          control_use = "control",
+                          method_outliers = "IQR",
+                          thres_outl = 3,
+                          stand_method = "std",
+                          stdev = NULL, thres_symb = 2)
+names(pre_proc)
 
 head(pre_proc$data.gene.zscores)
 head(pre_proc$data.gene.symb)
-#' pre_proc$stats.raw_data
-#' pre_proc$stats.outliers
+pre_proc$stats.raw_data
+pre_proc$stats.outliers
 #' pre_proc$stats.batch_data
 #' head(pre_proc$data.long)
 #' head(pre_proc$data.gene.logFC)
@@ -45,7 +50,7 @@ dat_symb <- pre_proc$data.gene.symb
 dim(dat)
 
 #' Select phenotypes of interest
-idx       <- rowSums(abs(dat_symb[, -1])) > 0
+idx      <- rowSums(abs(dat_symb[, -1])) > 0
 dat      <- dat[idx, ]
 dat_symb <- dat_symb[idx, ]
 dim(dat)
@@ -62,7 +67,8 @@ exp_anal <- ExploratoryAnalysis(data = dat)
 ## ==== Gene Network ====
 gene_net <- GeneNetwork(data = dat,
                         data_symb = dat_symb,
-                        min_clust_size = 10, thres_corr = 0.60,
+                        min_clust_size = 5,
+                        thres_corr = 0.60,
                         method_corr = "pearson")
                         #' method_corr = "cosine")
                         #' method_corr = "hybrid_mahal_cosine")
@@ -77,10 +83,10 @@ gene_net$stats.impact_betweenness
 gene_net$stats.impact_betweenness_tab
 
 #' ==== GO/KEGG enrichment analysis ====
-kegg_en <- kegg_enrich(data = dat_symb, min_clust_size = 10,
-                       pval = 0.05)
+kegg_en <- kegg_enrich(data = dat_symb, min_clust_size = 5, pval = 0.05,
+                       annot_pkg =  "org.Sc.sgd.db")
 kegg_en
 
-go_en  <- go_enrich(data = dat_symb, min_clust_size = 10,
-                    pval = 0.05, ont = "BP")
+go_en  <- go_enrich(data = dat_symb, min_clust_size = 5, pval = 0.05,
+                    ont = "BP", annot_pkg =  "org.Sc.sgd.db")
 go_en

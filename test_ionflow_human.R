@@ -18,7 +18,7 @@ source("funcs_ionflow.R")
 dat <- read.table("./test-data/human_z_profiles.csv", header = T, sep = ",")
 dat <- dat[!duplicated(dat$Gene), ]
 colnames(dat)[1] <- "Line"
-dat_symb <- symbol_data(x = dat, symb_thr = 2)
+dat_symb <- symbol_data(x = dat, thres_symb = 2)
 
 ## ==== Filtering: Select phenotypes of interest ====
 idx      <- rowSums(abs(dat_symb[, -1])) > 0

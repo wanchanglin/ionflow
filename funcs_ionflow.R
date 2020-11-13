@@ -4,7 +4,7 @@
 PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
                           method_norm = c("median", "median+std", "none"),
                           control_lines = NULL,
-                          control_use = c("control", "all", "control out"),
+                          control_use = c("control", "all", "control.out"),
                           method_outliers = c("mad", "IQR", "log.FC.dist", "none"),
                           thres_outl = 3,
                           stand_method = c("std", "mad", "custom"),
@@ -797,22 +797,22 @@ cosM <- function(x, mode = c("normal", "hybrid")) {
   }
 
   #' wl-25-10-2020, Sun: convert to symmetric matrix
-  if (T) { 
+  if (T) {
     #' wl's implementation
     #' mat <- matrix(1, n, n)
     #' mat[lower.tri(mat, diag = F)] <- C
     #' mat[which(lower.tri(t(mat)), arr.ind = T)[, c(2,1)]] <- C
 
     #' ji's implemetation
-    mat <- matrix(0, n, n)  
+    mat <- matrix(0, n, n)
     mat[lower.tri(mat, diag = F)] <- C
-    mat <- mat + t(mat)  
+    mat <- mat + t(mat)
     diag(mat) <- 1
 
     dimnames(mat) <- list(rownames(x), rownames(x))
     return(mat)
   } else {
-    return(C)   
+    return(C)
   }
 
 }
@@ -820,8 +820,8 @@ cosM <- function(x, mode = c("normal", "hybrid")) {
 #' =======================================================================
 #' From R package "lsa"
 #' x <- iris[, -5]
-#' cosine(as.matrix(x)) 
-#' cosine(as.matrix(t(x))) 
+#' cosine(as.matrix(x))
+#' cosine(as.matrix(t(x)))
 #'
 cosine <- function(x, y = NULL) {
   if (is.matrix(x) && is.null(y)) {
@@ -863,15 +863,15 @@ symbol_data <- function(x, thres_symb = 2) {
 }
 
 #' =======================================================================
-#' wl-06-11-2020, Fri: Get ENTREZID  from SYMBOL 
+#' wl-06-11-2020, Fri: Get ENTREZID  from SYMBOL
 #'
 get_entrez_id <- function(symbol, annot_pkg = "org.Hs.eg.db") {
-  res <- AnnotationDbi::select(get(annot_pkg), keys = symbol, 
+  res <- AnnotationDbi::select(get(annot_pkg), keys = symbol,
                                columns = "ENTREZID", keytype="SYMBOL")
   res <- res[,2,drop = T]
   res <- res[!is.na(res)]
   res <- res[!duplicated(res)]
-  
+
   return(res)
 }
 
@@ -903,7 +903,7 @@ kegg_enrich <- function(data, min_clust_size = 10, pval = 0.05,
   }
 
   #' geneIds can be ORF or ENTREZID
-  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]                
+  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]
     params <- new("KEGGHyperGParams",
                   geneIds = x,
                   universeGeneIds = gene_uni,
@@ -967,7 +967,7 @@ go_enrich <- function(data, min_clust_size = 10, pval = 0.05, ont = "BP",
   }
 
   #' geneIds can be ORF or ENTREZID
-  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]                
+  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]
     params <- new("GOHyperGParams",
                   geneIds = x,
                   universeGeneIds = gene_uni,

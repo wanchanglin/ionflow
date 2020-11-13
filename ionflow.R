@@ -222,7 +222,7 @@ if (com_f) {
     go_en_out   = paste0(tool_dir, "test-data/res/go_en.tsv")
   )
 }
-print(opt)
+print(opt$ion_file)
 
 suppressPackageStartupMessages({
   source(paste0(tool_dir, "funcs_ionflow.R"))

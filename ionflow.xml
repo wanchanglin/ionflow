@@ -19,21 +19,36 @@ wl-09-09-2020, Wed: add input data index for varaible, batch id and data
     <![CDATA[
 
       Rscript ${__tool_directory__}/ionflow.R
+        ## Input
         --ion_file '$ion_file'
         --var_id '$pre_proc.var_id'
         --batch_id '$pre_proc.batch_id'
         --data_id '$pre_proc.data_id'
+        --method_norm '$pre_proc.method_norm'
+        --batch_control '$pre_proc.batch.batch_control'
 
-        ## use std file or not
-        --std_file_sel '$pre_proc.std.std_file_sel'
-        #if $pre_proc.std.std_file_sel=='yes':
-           --std_file '$pre_proc.std.std_file'
+        #if $pre_proc.batch.batch_control=='yes'
+          --control_lines '$pre_proc.batch.control_lines'
+          --control_use '$pre_proc.batch.control_use'
         #end if
 
-        ## Clustering and network analysis
-        --thres_clus '$thres_clus'
-        --thres_anno '$thres_anno'
-        --thres_corr '$thres_corr'
+        --method_outliers '$pre_proc.method_outliers'
+        --thres_outl '$pre_proc.thres_outl'
+        --stand_method '$pre_proc.stand.stand_method'
+
+        #if $pre_proc.stand.stand_method=='custom':
+          --std_file '$pre_proc.stand.std_file'
+        #end if
+
+        --thres_symb '$pre_proc.thres_symb'
+
+        ## network and enrichment analysis
+        --min_clust_size '$net_enri.min_clust_size'
+        --thres_corr '$net_enri.thres_corr'
+        --method_corr '$net_enri.method_corr'
+        --pval '$net_enri.pval'
+        --ont '$net_enri.ont'
+        --annot_pkg '$net_enri.annot_pkg'
 
         ## output: pre-processing
         --pre_proc_pdf  '$pre_proc_pdf'
@@ -45,16 +60,14 @@ wl-09-09-2020, Wed: add input data index for varaible, batch id and data
         ## output: exploratory analysis
         --exp_anal_pdf  '$exp_anal_pdf'
 
-        ## output: gene clustering
-        --gene_clus_pdf  '$gene_clus_pdf'
-        --clus_out  '$clus_out'
-        --anno_out  '$anno_out'
-        --enri_out  '$enri_out'
-
         ## output: gene network
         --gene_net_pdf  '$gene_net_pdf'
         --imbe_out  '$imbe_out'
         --imbe_tab_out  '$imbe_tab_out'
+
+        ## output: enrichment analysis
+        --kegg_en_out  '$kegg_en_out'
+        --go_en_out  '$go_en_out'
     ]]>
   </command>
 
@@ -62,14 +75,14 @@ wl-09-09-2020, Wed: add input data index for varaible, batch id and data
   <inputs>
     <param name="ion_file" type="data"  format="tabular"
            label="Ion data table"
-           help="Ion data table with columns of Ions and rows of knockout. 
-                 The first two columns must be names of knowckout and batch ID." />
+           help="Ion data table with columns of Ions and meta information." />
 
+    <!-- start of pre_proc -->
     <section name="pre_proc" title="Pre Processing" >
 
       <param name="var_id" type="integer" value="1"
              label="Specify variable column index of input data"
-             help="Indicate which column will be the variable (Knockout)." />
+             help="Indicate which column will be the variable (ORF or SYMBOL)." />
 
       <param name="batch_id" type="integer" value="2"
              label="Specify batch ID column index of input data"
@@ -79,77 +92,140 @@ wl-09-09-2020, Wed: add input data index for varaible, batch id and data
              label="Specify data start column index of input data"
              help="Indicate which column will be the start of data matrix." />
 
-      <conditional name="std">
-        <param name="std_file_sel" type="select"
-              label="Use user defined ion std file or not" 
-              help="Use manul std values or calculation from ion data for 
-                    standardisation.">
-          <option value="yes" selected="true">Use defined file</option>
-          <option value="no">Caculate from data set</option>
+      <param name="method_norm" type="select"
+             label="Select a method for batch correction">
+      <option value="median" selected="true">Median</option>
+      <option value="median+std">Median plus std</option>
+      <option value="none">None</option>
+      </param>
+
+      <!-- batch control -->
+      <conditional name="batch">
+        <param name="batch_control" type="select"
+               label="Use control lines for batch correction or not" >
+        <option value="yes">Yes</option>
+        <option value="no" selected="true">No</option>
         </param>
 
         <when value="yes">
-          <param name="std_file" type="data"  format="tabular" 
-                label="STD file" 
-                help="A data matrix containing only two columns. The fisrt 
-                      column is the names of ion and the second one is std i
-                      values. " />
+          <param name="control_lines" type="text" value=""
+                 label="Specify batch control lines (rows)">
+          <sanitizer>
+            <valid initial="string.ascii_letters,string.digits"></valid>
+          </sanitizer>
+          </param>
+
+          <param name="control_use" type="select"
+                 label="Select lines for batch correction">
+          <option value="control" selected="true">Use control lines for batch correction</option>
+          <option value="all">Use all lines for batch correction</option>
+          <option value="control.out">Use all lines except control lines for batch correction</option>
+          </param>
         </when>
+
         <when value="no">
         </when>
       </conditional>
 
+      <param name="method_outliers" type="select"
+             label="Select a method for outlier detection">
+      <option value="IQR" selected="true">IQR</option>
+      <option value="mad">MAD</option>
+      <option value="log.FC.dist">log FC dist</option>
+      <option value="none">none</option>
+      </param>
+
+      <param name="thres_outl" type="float" value="3"
+             label="Specify outlier detection threshold" />
+
+      <!-- standardisation method -->
+      <conditional name="stand">
+        <param name="stand_method" type="select"
+              label="Select a method for standardisation">
+        <option value="std" selected="true">STD</option>
+        <option value="mad">MAD</option>
+        <option value="custom">Custom</option>
+        </param>
+
+        <when value="custom">
+          <param name="std_file" type="data"  format="tabular"
+                 label="STD file"
+                 help="A data matrix with only two columns. The fisrt
+                       column is the names of ion and the second one is std
+                       values. " />
+        </when>
+      </conditional>
+
+      <param name="thres_symb" type="float" value="2" 
+             label="Specify symbolisation threshold" />
+
     </section>
+    <!-- end of pre_proc -->
 
-    <param name="thres_clus" type="float" value="10" 
-            label="Specify clustering threshold"
-            help="Gene number threshold in a hierarchical clustering centre." /> 
+    <section name="net_enri" title="Network and enrichment analysis" >
+      <param name="min_clust_size" type="float" value="10"
+            label="Specify minimal cluster center number" />
+      <param name="thres_corr" type="float" value="0.60" min="0" max="1"
+             label="Specify similarity threshold (0 - 1)" />
 
-    <param name="thres_anno" type="float" value="5.0" min="0" max="100"
-           label="Specify annotation percentage threshold"
-           help="Percentage threshold for annotation (0 - 100).
-                 Features large than threshold will be kept." />
+      <param name="method_corr" type="select"
+             label="Select a method for similarity measure">
+      <option value="pearson" selected="true">Pearson</option>
+      <option value="spearman">Spearman</option>
+      <option value="kendall">Kendall</option>
+      <option value="cosine">Cosine</option>
+      <option value="mahal_cosine">Mahalanobis Cosine</option>
+      <option value="hybrid_mahal_cosine">Hybrid Mahalanobis Cosine</option>
+      </param>
 
-    <param name="thres_corr" type="float" value="0.60" min="0" max="1"
-           label="Specify correlation threshold"
-           help="Correlation threshold for network analysis (0 - 1).  
-                 Features large than threshold will be kept." /> 
+      <param name="pval" type="float" value="0.05"
+             label="Specify p-value threshold for enrichment analysiss" />
+
+      <param name="ont" type="select"
+             label="Select gene ontology for GO Terms">
+      <option value="BP" selected="true">BP</option>
+      <option value="MF">MF</option>
+      <option value="CC">CC</option>
+      </param>
+
+      <param name="annot_pkg" type="select"
+             label="Select an annotation package">
+      <option value="org.Sc.sgd.db" selected="true">Yeast(org.Sc.sgd.db)</option>
+      <option value="org.Hs.eg.db">Human(org.Hs.eg.db)</option>
+      <option value="org.Mm.eg.db">Mouse(org.Mm.eg.db)</option>
+      </param>
+    </section>
 
   </inputs>
 
 
   <!-- =============================================================== -->
   <outputs>
-    <data format="pdf" name="pre_proc_pdf" 
+    <data format="pdf" name="pre_proc_pdf"
           label="Pre-processing plots for Ions on ${on_string}" />
-    <data format="tabular" name="df_stats_out" 
+    <data format="tabular" name="df_stats_out"
           label="Statistical summary of data set on ${on_string}"/>
-    <data format="tabular" name="outl_out" 
+    <data format="tabular" name="outl_out"
           label="Outlier table on ${on_string}"/>
-    <data format="tabular" name="data_wide_out" 
+    <data format="tabular" name="data_wide_out"
           label="Pre-processed data in wide format on ${on_string}"/>
-    <data format="tabular" name="data_wide_symb_out" 
+    <data format="tabular" name="data_wide_symb_out"
           label="Symbolization data in wide format on ${on_string}"/>
 
-    <data format="pdf" name="exp_anal_pdf" 
+    <data format="pdf" name="exp_anal_pdf"
           label="Explanatation analysis plots for Ions on ${on_string}" />
 
-    <data format="pdf" name="gene_clus_pdf" 
-          label="Gene clustering plots on ${on_string}" />
-    <data format="tabular" name="clus_out" 
-          label="Clustering table on ${on_string}"/>
-    <data format="tabular" name="anno_out" 
-          label="Annotation table on ${on_string}"/>
-    <data format="tabular" name="enri_out" 
-          label="Enrichment table on ${on_string}"/>
-
-    <data format="pdf" name="gene_net_pdf" 
+    <data format="pdf" name="gene_net_pdf"
           label="Gene network plots on ${on_string}" />
-    <data format="tabular" name="imbe_out" 
+    <data format="tabular" name="imbe_out"
           label="Impact and betweenness table on ${on_string}"/>
-    <data format="tabular" name="imbe_tab_out" 
+    <data format="tabular" name="imbe_tab_out"
           label="Impact and betweenness contingency table on ${on_string}"/>
 
+    <data format="tabular" name="kegg_en_out"
+          label="KEGG entichment table on ${on_string}"/>
+    <data format="tabular" name="go_en_out"
+          label="GO enrichment table on ${on_string}"/>
   </outputs>
 
   <!-- =============================================================== -->

@@ -31,8 +31,9 @@ str_vec <- function(x) {
 }
 
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
-          "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
-          "org.Sc.sgd.db", "GO.db", "GOstats", "KEGG.db", "pheatmap")
+          "ggrepel", "corrplot", "gplots", "pheatmap",
+          "igraph", "network", "sna", "GGally",
+          "GO.db", "GOstats", "org.Sc.sgd.db", "KEGG.db")
 suppressPackageStartupMessages(invisible(lapply(pkgs, library,
                                                 character.only = TRUE)))
 
@@ -222,7 +223,7 @@ if (com_f) {
     go_en_out   = paste0(tool_dir, "test-data/res/go_en.tsv")
   )
 }
-print(opt$ion_file)
+print(opt)
 
 suppressPackageStartupMessages({
   source(paste0(tool_dir, "funcs_ionflow.R"))

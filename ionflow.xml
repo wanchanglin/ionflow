@@ -2,6 +2,7 @@
 wl-10-08-2020, Mon: commence
 wl-24-08-2020, Mon: first version
 wl-09-09-2020, Wed: add input data index for varaible, batch id and data
+wl-16-11-2020, Mon: second version
 -->
 
 <tool id="ionfow" name="IonFlow" version="0.1.0">
@@ -26,20 +27,16 @@ wl-09-09-2020, Wed: add input data index for varaible, batch id and data
         --data_id '$pre_proc.data_id'
         --method_norm '$pre_proc.method_norm'
         --batch_control '$pre_proc.batch.batch_control'
-
         #if $pre_proc.batch.batch_control=='yes'
           --control_lines '$pre_proc.batch.control_lines'
           --control_use '$pre_proc.batch.control_use'
         #end if
-
         --method_outliers '$pre_proc.method_outliers'
         --thres_outl '$pre_proc.thres_outl'
         --stand_method '$pre_proc.stand.stand_method'
-
         #if $pre_proc.stand.stand_method=='custom':
           --std_file '$pre_proc.stand.std_file'
         #end if
-
         --thres_symb '$pre_proc.thres_symb'
 
         ## network and enrichment analysis
@@ -135,7 +132,7 @@ wl-09-09-2020, Wed: add input data index for varaible, batch id and data
       <option value="none">none</option>
       </param>
 
-      <param name="thres_outl" type="float" value="3"
+      <param name="thres_outl" type="float" value="3.0"
              label="Specify outlier detection threshold" />
 
       <!-- standardisation method -->
@@ -156,14 +153,14 @@ wl-09-09-2020, Wed: add input data index for varaible, batch id and data
         </when>
       </conditional>
 
-      <param name="thres_symb" type="float" value="2" 
+      <param name="thres_symb" type="float" value="2.0" 
              label="Specify symbolisation threshold" />
 
     </section>
     <!-- end of pre_proc -->
 
     <section name="net_enri" title="Network and enrichment analysis" >
-      <param name="min_clust_size" type="float" value="10"
+      <param name="min_clust_size" type="float" value="10.0"
             label="Specify minimal cluster center number" />
       <param name="thres_corr" type="float" value="0.60" min="0" max="1"
              label="Specify similarity threshold (0 - 1)" />

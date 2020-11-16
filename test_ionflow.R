@@ -11,7 +11,7 @@ tool_dir <- "~/my_galaxy/ionflow/"
 setwd(tool_dir)
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
           "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
-          "org.Sc.sgd.db", "GO.db", "GOstats", "pheatmap")
+          "org.Sc.sgd.db", "GO.db", "GOstats", "KEGG.db", "pheatmap")
 invisible(lapply(pkgs, library, character.only = TRUE))
 source("funcs_ionflow.R")
 

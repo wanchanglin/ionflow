@@ -32,7 +32,7 @@ str_vec <- function(x) {
 
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
           "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
-          "org.Sc.sgd.db", "GO.db", "GOstats", "pheatmap")
+          "org.Sc.sgd.db", "GO.db", "GOstats", "KEGG.db", "pheatmap")
 suppressPackageStartupMessages(invisible(lapply(pkgs, library,
                                                 character.only = TRUE)))
 

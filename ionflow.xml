@@ -231,25 +231,34 @@ wl-09-09-2020, Wed: add input data index for varaible, batch id and data
   <!-- =============================================================== -->
   <tests>
     <test>
-      <param name="ion_file" value="iondata_test.tsv" />
-      <param name="std_file_sel" value="yes" />
+      <param name="ion_file" value="iondata.tsv" />
+      <param name="var_id" value="1" />
+      <param name="batch_id" value="2" />
+      <param name="data_id" value="3" />
+      <param name="method_norm" value="median" />
+      <param name="batch_control" value="no" />
+      <param name="method_outliers" value="IQR" />
+      <param name="thres_outl" value="3.0" />
+      <param name="stand_method" value="std" />
       <param name="std_file" value="user_std.tsv" />
-      <param name="thres_clus" value="5.0" />
-      <param name="thres_anno" value="10.0" />
+      <param name="thres_symb" value="2.0" />
+      <param name="min_clust_size" value="10.0" />
       <param name="thres_corr" value="0.75" />
+      <param name="method_corr" value="pearson" />
+      <param name="pval" value="0.05" />
+      <param name="ont" value="BP" />
+      <param name="annot_pkg" value="org.Sc.sgd.db" />
       <output name="pre_proc_pdf" file="res/pre_proc.pdf" compare="sim_size" />
       <output name="df_stats_out" file="res/df_stats.tsv" compare="diff" />
       <output name="outl_out" file="res/outl.tsv" compare="diff" />
       <output name="data_wide_out" file="res/data_wide.tsv" compare="diff" />
       <output name="data_wide_symb_out" file="res/data_wide_symb.tsv" compare="diff" />
       <output name="exp_anal_pdf" file="res/exp_anal.pdf" compare="sim_size" />
-      <output name="gene_clus_pdf" file="res/gene_clus.pdf" compare="sim_size" />
-      <output name="clus_out" file="res/clus.tsv" compare="diff" />
-      <output name="anno_out" file="res/kegg_go_anno.tsv" compare="diff" />
-      <output name="enri_out" file="res/go_enri.tsv" compare="diff" />
       <output name="gene_net_pdf" file="res/gene_net.pdf" compare="sim_size" />
       <output name="imbe_out" file="res/impact_betweenness.tsv" compare="diff" />
       <output name="imbe_tab_out" file="res/impact_betweenness_tab.tsv" />
+      <output name="kegg_en_out" file="res/kegg_en.tsv" compare="diff" />
+      <output name="go_en_out" file="res/go_en.tsv" compare="diff" />
     </test>
   </tests>
 

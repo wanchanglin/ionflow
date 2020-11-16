@@ -2,20 +2,20 @@
 # wl-12-11-2020, Thu: Modification 
 
 Rscript --vanilla ../ionflow.R \
-  --ion_file "../test-data/iondata_test.tsv" \
+  --ion_file "../test-data/iondata.tsv" \
   --var_id "1" \
   --batch_id "2" \
   --data_id "3" \
   --method_norm "median" \
   --batch_control "no" \
   --method_outliers "IQR" \
-  --thres_outl 3 \
+  --thres_outl 3.0 \
   --stand_method "std" \
   --std_file "../test-data/user_std.tsv" \
-  --thres_symb 2 \
-  --min_clust_size 5.0 \
-  --thres_corr "0.6" \
-  --method_corr "cosine" \
+  --thres_symb 2.0 \
+  --min_clust_size 10.0 \
+  --thres_corr "0.75" \
+  --method_corr "pearson" \
   --pval 0.05 \
   --ont "BP" \
   --annot_pkg "org.Sc.sgd.db" \

@@ -10,13 +10,13 @@
       <requirement type="package" version="0.8.2">r-ggrepel</requirement>
       <requirement type="package" version="0.84">r-corrplot</requirement>
       <requirement type="package" version="3.0.4">r-gplots</requirement>
-      <!-- <requirement type="package" version="1.0.12">r-pheatmap</requirement> -->
       <requirement type="package" version="1.16.0">r-network</requirement>
       <requirement type="package" version="2.5">r-sna</requirement>
       <requirement type="package" version="2.0.0">r-ggally</requirement>
-      <!-- <requirement type="package" version="1.6.4">r-qgraph</requirement> -->
       <requirement type="package" version="3.11.4">bioconductor-go.db</requirement>
       <requirement type="package" version="2.54.0">bioconductor-gostats</requirement>
+      <requirement type="package" version="1.0.12">r-pheatmap</requirement>
+      <!-- <requirement type="package" version="3.24">bioconductor-kegg.db</requirement> -->
       <!-- <requirement type="package" version="3.11.1">bioconductor-org.sc.sgd.db</requirement> -->
     </requirements>
   </xml>

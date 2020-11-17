@@ -267,46 +267,50 @@ IonFlow  Pipeline
 Description
 -----------
 
-This galaxy tool wraps R package IonFlow_ to process ionomics data to
-aid reproducible data sharing and big data initiatives.
+This galaxy tool wraps R package IonFlow_ with modification to process
+ionomics data to aid reproducible data sharing and big data initiatives.
 
 The pipeline includes:
 
-Pre-processing
-  This procedure uses quantile (boxplot) method to perform outlier
-  detection, median shift for batch correction, standard derivation of each
-  ion for standardisation after logarithm transformation.  The processed
-  concentration data and a symbolization profile data are returned for
-  further analysis.
+Pre-Processing
+  This procedure performs batch correction with or without control lines,
+  outlier detection and data standardisation. The processed concentration
+  data and a symbolisation profile data are returned for further analysis.
 
-Exploratory analysis
-  It includes PCA analysis, hierarchical clustering for both ion and
-  knockout, and correlation analysis with heatmap and network analysis.
+Exploratory Analysis
+  This procedure performs correlation analysis and PCA analysis in terms of
+  ions. The heatmap with hierarchical clustering and network graph are based
+  on the correlation analysis.
 
-Gene Clustering
-  This stage uses hierarchical clustering based on symbolised profile. The
-  genes located in the clustering centre with number large than a threshold
-  are then used for the GO Slim annotation and the GO terms enrichment
-  analysis.
+Gene Clustering and Enrichment Analysis
+  This step performs hierarchical clustering based on symbolised profile.
+  The selected cluster centres (control by the threshold of minimal cluster
+  centre number) are applied to GO Terms and KEGG enrichment analysis.
 
-Gene Network
-  This part uses hierarchical clustering based on the symbolised profile to
-  select genes located in the clustering centre with number large than a
-  threshold for correlation analysis. Genes with correlation coefficient
-  large than a threshold are then used for network analysis. Some network
-  analysis stats such as impact and betweenness are also returned.
-
+Gene clustering and Gene Network
+  This part uses hierarchical clustering of the symbolised profile to select
+  genes located in the clustering centre with its number large than the
+  minimal cluster centre threshold for correlation analysis. Genes with
+  correlation coefficient large than a threshold are then used for network
+  analysis. Some network analysis stats such as impact and betweenness are
+  also returned.
 
 .. _IonFlow: https://github.com/AlinaPeluso/MetaboFlow
 
 Inputs
 ------
 
-**\1. Ionomics data**
+Ionomics data
+~~~~~~~~~~~~~
 
 The input file is an ionomics data table in tubular format. The following is
 an example with the first two columns of knockout name and batch ID and
-other columns are ions.
+other columns are ion data. To use this input data in ``Pre-processing`` , the
+user must indicate ``var_id`` as ``1`` (``Knockout``), ``batch_id`` as ``2``
+(``Batch_ID``) and ``data_id`` as ``3``. If the file has the batch control
+information in the first column, ``control_lines`` should indicate. For
+example, if ``YDL227C`` will be used as batch control, ``control_lines =
+"YDL227C"``.
 
 
  +----------+----------+---------+-------+-------+--------+----------+---------+-------+---------+-------+----------+----------+
@@ -323,11 +327,12 @@ other columns are ions.
 
 |
 
-**\2. STD values**
+Custom STD data
+~~~~~~~~~~~~~~~
 
-Standard derivation values can be provide by user or calculated from ion
-data set. These values are used to standardize ion data. The user defined
-std file has tabular format such as:
+Standard derivation values can be provide by user if standardisation method
+``stand_method`` in pre-processing procedure is selected as ``custom``. The
+user defined std file has tabular format such as:
 
   +------+----------+
   |  Ion |   sd     |
@@ -349,33 +354,11 @@ std file has tabular format such as:
 
 |
 
-Parameters
-----------
-
-**\1. Threshold for cluster**
-
-The threshold is for the gene number in a cluster centre with the default
-value of 10. Genes located in a cluster center with gene number large than
-the threshold will be used for further analysis, such as annotation and
-network analysis.
-
-**\2. Threshold for annotation**
-
-The threshold is for the percentage of the genes in a cluster centre used
-for annotation. The default is 5 percent. Genes with percentage large than
-threshold will be annotated.
-
-**\3. Threshold for correlation**
-
-The threshold is the correlation coefficient cut-off for correlation network
-analysis. Only those large than the threshold will be used in the network
-analysis. The default is 0.6 in the range of 0 and 1.
-
-
 Outputs
-----------
+-------
 
-**\1. Pre-processing**
+Pre-processing
+~~~~~~~~~~~~~~
 
 The output includes:
 
@@ -386,32 +369,36 @@ The output includes:
 - A tabular file for processed data set
 - A tabular file for the symbolisation data set
 
-**\2. Exploratory analysis**
+Exploratory analysis
+~~~~~~~~~~~~~~~~~~~~
 
-A single PDF file is output with plots:
+A single PDF file with plots:
 
-- correlation map
-- heatmap with dendrogram,
-- correlation heatmap with dendrogram 
-- correlation network graph
+- Correlation map
+- Heatmap with dendrogram
+- Correlation heatmap with dendrogram
+- Correlation network graph
 - PCA plot
 
-**\3. Gene Clustering**
-
-PDF and tubular files include:
-
-- A PDF file for gene clustering in separate cluster centre
-- A tabular for clustering table
-- A tabular file for annotation table
-- A tabular file for enrichment table
-
-**\4. Gene Network**
+Gene network
+~~~~~~~~~~~~
 
 Three files are returned:
 
-- A PDF file for plots: network graph and impact scatter plot
+- A PDF file for plots
+  - network graph with node colours controlled by symbolic pheno
+  - network graph with node colours controlled by network cluster
+  - impact scatter plot
 - A tabular file for impact and betweenness table
 - A tabular file for impact and betweenness contingency table
+
+Gene enrichment
+~~~~~~~~~~~~~~~
+
+Two tubular files include:
+
+- A tabular file for GO Terms enrichment table
+- A tabular file for KEGG enrichment table
 
 </help>
   <citations>

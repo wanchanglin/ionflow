@@ -13,7 +13,7 @@ pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
           "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
           "org.Sc.sgd.db", "GO.db", "GOstats", "KEGG.db", "pheatmap")
 invisible(lapply(pkgs, library, character.only = TRUE))
-source("funcs_ionflow.R")
+source("ionflow_funcs.R")
 
 ## ==== Data preparation ====
 
@@ -88,10 +88,10 @@ go_en
 
 ## ==== Exploratory analysis ====
 exp_anal <- ExploratoryAnalysis(data = dat)
-#' exp_anal$plot.Pearson_correlation
-#' exp_anal$plot.PCA_Individual
-#' exp_anal$plot.heatmap
-#' exp_anal$plot.pairwise_correlation_map
-#' exp_anal$plot.correlation_network
-#' head(exp_anal$data.PCA_loadings)
+exp_anal$plot.Pearson_correlation
+exp_anal$plot.PCA_Individual
+exp_anal$plot.heatmap
+exp_anal$plot.pairwise_correlation_map
+exp_anal$plot.correlation_network
+head(exp_anal$data.PCA_loadings)
 

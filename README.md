@@ -1,7 +1,7 @@
 # IonFlow for Galaxy #
 
-Galaxy tool for processing and analysis of Ionomics data,
-[IonFlow](https://github.com/AlinaPeluso/MetaboFlow). 
+Galaxy tool for processing and analysis of ionomics data , based on the
+modification of R package [IonFlow](https://github.com/AlinaPeluso/MetaboFlow). 
 
 ## Installation ##
 
@@ -36,8 +36,6 @@ Galaxy tool for processing and analysis of Ionomics data,
   - `iondata.tsv`: a full ionomics data set 
   - `iondata_test.tsv`: a subset of `iondata.tsv`
   - `user_std.tsv`: user defined standard deviation file with two columns
-  - `pre_defined_std.tsv`: user defined standard deviation file with one
-    column (not recommended. Use two column format instead) 
 
 ## Authors, contributors & contacts ##
 

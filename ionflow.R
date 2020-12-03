@@ -226,7 +226,7 @@ if (com_f) {
 print(opt)
 
 suppressPackageStartupMessages({
-  source(paste0(tool_dir, "funcs_ionflow.R"))
+  source(paste0(tool_dir, "ionflow_funcs.R"))
 })
 
 ## ==== Data preparation ====

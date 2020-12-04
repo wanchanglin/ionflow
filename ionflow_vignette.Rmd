@@ -2,12 +2,11 @@
 title: "Ionflow: Ionomics data network and enrichment analysis"
 author: "Wanchang Lin"
 date: 01-12-2020
-output: rmarkdown::html_vignette
 KeyWords: ionomics, network analysis, enrichment analysis 
-vignette: >
-  %\VignetteIndexEntry{Ionflow: Ionomics data network and enrichment analysis}
-  %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{UTF-8}
+description: |
+  Ionomics data gene network and enrichment analysis
+fontsize: 11pt
+geometry: margin=1in
 ---
 
 ```{r, include = FALSE}
@@ -36,7 +35,7 @@ ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
 dim(ion_data)
 ```
 
-Ten random lines are shown:
+Ten random lines are shown as:
 
 ```{r, eval = F, echo = T}
 sample_n(ion_data, 10)
@@ -45,7 +44,8 @@ sample_n(ion_data, 10)
 ```{r, eval = T, echo = F}
 sample_n(ion_data, 10) %>%
   kable(caption = 'Samples of raw data', digits = 2) %>% 
-  kable_styling(full_width = F, font_size = 10)
+  kable_styling(full_width = F, font_size = 10,
+                latex_options = c("striped", "scale_down"))
 ```
 
 We can see that the first few columns are meta information such as gene ORF
@@ -124,11 +124,12 @@ pre$stats.batch_data %>% kable(caption = 'Summary: z-scores', digits = 2) %>%
 The pre-processed data and its symbolic data are like like:
 
 ```{r}
-pre$data.gene.zscores %>% sample_n(10) %>%
+pre$data.gene.zscores %>% head() %>%
   kable(caption = 'Pre-processed data', digits = 2) %>% 
-  kable_styling(full_width = F, font_size = 10)
+  kable_styling(full_width = F, font_size = 10,
+                latex_options = c("striped", "scale_down"))
 
-pre$data.gene.symb %>% sample_n(10) %>%
+pre$data.gene.symb %>% head() %>%
   kable(caption = 'Symbolic data') %>%
   kable_styling(full_width = F, font_size = 10)
 ```
@@ -139,7 +140,7 @@ The pre-processed data distribution is:
 pre$plot.hist
 ```
 
-## Data filter
+## Data filtering
 
 There are a lot of ways to filter gene. Here we filter gene based on
 symbolic data:
@@ -176,6 +177,8 @@ net$plot.impact_betweenness
 The node colours are indicated by either the similarity measures or the
 network community detection, i.e. clustering.
 
+\clearpage
+
 For the comparision, we use different similarity methods. Here use *Cosine*:
 
 ```{r net-1, fig.cap = "Netwok analysis based on Cosine"}
@@ -187,6 +190,8 @@ net_1 <- GeneNetwork(data = dat,
 net_1$plot.pnet1
 net_1$plot.pnet2
 ```
+
+\clearpage
 
 Use *Hybrid Mahalanobis Cosine*:
 
@@ -200,6 +205,8 @@ net_2$plot.pnet1
 net_2$plot.pnet2
 ```
 
+\clearpage
+
 Again, we use *Hybrid Mahalanobis Cosine*:
 
 ```{r net-3, fig.cap = "Netwok analysis based on Hybrid Mahalanobis Cosine"}
@@ -212,6 +219,8 @@ net_3$plot.pnet1
 net_3$plot.pnet2
 ```
 
+\clearpage
+
 ## Enrichment analysis
 
 The KEGG enrichment analysis:
@@ -223,7 +232,8 @@ kegg <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
 #' kegg
 kegg %>% 
   kable(caption = 'KEGG enrichmenat analysis', digits = 3) %>%
-  kable_styling(full_width = F, font_size = 10)
+  kable_styling(full_width = F, font_size = 10,
+                latex_options = c("striped", "scale_down"))
 ```
 
 Note that there can be none results for KRGG  enrichment analysis. Change
@@ -235,10 +245,13 @@ The GO Terms enrichment analysis:
 go <- go_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
                 ont = "BP", annot_pkg =  "org.Sc.sgd.db")
 #' go
-go %>% sample_n(10) %>%
+go %>% head() %>%
   kable(caption = 'GO Terms enrichmenat analysis', digits = 3) %>%
-  kable_styling(full_width = F, font_size = 10)
+  kable_styling(full_width = F, font_size = 10,
+                latex_options = c("striped", "scale_down"))
 ```
+
+\newpage
 
 ## Exploratory analysis
 

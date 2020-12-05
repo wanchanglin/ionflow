@@ -1,0 +1,319 @@
+---
+title: "Ionflow: Ionomics data network and enrichment analysis"
+author: "Wanchang Lin"
+date: 01-12-2020
+KeyWords: ionomics, network analysis, enrichment analysis 
+description: |
+  Ionomics data gene network and enrichment analysis
+fontsize: 11pt
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
+                      fig.width = 7, fig.height = 7, 
+                      fig.align = "center",
+                      fig.path = "./img/",
+                      dpi = 100, dev = "png", cache = FALSE)
+
+pkgs <- c("reshape2", "plyr", "knitr", "kableExtra", "tidyverse",
+          "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
+          "org.Sc.sgd.db", "GO.db", "GOstats", "KEGG.db", "pheatmap")
+invisible(lapply(pkgs, library, character.only = TRUE))
+source("../ionflow_funcs.R")
+```
+
+This document explains how to performs ionomics data analysis including gene
+network and enrichment analysis. 
+
+## Data preparation
+
+To explore the pipeline, we'll use the ionomics data set:
+
+```{r}
+ion_data <- read.table("../test-data/iondata.tsv", header = T, sep = "\t")
+dim(ion_data)
+```
+
+Ten random lines are shown as:
+
+```{r, eval = F, echo = T}
+sample_n(ion_data, 10)
+```
+
+```{r, eval = T, echo = F}
+sample_n(ion_data, 10) %>%
+  kable(caption = 'Samples of raw data', digits = 2, booktabs = T) %>% 
+  kable_styling(full_width = F, font_size = 10,
+                latex_options = c("striped", "scale_down"))
+```
+
+We can see that the first few columns are meta information such as gene ORF
+and batch id. The rest is the ionomics data. 
+
+
+## Data pre-process
+
+The raw data set is needed to be pre-processed. The pre-processing function
+`PreProcessing` performs:
+
+- log transformation
+- batch correction
+- outlier detection
+- standardisation
+
+For batch correction, control line could be used. If so, the values belong
+to control lines are used to be the basis of batch correlation. This data
+has a control line: **YDL227C** mutant. The code segment below is to
+identify it:
+
+```{r}
+max(with(ion_data, table(Knockout)))
+which.max(with(ion_data, table(Knockout)))
+```
+
+The outlier detection here is univarite method, with a threshold to control
+the number of outliers. The larger the threshold (`thres_outl`) the more
+outlier removal. 
+
+Standarisation provides a *custom* method. This allows user to use
+specific std values such as: 
+
+```{r}
+std <- read.table("../test-data/user_std.tsv", header = T, sep = "\t")
+std
+```
+
+The pre-process procedure returns not only processed ionomics data but also
+a symbolic data. This data is based on the inomics data and a
+threshold(`thres_symb`):
+
+- `0` if ionomics data located between `[-thres_symb, thres_symb]`
+- `1` if ionomics data larger than `thres_symb`
+- `-1` if ionomics data smaller than `-thres_symb`
+
+The core part of network and enrivhment analysis, clustering, is based on
+the symbolic data. Note that the symblic data is sensitive to the choices of
+the threshold. 
+
+Let's run the pre-process procedure:
+
+```{r, tidy = FALSE}
+pre <- PreProcessing(data = ion_data,
+                     var_id = 1, batch_id = 2, data_id = 3,
+                     method_norm = "median",
+                     control_lines = "YDL227C",
+                     control_use = "control",
+                     method_outliers = "IQR",
+                     thres_outl = 3,
+                     stand_method = "std",
+                     stdev = NULL,
+                     thres_symb = 3)
+
+names(pre)
+```
+
+The results includes summaries of raw data and processed data. The latter
+is:
+
+```{r, results = 'asis'}
+pre$stats.batch_data %>% 
+  kable(caption = 'Processed data summary', digits = 2, booktabs = T) %>%
+  kable_styling(full_width = F, font_size = 10)
+```
+
+The pre-processed data and its symbolic data are like like:
+
+```{r}
+pre$data.gene.zscores %>% head() %>%
+  kable(caption = 'Pre-processed data', digits = 2, booktabs = T) %>% 
+  kable_styling(full_width = F, font_size = 10,
+                latex_options = c("striped", "scale_down"))
+
+pre$data.gene.symb %>% head() %>%
+  kable(caption = 'Symbolic data', booktabs = T) %>%
+  kable_styling(full_width = F, font_size = 10)
+```
+
+The symbolic data is calulated from processed data with control of
+`thres_symb` (here is 3). You can obtain a new symbol data by assigning
+new threshold to the function `symbol_data`:
+
+```{r}
+data_symb <- symbol_data(pre$data.gene.zscores, thres_symb = 2)
+data_symb %>% head() %>%
+  kable(caption = 'Symbolic data with threshold of 2', booktabs = T) %>%
+  kable_styling(full_width = F, font_size = 10)
+```
+
+The pre-processed data distribution is:
+
+```{r pre-proc-ion, fig.cap = "Ionome data distribution plot"}
+pre$plot.hist
+```
+
+## Data filtering
+
+There are a lot of ways to filter gene. Here we filter gene based on
+symbolic data:
+
+```{r}
+data <- pre$data.gene.zscores
+data_symb <- pre$data.gene.symb
+idx <- rowSums(abs(data_symb[, -1])) > 0
+dat <- data[idx, ]
+dat_symb <- data_symb[idx, ]
+dim(dat)
+```
+
+## Data clustering
+
+The hierarchical cluster analysis is the key part of gene network and gene
+enrichment analysis. The methodology is as follow:
+
+- Compute the distance of symbolic data
+- Hierarchical cluster analysis on the distance
+- Identify clusters/groups with a threshold of minimal number of cluster
+  size
+
+One example is:
+
+```{r}
+clust <- gene_clus(dat_symb[, -1], min_clust_size = 10)
+names(clust)
+```
+
+The cluster centres are:
+
+```{r}
+clust$tab_sub
+```
+
+It indicates that clusters and their number of genes (larger than
+`min_cluster_size`).
+
+## Gene network
+
+The gene network uses both the ionomics and symboloc data. The similarity
+measure on the ionomics data is filtered by the similarity threshold located
+between 0 and 1, and cluster centres of symbolic data. The filter values are
+then used for network analysis. 
+
+The similarity measure method is one of *pearson*, *spearman*, *kendall*,
+*cosine*, *mahal_cosine* or *hybrid_mahal_cosine*.
+
+First, the Pearson correlation is used to build up the network:
+
+```{r}
+net <- GeneNetwork(data = dat,
+                   data_symb = dat_symb,
+                   min_clust_size = 10,
+                   thres_corr = 0.75,
+                   method_corr = "pearson")
+```
+
+The network with nodes colouring by the symbolic clustering is:
+
+```{r net-symb, fig.cap = "Netwok analysis based on Pearson correlation: symbolic clustering"}
+net$plot.pnet1
+```
+
+The same network, but nodes are colured by the netwok community detection:
+
+```{r net-clus, fig.cap = "Netwok analysis based on Pearson correlation: community detction"}
+net$plot.pnet2
+```
+
+The network analysis also returns a network impact and betweeness plot:
+
+```{r net-imp, fig.cap = "Netwok analysis based on Pearson correlation: impact and betweeness"}
+net$plot.impact_betweenness
+```
+
+\clearpage
+
+For the comparision purpose, we use different similarity methods. Here use
+*Cosine*:
+
+```{r net-1, fig.cap = "Netwok analysis based on Cosine"}
+net_1 <- GeneNetwork(data = dat,
+                     data_symb = dat_symb,
+                     min_clust_size = 10,
+                     thres_corr = 0.75,
+                     method_corr = "cosine")
+net_1$plot.pnet1
+net_1$plot.pnet2
+```
+
+\clearpage
+
+Use *Hybrid Mahalanobis Cosine*:
+
+```{r net-2, fig.cap = "Netwok analysis based on Mahalanobis Cosine"}
+net_2 <- GeneNetwork(data = dat,
+                     data_symb = dat_symb,
+                     min_clust_size = 10,
+                     thres_corr = 0.75,
+                     method_corr = "mahal_cosine")
+net_2$plot.pnet1
+net_2$plot.pnet2
+```
+
+\clearpage
+
+Again, we use *Hybrid Mahalanobis Cosine*:
+
+```{r net-3, fig.cap = "Netwok analysis based on Hybrid Mahalanobis Cosine"}
+net_3 <- GeneNetwork(data = dat,
+                     data_symb = dat_symb,
+                     min_clust_size = 10,
+                     thres_corr = 0.75,
+                     method_corr = "hybrid_mahal_cosine")
+net_3$plot.pnet1
+net_3$plot.pnet2
+```
+
+\clearpage
+
+## Enrichment analysis
+
+The KEGG enrichment analysis:
+
+```{r, message = F}
+kegg <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
+                    annot_pkg =  "org.Sc.sgd.db")
+
+#' kegg
+kegg %>% 
+  kable(caption = 'KEGG enrichmenat analysis', digits = 3, booktabs = T) %>%
+  kable_styling(full_width = F, font_size = 10,
+                latex_options = c("striped", "scale_down"))
+```
+
+Note that there can be none results for KRGG  enrichment analysis. Change
+arguments such as `thres_clus` as appropriate.
+
+The GO Terms enrichment analysis:
+
+```{r, message = F}
+go <- go_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
+                ont = "BP", annot_pkg =  "org.Sc.sgd.db")
+#' go
+go %>% head() %>%
+  kable(caption = 'GO Terms enrichmenat analysis', digits = 3, booktabs = T) %>%
+  kable_styling(full_width = F, font_size = 10,
+                latex_options = c("striped", "scale_down"))
+```
+
+\newpage
+
+## Exploratory analysis
+
+Some analysis are performed in terms of ions, i.e. feature, including PCA
+and correlation.
+
+```{r expl, fig.cap = "Exploratory analysis plots with respect to ionome"}
+expl <- ExploratoryAnalysis(data = dat)
+expl$plot.PCA_Individual
+expl$plot.correlation_network
+```
+

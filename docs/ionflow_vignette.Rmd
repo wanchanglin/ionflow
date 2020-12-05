@@ -5,6 +5,7 @@ date: 01-12-2020
 KeyWords: ionomics, network analysis, enrichment analysis 
 description: |
   Ionomics data gene network and enrichment analysis
+geometry: margin=1in
 fontsize: 11pt
 ---
 
@@ -22,8 +23,11 @@ invisible(lapply(pkgs, library, character.only = TRUE))
 source("../ionflow_funcs.R")
 ```
 
-This document explains how to performs ionomics data analysis including gene
-network and enrichment analysis. 
+This vignette explains how to performs ionomics data analysis including gene
+network and enrichment analysis by using the modification of R package,
+[ionflow](https://github.com/AlinaPeluso/MetaboFlow). The
+modification(`ionflow_funcs`) was made by Wanchang Lin
+(w.lin@imperial.ac.uk) and Jacopo Iacovacci (j.iacovacci@imperial.ac.uk).
 
 ## Data preparation
 
@@ -47,13 +51,12 @@ sample_n(ion_data, 10) %>%
                 latex_options = c("striped", "scale_down"))
 ```
 
-We can see that the first few columns are meta information such as gene ORF
-and batch id. The rest is the ionomics data. 
-
+The first few columns are meta information such as gene ORF and batch id.
+The rest is the ionomics data. 
 
 ## Data pre-process
 
-The raw data set is needed to be pre-processed. The pre-processing function
+The raw data set should be pre-processed. The pre-processing function
 `PreProcessing` performs:
 
 - log transformation
@@ -61,22 +64,31 @@ The raw data set is needed to be pre-processed. The pre-processing function
 - outlier detection
 - standardisation
 
-For batch correction, control line could be used. If so, the values belong
-to control lines are used to be the basis of batch correlation. This data
-has a control line: **YDL227C** mutant. The code segment below is to
-identify it:
+The raw data are at first log trainsformed and then followed by the batch
+correction. The user can chose not to perform batch correction, otherwise
+the user can use either *median* or *median* plus *std* method. If there is
+quality control for the batch correction, the user can use it and indicates
+in the argument of `control_lines`. Also this function gives user option how
+to use these control line (`control_use`): If `control_use` is `control`,
+these control lines (data rows) are used for the batch correction factor; if
+`control.out`, lines except control lines are used.
+
+This data set has a control line: **YDL227C** mutant. The code segment below
+is to identify it:
 
 ```{r}
 max(with(ion_data, table(Knockout)))
 which.max(with(ion_data, table(Knockout)))
 ```
 
-The outlier detection here is univarite method, with a threshold to control
-the number of outliers. The larger the threshold (`thres_outl`) the more
-outlier removal. 
+The next stage is outlier detection. Here only univarite methods are
+implemented, including *mad*, *IQR*, and *log.FC.dist*. And like batch
+correction, user can skip this procedure by setting `method_outliers = none`
+in the function argument. There is a threshold to control the number of
+outliers. The larger the threshold (`thres_outl`) the more outlier removal. 
 
-Standarisation provides a *custom* method. This allows user to use
-specific std values such as: 
+Standarisation provides three methods: *std*, *mad* or *custom*. If the
+method is *cumstom*, user must use specific std values such as: 
 
 ```{r}
 std <- read.table("../test-data/user_std.tsv", header = T, sep = "\t")
@@ -84,16 +96,16 @@ std
 ```
 
 The pre-process procedure returns not only processed ionomics data but also
-a symbolic data. This data is based on the inomics data and a
-threshold(`thres_symb`):
+a symbolic data set. This data set is based on the inomics data and is
+determined by a threshold(`thres_symb`):
 
-- `0` if ionomics data located between `[-thres_symb, thres_symb]`
-- `1` if ionomics data larger than `thres_symb`
-- `-1` if ionomics data smaller than `-thres_symb`
+- `0` if ionomics value is located between `[-thres_symb, thres_symb]`
+- `1` if ionomics value is larger than `thres_symb`
+- `-1` if ionomics value is smaller than `-thres_symb`
 
 The core part of network and enrivhment analysis, clustering, is based on
-the symbolic data. Note that the symblic data is sensitive to the choices of
-the threshold. 
+the symbolic data. 
+
 
 Let's run the pre-process procedure:
 
@@ -121,11 +133,11 @@ pre$stats.batch_data %>%
   kable_styling(full_width = F, font_size = 10)
 ```
 
-The pre-processed data and its symbolic data are like like:
+The pre-processed data and symbolic data are like like:
 
 ```{r}
 pre$data.gene.zscores %>% head() %>%
-  kable(caption = 'Pre-processed data', digits = 2, booktabs = T) %>% 
+  kable(caption = 'Processed data', digits = 2, booktabs = T) %>% 
   kable_styling(full_width = F, font_size = 10,
                 latex_options = c("striped", "scale_down"))
 
@@ -134,9 +146,9 @@ pre$data.gene.symb %>% head() %>%
   kable_styling(full_width = F, font_size = 10)
 ```
 
-The symbolic data is calulated from processed data with control of
-`thres_symb` (here is 3). You can obtain a new symbol data by assigning
-new threshold to the function `symbol_data`:
+The symbolic data are calulated from the processed data with control of
+`thres_symb` (here is 3). You can obtain a new symbol data set by
+re-assigning a new threshold to the function `symbol_data`:
 
 ```{r}
 data_symb <- symbol_data(pre$data.gene.zscores, thres_symb = 2)
@@ -147,14 +159,14 @@ data_symb %>% head() %>%
 
 The pre-processed data distribution is:
 
-```{r pre-proc-ion, fig.cap = "Ionome data distribution plot"}
+```{r pre-proc-ion, fig.cap = "Ionomcs data distribution plot"}
 pre$plot.hist
 ```
 
 ## Data filtering
 
-There are a lot of ways to filter gene. Here we filter gene based on
-symbolic data:
+There are a lot of ways to filter genes. Here we filter genes based on
+symbolic data: remove genes with all velues are zero.
 
 ```{r}
 data <- pre$data.gene.zscores
@@ -194,14 +206,18 @@ It indicates that clusters and their number of genes (larger than
 ## Gene network
 
 The gene network uses both the ionomics and symboloc data. The similarity
-measure on the ionomics data is filtered by the similarity threshold located
-between 0 and 1, and cluster centres of symbolic data. The filter values are
-then used for network analysis. 
+measures on the ionomics data are filtered by the similarity threshold
+located between 0 and 1, and cluster centres of symbolic data. The filter
+values are then used for network analysis. 
 
 The similarity measure method is one of *pearson*, *spearman*, *kendall*,
-*cosine*, *mahal_cosine* or *hybrid_mahal_cosine*.
+*cosine*, *mahal_cosine* or *hybrid_mahal_cosine*. For the last two methods,
+see publication: [Extraction and Integration of Genetic Networks from
+Short-Profile Omic Data Sets](https://www.mdpi.com/2218-1989/10/11/435/htm)
+for details.
 
-First, the Pearson correlation is used to build up the network:
+For example, we use the Pearson correlation as similarity measure for netwok
+analysis:
 
 ```{r}
 net <- GeneNetwork(data = dat,
@@ -211,7 +227,7 @@ net <- GeneNetwork(data = dat,
                    method_corr = "pearson")
 ```
 
-The network with nodes colouring by the symbolic clustering is:
+The network with nodes coloured by the symbolic data clustering is:
 
 ```{r net-symb, fig.cap = "Netwok analysis based on Pearson correlation: symbolic clustering"}
 net$plot.pnet1
@@ -231,8 +247,8 @@ net$plot.impact_betweenness
 
 \clearpage
 
-For the comparision purpose, we use different similarity methods. Here use
-*Cosine*:
+For the comparision purpose, we use different similarity methods. Here we
+choose *Cosine*:
 
 ```{r net-1, fig.cap = "Netwok analysis based on Cosine"}
 net_1 <- GeneNetwork(data = dat,

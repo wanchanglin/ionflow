@@ -498,25 +498,35 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
 
   method_corr <- match.arg(method_corr)
 
-  #' Cluster of gene with same profile
-  res.dist <- dist(data_symb[, -1], method = "manhattan")
-  res.hc <- hclust(d = res.dist, method = "single")
-  symb.cluster <- cutree(res.hc, h = 0)
 
-  data_symb$cluster <- symb.cluster
+  #' Define clusters
+  if (T) {  
+    clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size,
+                       f_max = T)  #' wl-05-12-2020, Sat: check go/kegg_enrich
+    data_symb$cluster <- clust$clus
+    index <- clust$idx
+    df_sub <- clust$tab_sub
+  } else {
 
-  df <- as.data.frame(table(symb.cluster), stringsAsFactors = F)
-  names(df) <- c("cluster", "nGenes")
-  #' filter clusters with threshold
-  df_sub <- df[df$nGenes > min_clust_size, ]
+    #' Cluster of gene with same profile
+    res.dist <- dist(data_symb[, -1], method = "manhattan")
+    res.hc <- hclust(d = res.dist, method = "single")
+    symb.cluster <- cutree(res.hc, h = 0)
 
-  #' Cluster 2 (largest cluster) contains genes with no phenotype hence not
-  #' considered (input to 0)
-  if (T) df_sub <- df_sub[-which.max(df_sub[, 2]), ]
+    data_symb$cluster <- symb.cluster
 
-  rownames(df_sub) <- c()
+    df <- as.data.frame(table(symb.cluster), stringsAsFactors = F)
+    names(df) <- c("cluster", "nGenes")
+    #' filter clusters with threshold
+    df_sub <- df[df$nGenes > min_clust_size, ]
 
-  index <- symb.cluster %in% df_sub$cluster
+    #' Cluster 2 (largest cluster) contains genes with no phenotype hence not
+    #' considered (input to 0)
+    if (T) df_sub <- df_sub[-which.max(df_sub[, 2]), ]
+
+    rownames(df_sub) <- c()
+    index <- symb.cluster %in% df_sub$cluster
+  }
 
   #' cluster labels with info of accumulation/decumulation of Ions
   #' (high/lower abundance) Assign label

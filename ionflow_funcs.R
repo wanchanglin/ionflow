@@ -234,14 +234,6 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 #'
 ExploratoryAnalysis <- function(data = NULL){
 
-  #' -------------------> Correlation
-  col3 <- colorRampPalette(c("steelblue4", "white", "firebrick"))
-  corrplot.mixed(cor(data[, -1], use = "complete.obs"),
-    number.cex = .7,
-    lower.col = "black", upper.col = col3(100)
-  )
-  p_corr <- recordPlot()
-
   #' -------------------> PCA
   #' wl-14-07-2020, Tue: Original (trust) pca computation if there is no NAs.
   dat <- t(data[, -1])
@@ -259,12 +251,12 @@ ExploratoryAnalysis <- function(data = NULL){
   #' names(pca_scores) <- dfn
 
   #' PCA loading
-  PCA_loadings <- data.frame(pca$rotation)
-  rownames(PCA_loadings) <- data$Line
-  PCA_loadings <- PCA_loadings[, 1:2]
+  pca_loadings <- data.frame(pca$rotation)
+  rownames(pca_loadings) <- data$Line
+  pca_loadings <- pca_loadings[, 1:2]
 
   #' PCA plot using ggplot2
-  pca_p <-
+  p_pca <-
     ggplot(data = pca_scores[, 1:2], aes(x = PC1, y = PC2)) +
     geom_point(color = "steelblue", size = 3, alpha = 0.4) +
     geom_text_repel(aes(label = row.names(pca_scores)), size = 4) +
@@ -274,26 +266,32 @@ ExploratoryAnalysis <- function(data = NULL){
     ylab(dfn[2]) +
     labs(title = "PCA")
 
-  #' -------------------> HEATMAP
-  pheatmap(data[, -1], show_rownames = F, cluster_cols = T, cluster_rows = T,
-           legend = T, fontsize = 15, clustering_method = "ward.D",
-           scale = "row")
-  pheat <- recordPlot()
+  #' -------------------> Correlation
+  col3 <- colorRampPalette(c("steelblue4", "white", "firebrick"))
+  corrplot.mixed(cor(data[, -1], use = "complete.obs"),
+    number.cex = .7,
+    lower.col = "black", upper.col = col3(100)
+  )
+  p_corr <- recordPlot()
 
-  #' -------------------> PAIRWISE CORRELATION MAP
+  #' -------------------> Correlation heatmap
   col <- colorRampPalette(c("skyblue4", "white", "plum4"))(20)
   corr <- cor(na.omit(data[, -1]))
   heatmap(
     x = corr, col = col, symm = TRUE, cexRow = 1.4, cexCol = 1.4,
     main = ""
   )
-  pcm <- recordPlot()
+  p_corr_heat <- recordPlot()
 
-  #' -------------------> Regularized partial correlation network MAP
+  #' -------------------> Heatmap with dendrogram
+  pheatmap(data[, -1], show_rownames = F, cluster_cols = T, cluster_rows = T,
+           legend = T, fontsize = 15, clustering_method = "ward.D",
+           scale = "row")
+  p_heat <- recordPlot()
+
+  #' -------------------> Correlation network
   #' wl-13-08-2020, Thu: there is no 'qgraph' in conda forge and bio conda.
-  #' Have to plot the correlation network instead.
   if (T) {
-    #' wl-14-08-2020, Fri: debug code only
     #' library(glasso)
     #' corr_reg <- glasso(corr, rho = 0.01)
     #' net <- network::network(corr_reg$w, directed = FALSE)
@@ -303,12 +301,11 @@ ExploratoryAnalysis <- function(data = NULL){
     net %e% "weight" <- corr
     net %e% "weight_abs" <- abs(corr) * 6
     net %e% "color" <- ifelse(net %e% "weight" > 0, "lightgreen", "coral")
-    net_p <-
+    p_net <-
       ggnet2(net,
         label = TRUE, mode = "spring",
         node.size = 10, edge.size = "weight_abs", edge.color = "color"
       )
-    #' net_p
   } else {
     #' wl-06-07-2020, Mon: 'cor_auto' is from package qgraph(lavaan)
     #' wl-28-07-2020, Tue: cad and corr are the same
@@ -321,12 +318,12 @@ ExploratoryAnalysis <- function(data = NULL){
   }
 
   res <- list()
-  res$plot.Pearson_correlation <- p_corr
-  res$plot.PCA_Individual <- pca_p
-  res$data.PCA_loadings <- PCA_loadings
-  res$plot.heatmap <- pheat
-  res$plot.pairwise_correlation_map <- pcm
-  res$plot.correlation_network <- net_p
+  res$plot.pca  <- p_pca
+  res$data.pca.load <- pca_loadings
+  res$plot.corr <- p_corr
+  res$plot.corr.heat <- p_corr_heat
+  res$plot.heat <- p_heat
+  res$plot.net <- p_net
   return(res)
 }
 
@@ -335,26 +332,24 @@ ExploratoryAnalysis <- function(data = NULL){
 GeneClustering <- function(data = NULL, data_symb = NULL,
                            min_clust_size = 10, thres_anno = 5) {
 
-  #' -------------------> Define clusters
-  res.dist <- dist(data_symb[, -1], method = "manhattan")
-  res.hc <- hclust(d = res.dist, method = "single")
-  clus <- cutree(res.hc, h = 0)
+  #' wl-06-12-2020, Sun: move two files inside 
+  data_GOslim <- read.table("./libraries/data_GOslim.tsv", header = T,
+                            sep = "\t")
+  data_ORF2KEGG <- read.table("./libraries/data_ORF2KEGG.tsv", header = T,
+                              sep = "\t")
 
-  data_symb$cluster <- clus
+  #' Define clusters
+  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size,
+                     max_rm = T)
 
-  #' -------------------> Subset cluster with more than 10 genes
-  df <- as.data.frame(table(clus), stringsAsFactors = F)
-  names(df) <- c("cluster", "nGenes")
-  df_sub <- df[df$nGenes > min_clust_size, ]
-  rownames(df_sub) <- c()
-
-  idx <- clus %in% df_sub$cluster
-
-  mat <- data[idx, ]
-  mat$cluster <- clus[idx]
+  #' Update data
+  data_symb$cluster <- clust$clus
+  data$cluster <- as.factor(clust$clus)
+  idx <- clust$idx
+  df_sub <- clust$tab_sub
 
   mat_long <-
-    reshape2::melt(mat,
+    reshape2::melt(data[idx, ],
       id = c("Line", "cluster"), variable.name = "Ion",
       value.name = "log_corr_norm"
     )
@@ -498,35 +493,12 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
 
   method_corr <- match.arg(method_corr)
 
-
   #' Define clusters
-  if (T) {  
-    clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size,
-                       f_max = T)  #' wl-05-12-2020, Sat: check go/kegg_enrich
-    data_symb$cluster <- clust$clus
-    index <- clust$idx
-    df_sub <- clust$tab_sub
-  } else {
-
-    #' Cluster of gene with same profile
-    res.dist <- dist(data_symb[, -1], method = "manhattan")
-    res.hc <- hclust(d = res.dist, method = "single")
-    symb.cluster <- cutree(res.hc, h = 0)
-
-    data_symb$cluster <- symb.cluster
-
-    df <- as.data.frame(table(symb.cluster), stringsAsFactors = F)
-    names(df) <- c("cluster", "nGenes")
-    #' filter clusters with threshold
-    df_sub <- df[df$nGenes > min_clust_size, ]
-
-    #' Cluster 2 (largest cluster) contains genes with no phenotype hence not
-    #' considered (input to 0)
-    if (T) df_sub <- df_sub[-which.max(df_sub[, 2]), ]
-
-    rownames(df_sub) <- c()
-    index <- symb.cluster %in% df_sub$cluster
-  }
+  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size,
+                     max_rm = T)
+  data_symb$cluster <- clust$clus
+  index <- clust$idx
+  df_sub <- clust$tab_sub
 
   #' cluster labels with info of accumulation/decumulation of Ions
   #' (high/lower abundance) Assign label
@@ -700,7 +672,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
 #' =======================================================================
 #' wl-04-10-2020, Sun: Hierarchical clustering
 #'
-gene_clus <- function(x, min_clust_size = 10, f_max = FALSE) {
+gene_clus <- function(x, min_clust_size = 10, max_rm = FALSE) {
   dis <- stats::dist(x, method = "manhattan")
   hc <- hclust(d = dis, method = "single")
   clus <- cutree(hc, h = 0)
@@ -708,7 +680,7 @@ gene_clus <- function(x, min_clust_size = 10, f_max = FALSE) {
   tab <- as.data.frame(table(clus), stringsAsFactors = F)
   names(tab) <- c("cluster", "nGenes")
   tab_sub <- tab[tab$nGenes > min_clust_size, ]
-  if (f_max) tab_sub <- tab_sub[-which.max(tab_sub[, 2]), ]
+  if (max_rm) tab_sub <- tab_sub[-which.max(tab_sub[, 2]), ]
   tab_sub <- tab_sub[order(tab_sub$nGenes, decreasing = T), ]
   rownames(tab_sub) <- NULL
 
@@ -894,7 +866,7 @@ kegg_enrich <- function(data, min_clust_size = 10, pval = 0.05,
                         annot_pkg =  "org.Sc.sgd.db") {
 
   #' Define clusters
-  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size, f_max = F)
+  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size, max_rm = T)
 
   #' Update data for enrichment analysis
   data$cluster <- clust$clus
@@ -958,7 +930,7 @@ go_enrich <- function(data, min_clust_size = 10, pval = 0.05, ont = "BP",
   ont <- match.arg(ont, c("BP", "MF", "CC"))
 
   #' Define clusters
-  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size, f_max = F)
+  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size, max_rm = T)
 
   #' Update data for enrichment analysis
   data$cluster <- clust$clus

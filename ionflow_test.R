@@ -87,11 +87,18 @@ go_en  <- go_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
 go_en
 
 ## ==== Exploratory analysis ====
-exp_anal <- ExploratoryAnalysis(data = dat)
-exp_anal$plot.Pearson_correlation
-exp_anal$plot.PCA_Individual
-exp_anal$plot.heatmap
-exp_anal$plot.pairwise_correlation_map
-exp_anal$plot.correlation_network
-head(exp_anal$data.PCA_loadings)
+expl <- ExploratoryAnalysis(data = dat)
+expl$plot.pca
+expl$plot.corr
+expl$plot.corr.heat
+expl$plot.heat
+expl$plot.net
+head(expl$data.pca.load)
 
+## ==== Gene clustering ====
+gclus <- GeneClustering(data = dat, data_symb = dat_symb,
+                        min_clust_size = 10, thres_anno = 5) 
+gclus$stats.clusters
+gclus$plot.profiles
+gclus$stats.Kegg_Goslim_annotation
+gclus$stats.Goterms_enrichment

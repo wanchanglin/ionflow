@@ -223,7 +223,7 @@ if (com_f) {
     go_en_out   = paste0(tool_dir, "test-data/res/go_en.tsv")
   )
 }
-print(opt)
+#' print(opt)
 
 suppressPackageStartupMessages({
   source(paste0(tool_dir, "ionflow_funcs.R"))
@@ -291,8 +291,8 @@ dat_symb <- dat_symb[idx, ]
 ## ==== Exploratory analysis ====
 pdf(file = opt$exp_anal_pdf, onefile = T) # ,width=15, height=10)
 exp_anal <- ExploratoryAnalysis(data = dat)
-exp_anal$plot.correlation_network
-exp_anal$plot.PCA_Individual
+exp_anal$plot.pca
+exp_anal$plot.net
 dev.off()
 
 ## ==== Gene Network ====

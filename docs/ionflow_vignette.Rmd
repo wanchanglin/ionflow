@@ -329,7 +329,7 @@ and correlation.
 
 ```{r expl, fig.cap = "Exploratory analysis plots with respect to ionome"}
 expl <- ExploratoryAnalysis(data = dat)
-expl$plot.PCA_Individual
-expl$plot.correlation_network
+expl$plot.pca
+expl$plot.net
 ```
 

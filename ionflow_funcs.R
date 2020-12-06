@@ -672,7 +672,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
 #' =======================================================================
 #' wl-04-10-2020, Sun: Hierarchical clustering
 #'
-gene_clus <- function(x, min_clust_size = 10, max_rm = FALSE) {
+gene_clus <- function(x, min_clust_size = 10, max_rm = TRUE) {
   dis <- stats::dist(x, method = "manhattan")
   hc <- hclust(d = dis, method = "single")
   clus <- cutree(hc, h = 0)

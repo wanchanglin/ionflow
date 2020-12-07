@@ -23,22 +23,22 @@ invisible(lapply(pkgs, library, character.only = TRUE))
 source("../ionflow_funcs.R")
 ```
 
-This vignette explains how to performs ionomics data analysis including gene
+This vignette explains how to perform ionomics data analysis including gene
 network and enrichment analysis by using the modification of R package,
 [ionflow](https://github.com/AlinaPeluso/MetaboFlow). The
 modification(`ionflow_funcs`) was made by Wanchang Lin
-(w.lin@imperial.ac.uk) and Jacopo Iacovacci (j.iacovacci@imperial.ac.uk).
+(w.lin@imperial.ac.uk) and Jacopo Iacovacci(j.iacovacci@imperial.ac.uk).
 
 ## Data preparation
 
-To explore the pipeline, we'll use the ionomics data set:
+To explore the process, we'll use the ionomics data set:
 
 ```{r}
 ion_data <- read.table("../test-data/iondata.tsv", header = T, sep = "\t")
 dim(ion_data)
 ```
 
-Ten random lines are shown as:
+Ten random data records are shown as:
 
 ```{r, eval = F, echo = T}
 sample_n(ion_data, 10)
@@ -57,7 +57,7 @@ The rest is the ionomics data.
 ## Data pre-process
 
 The raw data set should be pre-processed. The pre-processing function
-`PreProcessing` performs:
+`PreProcessing` has functions:
 
 - log transformation
 - batch correction
@@ -65,10 +65,10 @@ The raw data set should be pre-processed. The pre-processing function
 - standardisation
 
 The raw data are at first log transformed and then followed by the batch
-correction. The user can chose not to perform batch correction, otherwise
-the user can use either *median* or *median* plus *std* method. If there is
+correction. User can chose not to perform batch correction, otherwise the
+user will use either *median* or *median* plus *std* method. If there is
 quality control for the batch correction, the user can use it and indicates
-in the argument of `control_lines`. Also this function gives user option how
+in the argument of `control_lines`. Also one argument gives user option how
 to use these control line (`control_use`): If `control_use` is `control`,
 these control lines (data rows) are used for the batch correction factor; if
 `control.out`, lines except control lines are used.
@@ -88,7 +88,7 @@ in the function argument. There is a threshold to control the number of
 outliers. The larger the threshold (`thres_outl`) the more outlier removal. 
 
 Standardisation provides three methods: *std*, *mad* or *custom*. If the
-method is *custom*, user must use specific std values such as: 
+method is *custom*, user uses a specific std file like: 
 
 ```{r}
 std <- read.table("../test-data/user_std.tsv", header = T, sep = "\t")
@@ -99,13 +99,13 @@ The pre-process procedure returns not only processed ionomics data but also
 a symbolic data set. This data set is based on the ionomics data and is
 determined by a threshold(`thres_symb`):
 
-- `0` if ionomics value is located between `[-thres_symb, thres_symb]`
+- `0` if ionomics value is located in `[-thres_symb, thres_symb]`
 - `1` if ionomics value is larger than `thres_symb`
 - `-1` if ionomics value is smaller than `-thres_symb`
 
-The core part of network and enrichment analysis, clustering, is based on
-the symbolic data. 
-
+Note that the symbolic data set is important since the key part of network
+and enrichment analysis is based on the hierarchical clustering of symbolic
+data. 
 
 Let's run the pre-process procedure:
 
@@ -124,7 +124,7 @@ pre <- PreProcessing(data = ion_data,
 names(pre)
 ```
 
-The results includes summaries of raw data and processed data. The latter
+The results include summaries of raw data and processed data. The latter
 is:
 
 ```{r, results = 'asis'}
@@ -157,6 +157,11 @@ data_symb %>% head() %>%
   kable_styling(full_width = F, font_size = 10)
 ```
 
+The `thres_symb` is a crucial value to get the symbolic data. Before
+re-setting this threshold, the user should check the summary of processed
+data and pay more attention to the maximum values. For example, some ions
+(for example, *Cd* and *Mn*) are all zero even with 2 of `thres_symb`.
+
 The pre-processed data distribution is:
 
 ```{r pre-proc-ion, fig.cap = "Ionomcs data distribution plot"}
@@ -165,8 +170,8 @@ pre$plot.hist
 
 ## Data filtering
 
-There are a lot of ways to filter genes. Here we filter genes based on
-symbolic data: remove genes with all values are zero.
+There are a lot of ways to filter genes. Here genes are filtered according
+to symbolic data: remove genes with all values are zero.
 
 ```{r}
 data <- pre$data.gene.zscores
@@ -203,18 +208,28 @@ clust$tab_sub
 It indicates that clusters and their number of genes (larger than
 `min_cluster_size`).
 
+The identified gene located in those clusters are:
+
+```{r}
+sum(clust$idx)                    #' numbers of all genes
+as.character(dat[,1][clust$idx])  #' and they are
+```
+
 ## Gene network
 
 The gene network uses both the ionomics and symbolic data. The similarity
-measures on the ionomics data are filtered by the similarity threshold
-located between 0 and 1, and cluster centres of symbolic data. The filter
-values are then used for network analysis. 
+measures on ionomics data are used for constructing network. Before creating
+network, these measurement are further filtered by:
 
-The similarity measure method is one of *pearson*, *spearman*, *kendall*,
-*cosine*, *mahal_cosine* or *hybrid_mahal_cosine*. For the last two methods,
-see publication: [Extraction and Integration of Genetic Networks from
-Short-Profile Omic Data Sets](https://www.mdpi.com/2218-1989/10/11/435/htm)
-for details.
+- clustering of symbolic data;
+- and the similarity threshold located between 0 and 1;
+
+The methods implemented are: *pearson*, *spearman*, *kendall*, *cosine*,
+*mahal_cosine* or *hybrid_mahal_cosine*. The first three methods are
+correleation methods and *cosine* is similar to correlation. For the last
+two methods, see publication: [Extraction and Integration of Genetic
+Networks from Short-Profile Omic Data
+Sets](https://www.mdpi.com/2218-1989/10/11/435/htm) for details.
 
 For example, we use the Pearson correlation as similarity measure for
 network analysis:
@@ -229,19 +244,19 @@ net <- GeneNetwork(data = dat,
 
 The network with nodes coloured by the symbolic data clustering is:
 
-```{r net-symb, fig.cap = "Netwok analysis based on Pearson correlation: symbolic clustering"}
+```{r net-symb, fig.cap = "Network with Pearson correlation: symbolic clustering"}
 net$plot.pnet1
 ```
 
 The same network, but nodes are coloured by the network community detection:
 
-```{r net-clus, fig.cap = "Netwok analysis based on Pearson correlation: community detction"}
+```{r net-clus, fig.cap = "Network with Pearson correlation: community detction"}
 net$plot.pnet2
 ```
 
 The network analysis also returns a network impact and betweenness plot:
 
-```{r net-imp, fig.cap = "Netwok analysis based on Pearson correlation: impact and betweeness"}
+```{r net-imp, fig.cap = "Network with Pearson correlation: impact and betweeness"}
 net$plot.impact_betweenness
 ```
 
@@ -250,7 +265,7 @@ net$plot.impact_betweenness
 For the comparison purpose, we use different similarity methods. Here we
 choose *Cosine*:
 
-```{r net-1, fig.cap = "Netwok analysis based on Cosine"}
+```{r net-1, fig.cap = "Network analysis based on Cosine"}
 net_1 <- GeneNetwork(data = dat,
                      data_symb = dat_symb,
                      min_clust_size = 10,
@@ -264,7 +279,7 @@ net_1$plot.pnet2
 
 Use *Hybrid Mahalanobis Cosine*:
 
-```{r net-2, fig.cap = "Netwok analysis based on Mahalanobis Cosine"}
+```{r net-2, fig.cap = "Network with Mahalanobis Cosine"}
 net_2 <- GeneNetwork(data = dat,
                      data_symb = dat_symb,
                      min_clust_size = 10,
@@ -278,7 +293,7 @@ net_2$plot.pnet2
 
 Again, we use *Hybrid Mahalanobis Cosine*:
 
-```{r net-3, fig.cap = "Netwok analysis based on Hybrid Mahalanobis Cosine"}
+```{r net-3, fig.cap = "Network with Hybrid Mahalanobis Cosine"}
 net_3 <- GeneNetwork(data = dat,
                      data_symb = dat_symb,
                      min_clust_size = 10,
@@ -294,9 +309,13 @@ net_3$plot.pnet2
 
 The enrichment analysis is based on symbolic data clustering. The genes in
 clusters are considered target gene sets while genes in the whole data set
-is the universe gene set. 
+is the universe gene set. The Bioconductor R package
+[GOstats](http://bioconductor.org/packages/release//bioc/html/GOstats.html)
+is used for the enrichment analysis.
 
-The KEGG enrichment analysis:
+The KEGG enrichment analysis, using a p-values of 0.05 and Genome wide
+annotation for Yeast,
+[org.Sc.sgd.db](https://bioconductor.org/packages/release/data/annotation/html/org.Sc.sgd.db.html):
 
 ```{r, message = F}
 kegg <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
@@ -304,22 +323,25 @@ kegg <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
 
 #' kegg
 kegg %>% 
-  kable(caption = 'KEGG enrichmenat analysis', digits = 3, booktabs = T) %>%
+  kable(caption = 'KEGG enrichmenat analysis',
+        digits = 3, booktabs = T) %>%
   kable_styling(full_width = F, font_size = 10,
                 latex_options = c("striped", "scale_down"))
 ```
 
-Note that there can be none results for KRGG  enrichment analysis. Change
-arguments such as `thres_clus` as appropriate.
+Note that there could be none results for KEGG enrichment analysis. Change
+arguments such as `min_clust_size` as appropriate.
 
-The GO Terms enrichment analysis:
+The GO Terms enrichment analysis with ontology of *BP* (other two are *MF*
+and *CC*):
 
 ```{r, message = F}
 go <- go_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
                 ont = "BP", annot_pkg =  "org.Sc.sgd.db")
 #' go
-go %>% 
-  kable(caption = 'GO Terms enrichmenat analysis', digits = 3, booktabs = T) %>%
+go %>% head() %>% 
+  kable(caption = 'GO Terms enrichmenat analysis',
+        digits = 3, booktabs = T) %>%
   kable_styling(full_width = F, font_size = 10,
                 latex_options = c("striped", "scale_down"))
 ```
@@ -329,26 +351,28 @@ go %>%
 ## Exploratory analysis
 
 The explanatory analysis performs PCA and correlation analysis for ions in
-terms of genes, i.e. ions are samples/replicates while genes are
-variables/features. 
+terms of genes. Note that this analysis treats ions as samples/replicates
+while genes variables/features. The explanatory analysis is normally employed
+in the different stages of analysis.
 
-We can use the pre-processed data `dat` for explanatory analysis: 
+For example, we apply it to the pre-processed data `dat` before any other
+analysis:
 
 ```{r, fig.show = "hide"}
 expl <- ExploratoryAnalysis(data = dat)
 names(expl)
 ```
 
-The ionome PCA plot is:
+The PCA plot is:
 
-```{r dat-pca, fig.cap = "Ion PCA plot"}
+```{r dat-pca, fig.cap = "Ion PCA plot on pre-processed data"}
 expl$plot.pca
 ```
 
 The Person correlation of ions are shown in correlation plot, heatmap and
 network plot:
 
-```{r dat-corr, fig.cap = "Ion correlation plots"}
+```{r dat-corr, fig.cap = "Ion correlation plots on pre-processed data"}
 expl$plot.corr
 expl$plot.corr.heat
 expl$plot.net
@@ -356,16 +380,16 @@ expl$plot.net
 
 The correlation between ions and genes are shown in heatmap with dendrogram:
 
-```{r dat-corr-gene, fig.cap = "Correlation plots between ions and genes"}
+```{r dat-corr-gene, fig.cap = "Correlation between ions and genes on pre-processed data"}
 expl$plot.heat
 ```
 
 \clearpage
 
-Actually we can perform explanatory analysis using results of gene
-clustering:
+The explanatory analysis can be used after gene identification.  Here for
+example after gene clustering analysis:
 
-```{r dat-clus, fig.cap = "Explanotory analysis plots for gene clustering"}
+```{r dat-clus, fig.cap = "Explanotory analysis after gene clustering"}
 #' update data set with results of gene clustering
 dat_clus <- dat[clust$idx, ]
 dim(dat_clus)

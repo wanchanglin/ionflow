@@ -358,7 +358,7 @@ in the different stages of analysis.
 For example, we apply it to the pre-processed data `dat` before any other
 analysis:
 
-```{r, fig.show = "hide"}
+```{r expl-1, fig.show = "hide"}
 expl <- ExploratoryAnalysis(data = dat)
 names(expl)
 ```
@@ -389,7 +389,7 @@ expl$plot.heat
 The explanatory analysis can be used after gene identification.  Here for
 example after gene clustering analysis:
 
-```{r dat-clus, fig.cap = "Explanotory analysis after gene clustering"}
+```{r expl-2, fig.cap = "Explanotory analysis after gene clustering"}
 #' update data set with results of gene clustering
 dat_clus <- dat[clust$idx, ]
 dim(dat_clus)

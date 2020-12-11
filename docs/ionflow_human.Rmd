@@ -390,7 +390,7 @@ expl$plot.heat
 The explanatory analysis can also be used at other stages of the analysis.
 Here for example after gene clustering analysis:
 
-```{r expl-2, fig.cap = "Explanotory analysis after gene clustering"}
+```{r expl-2, fig.cap = "Exploratory analysis after gene clustering"}
 #' update data set with results of gene clustering
 dat_clus <- dat[clust$idx, ]
 dim(dat_clus)

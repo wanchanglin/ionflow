@@ -1,5 +1,5 @@
 ---
-title: "Ionflow: Ionomics data network and enrichment analysis"
+title: "Ionflow: network and enrichment analysis for ionomics data"
 author: "Wanchang Lin"
 date: 01-12-2020
 KeyWords: ionomics, network analysis, enrichment analysis 
@@ -351,9 +351,9 @@ go %>% head() %>%
 
 ## Exploratory analysis
 
-The explanatory analysis performs PCA and correlation analysis for ions in
+The exploratory analysis performs PCA and correlation analysis for ions in
 terms of genes. Note that this analysis treats ions as samples/replicates
-while genes are treated as variables/features. The explanatory analysis is
+while genes are treated as variables/features. The exploratory analysis is
 initially employed at an early stage of the analysis.
 
 For example, we apply it to the pre-processed data `dat` before any other
@@ -387,10 +387,10 @@ expl$plot.heat
 
 \clearpage
 
-The explanatory analysis can also be used at other stages of the analysis.
+The exploratory analysis can also be used at other stages of the analysis.
 Here for example after gene clustering analysis:
 
-```{r expl-2, fig.cap = "Explanotory analysis after gene clustering"}
+```{r expl-2, fig.cap = "Exploratory analysis after gene clustering"}
 #' update data set with results of gene clustering
 dat_clus <- dat[clust$idx, ]
 dim(dat_clus)

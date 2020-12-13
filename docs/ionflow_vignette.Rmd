@@ -5,6 +5,15 @@ date: 01-12-2020
 KeyWords: ionomics, network analysis, enrichment analysis 
 description: |
   Ionomics data gene network and enrichment analysis
+output:
+  BiocStyle::html_document:
+    toc_depth: 3
+    number_section: false
+    toc_float: false
+  BiocStyle::pdf_document:
+    toc_depth: 3
+    number_section: false
+    keep_tex: false
 geometry: margin=1in
 fontsize: 11pt
 ---

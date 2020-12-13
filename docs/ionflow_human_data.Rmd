@@ -2,6 +2,15 @@
 title: "Ionomics analysis for human data set using Ionflow"
 author: "Wanchang Lin"
 date: "11-12-2020, Fri"
+output:
+  BiocStyle::html_document:
+    toc_depth: 3
+    number_section: false
+    toc_float: false
+  BiocStyle::pdf_document:
+    toc_depth: 3
+    number_section: false
+    keep_tex: false
 geometry: margin=1in
 fontsize: 11pt
 ---

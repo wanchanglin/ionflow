@@ -339,8 +339,7 @@ GeneClustering <- function(data = NULL, data_symb = NULL,
                               sep = "\t")
 
   #' Define clusters
-  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size,
-                     max_rm = T)
+  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size)
 
   #' Update data
   data_symb$cluster <- clust$clus
@@ -494,8 +493,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   method_corr <- match.arg(method_corr)
 
   #' Define clusters
-  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size,
-                     max_rm = T)
+  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size)
   data_symb$cluster <- clust$clus
   index <- clust$idx
   df_sub <- clust$tab_sub
@@ -672,7 +670,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
 #' =======================================================================
 #' wl-04-10-2020, Sun: Hierarchical clustering
 #'
-gene_clus <- function(x, min_clust_size = 10, max_rm = TRUE) {
+gene_clus <- function(x, min_clust_size = 10) {
   dis <- stats::dist(x, method = "manhattan")
   hc <- hclust(d = dis, method = "single")
   clus <- cutree(hc, h = 0)
@@ -680,7 +678,6 @@ gene_clus <- function(x, min_clust_size = 10, max_rm = TRUE) {
   tab <- as.data.frame(table(clus), stringsAsFactors = F)
   names(tab) <- c("cluster", "nGenes")
   tab_sub <- tab[tab$nGenes > min_clust_size, ]
-  if (max_rm) tab_sub <- tab_sub[-which.max(tab_sub[, 2]), ]
   tab_sub <- tab_sub[order(tab_sub$nGenes, decreasing = T), ]
   rownames(tab_sub) <- NULL
 
@@ -866,7 +863,7 @@ kegg_enrich <- function(data, min_clust_size = 10, pval = 0.05,
                         annot_pkg =  "org.Sc.sgd.db") {
 
   #' Define clusters
-  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size, max_rm = T)
+  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size)
 
   #' Update data for enrichment analysis
   data$cluster <- clust$clus
@@ -930,7 +927,7 @@ go_enrich <- function(data, min_clust_size = 10, pval = 0.05, ont = "BP",
   ont <- match.arg(ont, c("BP", "MF", "CC"))
 
   #' Define clusters
-  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size, max_rm = T)
+  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size)
 
   #' Update data for enrichment analysis
   data$cluster <- clust$clus

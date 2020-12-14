@@ -23,13 +23,13 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>",
                       fig.width = 7, fig.height = 7, 
                       fig.align = "center",
                       fig.path = "./img/",
-                      dpi = 100, dev = "png", cache = FALSE)
+                      dpi = 100, dev = "png", cache = T)
 
 pkgs <- c("reshape2", "plyr", "knitr", "kableExtra", "tidyverse",
           "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
           "org.Sc.sgd.db", "GO.db", "GOstats", "KEGG.db", "pheatmap")
 invisible(lapply(pkgs, library, character.only = TRUE))
-source("../ionflow_funcs.R")
+source("./ionflow_funcs.R")
 ```
 
 This vignette explains how to perform ionomics data analysis including gene
@@ -43,7 +43,7 @@ modification(`ionflow_funcs`) was made by Wanchang Lin
 To explore the process, we'll use the ionomics data set:
 
 ```{r}
-ion_data <- read.table("../test-data/iondata.tsv", header = T, sep = "\t")
+ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
 dim(ion_data)
 ```
 
@@ -101,7 +101,7 @@ Standardisation provides three methods: *std*, *mad* or *custom*. If the
 method is *custom*, the user uses a specific *std* file like: 
 
 ```{r}
-std <- read.table("../test-data/user_std.tsv", header = T, sep = "\t")
+std <- read.table("./test-data/user_std.tsv", header = T, sep = "\t")
 std
 ```
 
@@ -220,8 +220,8 @@ This shows clusters and the number of genes (larger than `min_cluster_size`).
 The identified gene located in those clusters are:
 
 ```{r}
-sum(clust$idx)                    #' numbers of all genes
-as.character(dat[,1][clust$idx])  #' and they are
+sum(clust$idx)                          #' numbers of all genes
+head(as.character(dat[,1][clust$idx]))  #' and some are
 ```
 
 ## Gene network
@@ -349,6 +349,7 @@ and *CC*):
 go <- go_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
                 ont = "BP", annot_pkg =  "org.Sc.sgd.db")
 #' go
+dim(go)
 go %>% head() %>% 
   kable(caption = 'GO Terms enrichmenat analysis',
         digits = 3, booktabs = T) %>%

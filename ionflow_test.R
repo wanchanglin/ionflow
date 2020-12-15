@@ -6,7 +6,8 @@
 ## ==== General settings ====
 rm(list = ls(all = T))
 
-tool_dir <- "~/my_galaxy/ionflow/"
+#' tool_dir <- "~/my_galaxy/ionflow/"
+tool_dir <- "C:/R_lwc/my_galaxy/ionflow/"
 
 setwd(tool_dir)
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
@@ -20,7 +21,7 @@ source("ionflow_funcs.R")
 #' ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
-ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
+ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
 
 #' Test for batch control
 #' idx <- ion_data[, 1] %in% "BY4741"
@@ -60,6 +61,12 @@ dat_symb <- dat_symb[idx, ]
 dim(dat)
 
 ## ==== Gene Network ====
+data = dat
+data_symb = dat_symb
+min_clust_size = 10
+thres_corr = 0.75
+method_corr = "pearson"
+
 gene_net <- GeneNetwork(data = dat,
                         data_symb = dat_symb,
                         min_clust_size = 10,
@@ -81,10 +88,15 @@ head(gene_net$net_node)
 net_node <- gene_net$net_node
 pval = 0.05
 annot_pkg =  "org.Sc.sgd.db"
+ont = "BP"
 
-kegg_en <- kegg_enrich_net(net_node = net_node, pval = 0.05,
+kegg_en <- kegg_enrich_net(net_node = net_node, pval = 0.1,
                            annot_pkg =  "org.Sc.sgd.db")
 kegg_en
+
+go_en  <- go_enrich_net(net_node = net_node, pval = 0.05,
+                        ont = "BP", annot_pkg =  "org.Sc.sgd.db")
+go_en
 
 #' ==== GO/KEGG enrichment analysis ====
 kegg_en <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,

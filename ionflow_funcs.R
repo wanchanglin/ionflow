@@ -538,6 +538,10 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   } else if (method_corr == "hybrid_mahal_cosine") {
     corrGenes <- cosM(data[, -1], mode = "hybrid")
   }
+  
+  #' wl-15-12-2020, Tue: assign names
+  gene <- as.character(data[, 1])
+  dimnames(corrGenes) <- list(gene, gene)
 
   A <- corrGenes[index, index]
   diag(A) <- 0
@@ -661,7 +665,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   node_names <- net %v% "vertex.names"
   symb_pheno <- net %v% "Label"
   comm_centre <- mem
-  net_node <- data.frame(Line = names, symb_pheno = symb_pheno, 
+  net_node <- data.frame(Line = node_names, symb_pheno = symb_pheno, 
                          comm_centre = comm_centre)
 
   res <- list()
@@ -1003,9 +1007,8 @@ kegg_enrich_net <- function(net_node, pval = 0.05,
 
   #' get the gene ids
   gene_uni <- as.character(net_node[, 1])
-  gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
-
-  #' gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
+  #' gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
+  gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
 
   #' get entrez id for GOStats
   if (annot_pkg != "org.Sc.sgd.db") {
@@ -1036,12 +1039,6 @@ kegg_enrich_net <- function(net_node, pval = 0.05,
   })
   summ <- summ[!sapply(summ,is.null)]
 
-  tab_sub <- clust$tab_sub
-  tmp <- names(summ)
-  idx <- tab_sub[, 1] %in% tmp
-  tab_sub <- tab_sub[idx, ]
-  names(summ) <- paste0("Cluster ", tab_sub[[1]], " (", tab_sub[[2]], " genes)")
-
   #' binding and filtering
   summ <- lapply(summ, "[", -c(3, 4)) %>%
     dplyr::bind_rows(.id = "Cluster") %>%
@@ -1049,3 +1046,63 @@ kegg_enrich_net <- function(net_node, pval = 0.05,
 
   return(summ)
 }
+
+#' =======================================================================
+#' wl-15-12-2020, Tue: GO enrichment analysis based on network analysis
+#'
+go_enrich_net <- function(net_node, pval = 0.05, ont = "BP",
+                          annot_pkg = "org.Sc.sgd.db") {
+
+  ont <- match.arg(ont, c("BP", "MF", "CC"))
+
+  #' get the gene ids
+  gene_uni <- as.character(net_node[, 1])
+  gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
+  #' gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
+
+  #' get entrez id for GOStats
+  if (annot_pkg != "org.Sc.sgd.db") {
+    gene_uni <- get_entrez_id(gene_uni, annot_pkg)
+    gene_ids <- lapply(gene_ids, function(x){
+      get_entrez_id(x, annot_pkg)
+    })
+  }
+
+  #' geneIds can be ORF or ENTREZID
+  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]
+    params <- new("GOHyperGParams",
+                  geneIds = x,
+                  universeGeneIds = gene_uni,
+                  annotation = annot_pkg,
+                  categoryName = "GO",
+                  ontology = ont,
+                  pvalueCutoff = 1,
+                  conditional = T,
+                  testDirection = "over")
+
+    over <- hyperGTest(params)
+  })
+
+  summ <- lapply(enrich, function(x) {
+    Pvalue        <- round(pvalues(x), digit = 4)
+    ID            <- names(Pvalue)
+    Description   <- Term(ID)
+    OddsRatio     <- oddsRatios(x)
+    ExpCount      <- expectedCounts(x)
+    Count         <- geneCounts(x)
+    CountUniverse <- universeCounts(x)
+
+    tab <- cbind(ID, Description, Pvalue, OddsRatio, ExpCount, Count,
+                 CountUniverse)
+    rownames(tab) <- NULL
+    tab <- na.omit(tab)   #' wl-03-10-2020, Sat: this is why summary fails.
+    tab <- data.frame(tab, Ontology = ont)
+  })
+
+  summ <- lapply(summ, "[", -c(4, 5)) %>%
+    dplyr::bind_rows(.id = "Cluster") %>%
+    dplyr::filter(Pvalue <= pval & Count > 1)
+
+  return(summ)
+}
+

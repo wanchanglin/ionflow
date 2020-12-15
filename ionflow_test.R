@@ -65,10 +65,8 @@ gene_net <- GeneNetwork(data = dat,
                         min_clust_size = 10,
                         thres_corr = 0.75,
                         method_corr = "pearson")
-                        #' method_corr = "cosine")
-                        #' method_corr = "hybrid_mahal_cosine")
                         #' method_corr = "mahal_cosine")
-
+names(gene_net)
 gene_net$plot.pnet1    #' symbolic pheno (hclust)
 X11()
 gene_net$plot.pnet2    #' network (comminuty detection)
@@ -76,6 +74,17 @@ gene_net$plot.pnet2    #' network (comminuty detection)
 gene_net$plot.impact_betweenness
 gene_net$stats.impact_betweenness
 gene_net$stats.impact_betweenness_tab
+head(gene_net$net_node)
+
+#' ==== GO/KEGG enrichment analysis based on network analysis ====
+
+net_node <- gene_net$net_node
+pval = 0.05
+annot_pkg =  "org.Sc.sgd.db"
+
+kegg_en <- kegg_enrich_net(net_node = net_node, pval = 0.05,
+                           annot_pkg =  "org.Sc.sgd.db")
+kegg_en
 
 #' ==== GO/KEGG enrichment analysis ====
 kegg_en <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,

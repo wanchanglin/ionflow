@@ -657,6 +657,13 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   df.tab <- dplyr::arrange(df.tab, desc(nGenes))
   df.tab2 <- df.tab %>% dplyr::group_by(Cluster) %>% top_n(1, nGenes)
 
+  #' wl-15-12-2020, Tue: get network vertex attributes
+  node_names <- net %v% "vertex.names"
+  symb_pheno <- net %v% "Label"
+  comm_centre <- mem
+  net_node <- data.frame(Line = names, symb_pheno = symb_pheno, 
+                         comm_centre = comm_centre)
+
   res <- list()
   res$plot.pnet1 <- net_p1 # plot gene network with symbolic pheno
   res$plot.pnet2 <- net_p2 # plot gene network with community detection
@@ -664,6 +671,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   res$stats.impact_betweenness <- df.res3 # impact betweenees data
   res$stats.impact_betweenness_by_cluster <- df.tab2 # plot position by cluster
   res$stats.impact_betweenness_tab <- df.tab # contingency table
+  res$net_node <- net_node
   return(res)
 }
 
@@ -980,6 +988,62 @@ go_enrich <- function(data, min_clust_size = 10, pval = 0.05, ont = "BP",
                         clust$tab_sub[[2]], " genes)")
 
   summ <- lapply(summ, "[", -c(4, 5)) %>%
+    dplyr::bind_rows(.id = "Cluster") %>%
+    dplyr::filter(Pvalue <= pval & Count > 1)
+
+  return(summ)
+}
+
+#' =======================================================================
+#' wl-15-12-2020, Tue: KEGG enrichment analysis based on network node
+#' attributes
+#'
+kegg_enrich_net <- function(net_node, pval = 0.05,
+                            annot_pkg =  "org.Sc.sgd.db") {
+
+  #' get the gene ids
+  gene_uni <- as.character(net_node[, 1])
+  gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
+
+  #' gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
+
+  #' get entrez id for GOStats
+  if (annot_pkg != "org.Sc.sgd.db") {
+    gene_uni <- get_entrez_id(gene_uni, annot_pkg)
+    gene_ids <- lapply(gene_ids, function(x){
+      get_entrez_id(x, annot_pkg)
+    })
+  }
+
+  #' geneIds can be ORF or ENTREZID
+  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]
+    params <- new("KEGGHyperGParams",
+                  geneIds = x,
+                  universeGeneIds = gene_uni,
+                  annotation = annot_pkg,
+                  categoryName = "KEGG",
+                  pvalueCutoff = 1,
+                  testDirection = "over")
+
+    over <- hyperGTest(params)
+  })
+
+  #' There is no explicit methods for getting manual summary table.
+  summ <- lapply(enrich, function(x) {
+    tmp <- summary(x)
+    if (nrow(tmp) == 0) tmp <- NULL #' wl-04-10-2020, Sun: it happens very often.
+    return(tmp)
+  })
+  summ <- summ[!sapply(summ,is.null)]
+
+  tab_sub <- clust$tab_sub
+  tmp <- names(summ)
+  idx <- tab_sub[, 1] %in% tmp
+  tab_sub <- tab_sub[idx, ]
+  names(summ) <- paste0("Cluster ", tab_sub[[1]], " (", tab_sub[[2]], " genes)")
+
+  #' binding and filtering
+  summ <- lapply(summ, "[", -c(3, 4)) %>%
     dplyr::bind_rows(.id = "Cluster") %>%
     dplyr::filter(Pvalue <= pval & Count > 1)
 

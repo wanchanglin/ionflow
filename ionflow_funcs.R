@@ -574,6 +574,12 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
   com <- igraph::cluster_louvain(tmp, weights = NULL)
   mem <- as.factor(igraph::membership(com))
 
+  #' wl-16-12-2020, Wed: add more stuff
+  tab <- table(mem)
+  mem <- sapply(mem, function(x) {
+    res <- paste0("Cluster ", x, " (", tab[x], " genes)")
+  })
+
   tmp <- unique(mem)
   if (length(tmp) != 1) {
     cpy <- rainbow(length(tmp))
@@ -585,7 +591,7 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
     mode = "fruchtermanreingold",
     color = mem,
     palette = cpy,
-    edge.alpha = 0.5, size = 2, color.legend = "Network",
+    edge.alpha = 0.5, size = 2, color.legend = "Network Community",
     legend.size = 10, legend.position = "right"
   )
   #' net_p2
@@ -999,8 +1005,7 @@ go_enrich <- function(data, min_clust_size = 10, pval = 0.05, ont = "BP",
 }
 
 #' =======================================================================
-#' wl-15-12-2020, Tue: KEGG enrichment analysis based on network node
-#' attributes
+#' wl-15-12-2020, Tue: KEGG enrichment based on network community centre
 #'
 kegg_enrich_net <- function(net_node, pval = 0.05,
                             annot_pkg =  "org.Sc.sgd.db") {
@@ -1009,6 +1014,8 @@ kegg_enrich_net <- function(net_node, pval = 0.05,
   gene_uni <- as.character(net_node[, 1])
   #' gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
   gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
+  ind <- sapply(gene_ids, function(x) ifelse(length(x) > 1, TRUE, FALSE))
+  gene_ids <- gene_ids[ind]
 
   #' get entrez id for GOStats
   if (annot_pkg != "org.Sc.sgd.db") {
@@ -1048,7 +1055,7 @@ kegg_enrich_net <- function(net_node, pval = 0.05,
 }
 
 #' =======================================================================
-#' wl-15-12-2020, Tue: GO enrichment analysis based on network analysis
+#' wl-15-12-2020, Tue: GO enrichment based on network comunity centre
 #'
 go_enrich_net <- function(net_node, pval = 0.05, ont = "BP",
                           annot_pkg = "org.Sc.sgd.db") {
@@ -1057,8 +1064,10 @@ go_enrich_net <- function(net_node, pval = 0.05, ont = "BP",
 
   #' get the gene ids
   gene_uni <- as.character(net_node[, 1])
-  gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
-  #' gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
+  #' gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
+  gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
+  ind <- sapply(gene_ids, function(x) ifelse(length(x) > 1, TRUE, FALSE))
+  gene_ids <- gene_ids[ind]
 
   #' get entrez id for GOStats
   if (annot_pkg != "org.Sc.sgd.db") {

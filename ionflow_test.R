@@ -2,6 +2,7 @@
 #' wl-26-10-2020, Mon: test cosM
 #' wl-07-11-2020, Sat: test enrichment
 #' wl-09-11-2020, Mon: test GeneNetwork
+#' wl-16-12-2020, Wed: test enrichment sung network community centre
 
 ## ==== General settings ====
 rm(list = ls(all = T))
@@ -19,9 +20,9 @@ source("ionflow_funcs.R")
 ## ==== Data preparation ====
 
 #' ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
-ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
+ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
 
 #' Test for batch control
 #' idx <- ion_data[, 1] %in% "BY4741"
@@ -37,14 +38,14 @@ ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", heade
 
 ## ==== Pre-processing ====
 pre <- PreProcessing(data = ion_data,
-                     var_id = 1, batch_id = 4, data_id = 5,
+                     var_id = 1, batch_id = 2, data_id = 3,
                      method_norm = "median",
                      control_lines = NULL,
                      method_outliers = "IQR",
                      thres_outl = 3,
                      stand_method = "std",
                      stdev = NULL,
-                     thres_symb = 2)
+                     thres_symb = 3)
 
 head(pre$data.gene.zscores)
 head(pre$data.gene.symb)
@@ -61,12 +62,6 @@ dat_symb <- dat_symb[idx, ]
 dim(dat)
 
 ## ==== Gene Network ====
-data = dat
-data_symb = dat_symb
-min_clust_size = 10
-thres_corr = 0.75
-method_corr = "pearson"
-
 gene_net <- GeneNetwork(data = dat,
                         data_symb = dat_symb,
                         min_clust_size = 10,
@@ -83,29 +78,25 @@ gene_net$stats.impact_betweenness
 gene_net$stats.impact_betweenness_tab
 head(gene_net$net_node)
 
-#' ==== GO/KEGG enrichment analysis based on network analysis ====
+#' ==== GO/KEGG enrichment using network community centre ====
+net <- gene_net$net_node 
 
-net_node <- gene_net$net_node
-pval = 0.05
-annot_pkg =  "org.Sc.sgd.db"
-ont = "BP"
+kegg <- kegg_enrich_net(net_node = net, pval = 0.05,
+                        annot_pkg =  "org.Sc.sgd.db")
+kegg
 
-kegg_en <- kegg_enrich_net(net_node = net_node, pval = 0.1,
-                           annot_pkg =  "org.Sc.sgd.db")
-kegg_en
+go  <- go_enrich_net(net_node = net, pval = 0.05,
+                     ont = "BP", annot_pkg =  "org.Sc.sgd.db")
+go
 
-go_en  <- go_enrich_net(net_node = net_node, pval = 0.05,
-                        ont = "BP", annot_pkg =  "org.Sc.sgd.db")
-go_en
-
-#' ==== GO/KEGG enrichment analysis ====
-kegg_en <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
+#' ==== GO/KEGG enrichment using symbolic clustering ====
+kegg_1 <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
                        annot_pkg =  "org.Sc.sgd.db")
-kegg_en
+kegg_1
 
-go_en  <- go_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
+go_1  <- go_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
                     ont = "BP", annot_pkg =  "org.Sc.sgd.db")
-go_en
+go_1
 
 ## ==== Exploratory analysis ====
 expl <- ExploratoryAnalysis(data = dat)
@@ -115,11 +106,3 @@ expl$plot.corr.heat
 expl$plot.heat
 expl$plot.net
 head(expl$data.pca.load)
-
-## ==== Gene clustering ====
-gclus <- GeneClustering(data = dat, data_symb = dat_symb,
-                        min_clust_size = 10, thres_anno = 5) 
-gclus$stats.clusters
-gclus$plot.profiles
-gclus$stats.Kegg_Goslim_annotation
-gclus$stats.Goterms_enrichment

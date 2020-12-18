@@ -8,7 +8,7 @@
 rm(list = ls(all = T))
 
 #' tool_dir <- "~/my_galaxy/ionflow/"
-tool_dir <- "C:/R_lwc/my_galaxy/ionflow/"
+tool_dir <- "~/my_galaxy/ionflow/"
 
 setwd(tool_dir)
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
@@ -21,8 +21,8 @@ source("ionflow_funcs.R")
 
 #' ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
 ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("C:/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
 
 #' Test for batch control
 #' idx <- ion_data[, 1] %in% "BY4741"

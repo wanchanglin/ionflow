@@ -876,20 +876,19 @@ get_entrez_id <- function(symbol, annot_pkg = "org.Hs.eg.db") {
 #' wl-03-10-2020, Sat: KEGG enrichment analysis for symbolization data
 #' wl-06-11-2020, Fri: The first column of data must be ORF for
 #'  org.Sc.sgd.db or SYMBOL for any other annotation packages.
+#' wl-15-12-2020, Tue: KEGG enrichment based on network comunity centre
+#' wl-15-12-2020, Tue: KEGG enrichment for group data
+#'  The group information may be the symbolic clustering or network
+#'  community detection
 #'
-kegg_enrich <- function(data, min_clust_size = 10, pval = 0.05,
-                        annot_pkg =  "org.Sc.sgd.db") {
-
-  #' Define clusters
-  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size)
-
-  #' Update data for enrichment analysis
-  data$cluster <- clust$clus
-  mat <- data[clust$idx, ]
+kegg_enrich <- function(mat, pval = 0.05, annot_pkg =  "org.Sc.sgd.db") {
 
   #' get the gene ids
-  gene_uni <- as.character(data[, 1])
-  gene_ids <- plyr::dlply(mat, "cluster", function(x) as.character(x[, 1]))
+  gene_uni <- as.character(mat[, 1])
+  grp <- names(mat[2])
+  gene_ids <- plyr::dlply(mat, grp, function(x) as.character(x[, 1]))
+  ind <- sapply(gene_ids, function(x) ifelse(length(x) > 1, TRUE, FALSE))
+  gene_ids <- gene_ids[ind]
 
   #' get entrez id for GOStats
   if (annot_pkg != "org.Sc.sgd.db") {
@@ -920,15 +919,9 @@ kegg_enrich <- function(data, min_clust_size = 10, pval = 0.05,
   })
   summ <- summ[!sapply(summ,is.null)]
 
-  tab_sub <- clust$tab_sub
-  tmp <- names(summ)
-  idx <- tab_sub[, 1] %in% tmp
-  tab_sub <- tab_sub[idx, ]
-  names(summ) <- paste0("Cluster ", tab_sub[[1]], " (", tab_sub[[2]], " genes)")
-
   #' binding and filtering
   summ <- lapply(summ, "[", -c(3, 4)) %>%
-    dplyr::bind_rows(.id = "Cluster") %>%
+    dplyr::bind_rows(.id = grp) %>%
     dplyr::filter(Pvalue <= pval & Count > 1)
 
   return(summ)
@@ -938,134 +931,18 @@ kegg_enrich <- function(data, min_clust_size = 10, pval = 0.05,
 #' wl-03-10-2020, Sat: GO enrichment analysis for symbolization data
 #' wl-06-11-2020, Fri: The first column of data must be ORF for
 #'  org.Sc.sgd.db or SYMBOL for any other annotation packages.
+#' wl-15-12-2020, Tue: GO enrichment based on network comunity centre
+#' wl-15-12-2020, Tue: GO enrichment for group data
 #'
-go_enrich <- function(data, min_clust_size = 10, pval = 0.05, ont = "BP",
+go_enrich <- function(mat, pval = 0.05, ont = "BP",
                       annot_pkg = "org.Sc.sgd.db") {
 
   ont <- match.arg(ont, c("BP", "MF", "CC"))
 
-  #' Define clusters
-  clust <- gene_clus(data[, -1], min_clust_size = min_clust_size)
-
-  #' Update data for enrichment analysis
-  data$cluster <- clust$clus
-  mat <- data[clust$idx, ]
-
   #' get the gene ids
-  gene_uni <- as.character(data[, 1])
-  gene_ids <- plyr::dlply(mat, "cluster", function(x) as.character(x[, 1]))
-
-  #' get entrez id for GOStats
-  if (annot_pkg != "org.Sc.sgd.db") {
-    gene_uni <- get_entrez_id(gene_uni, annot_pkg)
-    gene_ids <- lapply(gene_ids, function(x){
-      get_entrez_id(x, annot_pkg)
-    })
-  }
-
-  #' geneIds can be ORF or ENTREZID
-  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]
-    params <- new("GOHyperGParams",
-                  geneIds = x,
-                  universeGeneIds = gene_uni,
-                  annotation = annot_pkg,
-                  categoryName = "GO",
-                  ontology = ont,
-                  pvalueCutoff = 1,
-                  conditional = T,
-                  testDirection = "over")
-
-    over <- hyperGTest(params)
-  })
-
-  summ <- lapply(enrich, function(x) {
-    Pvalue        <- round(pvalues(x), digit = 4)
-    ID            <- names(Pvalue)
-    Description   <- Term(ID)
-    OddsRatio     <- oddsRatios(x)
-    ExpCount      <- expectedCounts(x)
-    Count         <- geneCounts(x)
-    CountUniverse <- universeCounts(x)
-
-    tab <- cbind(ID, Description, Pvalue, OddsRatio, ExpCount, Count,
-                 CountUniverse)
-    rownames(tab) <- NULL
-    tab <- na.omit(tab)   #' wl-03-10-2020, Sat: this is why summary fails.
-    tab <- data.frame(tab, Ontology = ont)
-  })
-
-  names(summ) <- paste0("Cluster ", clust$tab_sub[[1]], " (",
-                        clust$tab_sub[[2]], " genes)")
-
-  summ <- lapply(summ, "[", -c(4, 5)) %>%
-    dplyr::bind_rows(.id = "Cluster") %>%
-    dplyr::filter(Pvalue <= pval & Count > 1)
-
-  return(summ)
-}
-
-#' =======================================================================
-#' wl-15-12-2020, Tue: KEGG enrichment based on network community centre
-#'
-kegg_enrich_net <- function(net_node, pval = 0.05,
-                            annot_pkg =  "org.Sc.sgd.db") {
-
-  #' get the gene ids
-  gene_uni <- as.character(net_node[, 1])
-  #' gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
-  gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
-  ind <- sapply(gene_ids, function(x) ifelse(length(x) > 1, TRUE, FALSE))
-  gene_ids <- gene_ids[ind]
-
-  #' get entrez id for GOStats
-  if (annot_pkg != "org.Sc.sgd.db") {
-    gene_uni <- get_entrez_id(gene_uni, annot_pkg)
-    gene_ids <- lapply(gene_ids, function(x){
-      get_entrez_id(x, annot_pkg)
-    })
-  }
-
-  #' geneIds can be ORF or ENTREZID
-  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]
-    params <- new("KEGGHyperGParams",
-                  geneIds = x,
-                  universeGeneIds = gene_uni,
-                  annotation = annot_pkg,
-                  categoryName = "KEGG",
-                  pvalueCutoff = 1,
-                  testDirection = "over")
-
-    over <- hyperGTest(params)
-  })
-
-  #' There is no explicit methods for getting manual summary table.
-  summ <- lapply(enrich, function(x) {
-    tmp <- summary(x)
-    if (nrow(tmp) == 0) tmp <- NULL #' wl-04-10-2020, Sun: it happens very often.
-    return(tmp)
-  })
-  summ <- summ[!sapply(summ,is.null)]
-
-  #' binding and filtering
-  summ <- lapply(summ, "[", -c(3, 4)) %>%
-    dplyr::bind_rows(.id = "Cluster") %>%
-    dplyr::filter(Pvalue <= pval & Count > 1)
-
-  return(summ)
-}
-
-#' =======================================================================
-#' wl-15-12-2020, Tue: GO enrichment based on network comunity centre
-#'
-go_enrich_net <- function(net_node, pval = 0.05, ont = "BP",
-                          annot_pkg = "org.Sc.sgd.db") {
-
-  ont <- match.arg(ont, c("BP", "MF", "CC"))
-
-  #' get the gene ids
-  gene_uni <- as.character(net_node[, 1])
-  #' gene_ids <- plyr::dlply(net_node, "symb_pheno", function(x) as.character(x[, 1]))
-  gene_ids <- plyr::dlply(net_node, "comm_centre", function(x) as.character(x[, 1]))
+  gene_uni <- as.character(mat[, 1])
+  grp <- names(mat[2])
+  gene_ids <- plyr::dlply(mat, grp, function(x) as.character(x[, 1]))
   ind <- sapply(gene_ids, function(x) ifelse(length(x) > 1, TRUE, FALSE))
   gene_ids <- gene_ids[ind]
 
@@ -1109,7 +986,7 @@ go_enrich_net <- function(net_node, pval = 0.05, ont = "BP",
   })
 
   summ <- lapply(summ, "[", -c(4, 5)) %>%
-    dplyr::bind_rows(.id = "Cluster") %>%
+    dplyr::bind_rows(.id = grp) %>%
     dplyr::filter(Pvalue <= pval & Count > 1)
 
   return(summ)

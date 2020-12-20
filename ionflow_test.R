@@ -20,9 +20,9 @@ source("ionflow_funcs.R")
 ## ==== Data preparation ====
 
 #' ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
-ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
+#' ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
+ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
 
 #' Test for batch control
 #' idx <- ion_data[, 1] %in% "BY4741"
@@ -38,7 +38,7 @@ ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
 
 ## ==== Pre-processing ====
 pre <- PreProcessing(data = ion_data,
-                     var_id = 1, batch_id = 2, data_id = 3,
+                     var_id = 1, batch_id = 4, data_id = 5,
                      method_norm = "median",
                      control_lines = NULL,
                      method_outliers = "IQR",
@@ -79,24 +79,15 @@ gene_net$stats.impact_betweenness_tab
 head(gene_net$net_node)
 
 #' ==== GO/KEGG enrichment using network community centre ====
-net <- gene_net$net_node 
+mat <- gene_net$net_node[, c(1, 2)] 
+pval = 0.05
+annot_pkg =  "org.Sc.sgd.db"
 
-kegg <- kegg_enrich_net(net_node = net, pval = 0.05,
-                        annot_pkg =  "org.Sc.sgd.db")
+kegg <- kegg_enrich(mat = mat, pval = 0.05, annot_pkg =  "org.Sc.sgd.db")
 kegg
 
-go  <- go_enrich_net(net_node = net, pval = 0.05,
-                     ont = "BP", annot_pkg =  "org.Sc.sgd.db")
+go  <- go_enrich(mat = mat, pval = 0.05, ont = "BP", annot_pkg =  "org.Sc.sgd.db")
 go
-
-#' ==== GO/KEGG enrichment using symbolic clustering ====
-kegg_1 <- kegg_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
-                       annot_pkg =  "org.Sc.sgd.db")
-kegg_1
-
-go_1  <- go_enrich(data = dat_symb, min_clust_size = 10, pval = 0.05,
-                    ont = "BP", annot_pkg =  "org.Sc.sgd.db")
-go_1
 
 ## ==== Exploratory analysis ====
 expl <- ExploratoryAnalysis(data = dat)

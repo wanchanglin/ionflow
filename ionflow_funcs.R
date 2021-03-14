@@ -1,4 +1,3 @@
-
 #' =======================================================================
 #'
 PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
@@ -64,6 +63,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
       res <- plyr::ddply(x, "Batch_ID", function(y) {
         med <- median(y$log[y$control == 1])
         y$log_corr <- y$log - med
+        y$med <- med
         y
       })
     })
@@ -74,12 +74,14 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
         med <- median(y$log[y$control == 1])
         st_de <- sd(y$log[y$control == 1])
         y$log_corr <- y$log - med - st_de
+        y$med <- med
         y
       })
     })
   }
   if (method_norm == "none") {
     data_long$log_corr <- data_long$log
+    data_long$med <- NULL
   }
 
   #' get correction stats
@@ -171,28 +173,26 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     names(sds) <- nam
   }
 
-  #' ji: aggregate measurements at gene level (median)
-  data_wide_gene_log_norm <- reshape2::dcast(data_long, Line ~ Ion,
+  #' ji: aggregate measurements at line level (median)
+  data_wide_line_log_norm <- reshape2::dcast(data_long, Line ~ Ion,
     fun.aggregate = median,
     value.var = "log_corr"
   )
 
   #' ji: normalise by stds
-  data_wide_gene_z_score <- data_wide_gene_log_norm
-  data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)] <-
-    data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)] / sds
+  data_wide_line_z_score <- data_wide_line_log_norm
+  data_wide_line_z_score[, 2:ncol(data_wide_line_z_score)] <- data_wide_line_z_score[, 2:ncol(data_wide_line_z_score)] / sds
 
   #' -------------------> Symbolisation
-  symb_profiles <- data_wide_gene_z_score[, 2:ncol(data_wide_gene_z_score)]
+  symb_profiles <- data_wide_line_z_score[, 2:ncol(data_wide_line_z_score)]
   symb_profiles[(symb_profiles > -thres_symb) & (symb_profiles < thres_symb)] <- 0
   symb_profiles[symb_profiles >= thres_symb] <- 1
   symb_profiles[symb_profiles <= -thres_symb] <- -1
 
-  #' wl-20-10-2020, Tue: fix a bug
-  data_wide_gene_symb <- cbind(Line = data_wide_gene_z_score$Line,
-                               symb_profiles)
+  #' ji: save sybolic profiles
+  data_wide_line_symb <- cbind(Line = data_wide_line_z_score$Line, symb_profiles)
 
-  #' wl-20-10-2020, Tue: fix a bug
+  #' plot z-score distributions
   p1 <-
     ggplot(
       data = data_long,
@@ -201,87 +201,132 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     geom_point(shape = 1) +
     facet_wrap(~Ion) +
     xlab("Batch.ID") +
-    ylab("log(MedianFC)") +
+    ylab("Log FC to batch median") +
     theme(legend.position = "none") +
-    theme(axis.text.x = element_blank())
+    theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
 
-  #' wl-20-10-2020, Tue: fix a bug
-  tmp <- data_wide_gene_z_score
-  dat <- reshape2::melt(tmp, id = "Line")
+  # plot overview processed samples
+  dat <- reshape2::melt(data_wide_line_z_score, id = "Line")
   p2 <-
     ggplot(data = dat, aes(x = value)) +
     geom_histogram(binwidth = .1) +
     facet_wrap(~variable) +
     xlab("Concentration (z-score)") +
-    ylab("Frequency") +
-    geom_vline(xintercept = c(-3, 3), col = "red")
+    ylab("Counts") +
+    xlim(-10, 10) +
+    geom_vline(xintercept = c(-thres_symb, thres_symb), col = "red")
 
+  if (method_norm != "none"){
+  # plot batch median log-concentrations
+  plot.data.long <- data_long[data_long["Outlier"]==0, ] 
+  batch_median_ions <- plot.data.long[!duplicated(plot.data.long[,"med"]), c("Batch_ID","Ion","med"), drop = FALSE];
+  
+  ion.batch.mean.median <- batch_median_ions %>%
+    dplyr::group_by(Ion) %>%
+    dplyr::summarize(mean = mean(med, na.rm = TRUE)) 
+  
+  ion.order <- as.character(ion.batch.mean.median$Ion[sort.list(ion.batch.mean.median$mean)],  decreasing = TRUE)
+  
+  batch_median_ions$Ion <- factor(batch_median_ions$Ion, levels = ion.order)
+  
+ p3 <- ggplot(batch_median_ions, aes(x=Ion, y=med, group = Batch_ID)) +
+    geom_line(aes(), color = "gray") +
+    theme(text = element_text(size=20), axis.title.x=element_blank()) +
+    ylab("Log-concentration") +
+    stat_summary(aes(y = med, group=1), fun = mean, colour="green1", geom="line", group=1) + 
+    stat_summary(fun.min = function(x) mean(x) - sd(x), fun.max = function(x) mean(x) + sd(x), position ='dodge', 
+                 colour="green1", geom = 'errorbar', aes(group = 1), width=.1)+
+    ggtitle("Median log-concentrations of batches");
+  
+  # plot CV batch median log-concentrations
+  ion.batch.cv.median <- batch_median_ions %>%
+    dplyr::group_by(Ion) %>%
+    dplyr::summarize(CV = sd(med, na.rm = TRUE)/mean(med, na.rm = TRUE)) 
+  
+  ion.batch.cv.median <- data.frame(ion.batch.cv.median)
+  
+  ion.batch.cv.median <- ion.batch.cv.median[order(ion.batch.cv.median$CV),]
+  
+  ion.batch.cv.median$Ion <- factor(ion.batch.cv.median$Ion, levels = ion.batch.cv.median$Ion)
+  
+  p4 <- ggplot(ion.batch.cv.median, aes(x=Ion, y=abs(CV), group =1)) +
+    ylab(" Absolute CV") +
+    geom_line(aes(), color = "red") +
+    theme(text = element_text(size=20), axis.title.x=element_blank()) +
+    scale_y_log10() +
+    ggtitle("CV median log-concentrations across batches");
+  
+  }
+  
   #' -------------------> Output
   res                    <- list()
-  res$stats.raw_data     <- df_raw                    # raw data
+  res$stats.raw.data     <- df_raw                    # raw data
   res$stats.outliers     <- df_outlier                # outliers
-  res$stats.batch_data   <- df_bat                    # batch corrected data
+  res$stats.batches      <- df_bat                    # batch corrected data
+  res$stats.std          <- sds                       # standard deviations
   res$data.long          <- data_long                 # with Batch_ID
-  res$data.gene.logFC    <- data_wide_gene_log_norm
-  res$data.gene.zscores  <- data_wide_gene_z_score
-  res$data.gene.symb     <- data_wide_gene_symb
-  res$plot.dot           <- p1
+  res$data.line.logFC    <- data_wide_line_log_norm
+  res$data.line.zscores  <- data_wide_line_z_score
+  res$data.line.symb     <- data_wide_line_symb
+  res$plot.overview      <- p1
   res$plot.hist          <- p2
+  res$plot.medians       <- p3
+  res$plot.CV            <- p4
   return(res)
 }
 
 #' =======================================================================
 #'
-ExploratoryAnalysis <- function(data = NULL){
-
+IonAnalysis <- function(data = NULL, thres_ion_corr = 0.15, method_ion_corr = "pearson"){
+  
   #' -------------------> PCA
-  #' wl-14-07-2020, Tue: Original (trust) pca computation if there is no NAs.
-  dat <- t(data[, -1])
-  pca <- prcomp(dat, center = T, scale. = F)
-
-  #' variance explained
-  vars <- pca$sdev^2
-  vars <- vars / sum(vars) #' Proportion of Variance
-  names(vars) <- colnames(pca$rotation)
-  vars <- round(vars * 100, 2)
-  dfn <- paste(names(vars), " (", vars[names(vars)], "%)", sep = "")
-
-  #' PCA scores
-  pca_scores <- data.frame(pca$x)
-  #' names(pca_scores) <- dfn
-
+  ionProfile.PCA = NULL
+  ionProfile.PCA$pr.y = prcomp(data[, -1],scale. = F)
+  ionProfile.PCA$y = cbind(data.frame(Line = data$Line), as.data.frame(ionProfile.PCA$pr.y$x))
+  
+  unit.norm = function(x)(x / sqrt(sum(x^2)))
+  ionProfile.PCA$y[,grepl("^PC",colnames(ionProfile.PCA$y))] = apply(ionProfile.PCA$y[,grepl("^PC",colnames(ionProfile.PCA$y))],2,unit.norm)
+  
+  p.PCA.data = ionProfile.PCA$y %>%
+    dplyr::select(Line, PC1, PC2 )
+  
+  my.annotation = tbl_df(ionProfile.PCA$pr.y$rotation) %>%
+    dplyr::select(PC1, PC2) %>%
+    dplyr::mutate(Ion = row.names(ionProfile.PCA$pr.y$rotation)) %>%
+    `colnames<-`(c("x", "y", "Ion")) 
+  
+  p_pca <- p.PCA.data %>%
+    ggplot(aes(x = PC1, y = PC2)) +
+    geom_segment(inherit.aes = F, data = my.annotation,
+                 aes(x = 0, y = 0, xend = x/2, yend = y/2),
+                 color = "blue",
+                 arrow = arrow(length = unit(0.02, "npc")))+
+    geom_text(inherit.aes = F, data = my.annotation,
+              aes(x = 0.51*x, y = 0.51*y, label = Ion),
+              color = "red", size = 4) + 
+    geom_point(size = 1, alpha = 1/20) + 
+    theme(aspect.ratio = 1) +
+    scale_shape(solid = FALSE) +
+    labs(x = paste0("PC1",
+                    " (",round(summary(ionProfile.PCA$pr.y)$importance[2,"PC1"],2)*100,"%)"),
+         y = paste0("PC2"," (",
+                    round(summary(ionProfile.PCA$pr.y)$importance[2,"PC2"],2)*100,"%)"),
+         color = "changed")  
+  
   #' PCA loading
-  pca_loadings <- data.frame(pca$rotation)
-  rownames(pca_loadings) <- data$Line
+  pca_loadings <- data.frame(ionProfile.PCA$pr.y$rotation)
+  rownames(pca_loadings) <- colnames(data[, -1])
   pca_loadings <- pca_loadings[, 1:2]
-
-  #' PCA plot using ggplot2
-  p_pca <-
-    ggplot(data = pca_scores[, 1:2], aes(x = PC1, y = PC2)) +
-    geom_point(color = "steelblue", size = 3, alpha = 0.4) +
-    geom_text_repel(aes(label = row.names(pca_scores)), size = 4) +
-    theme_bw() +
-    theme(legend.position = "none") +
-    xlab(dfn[1]) +
-    ylab(dfn[2]) +
-    labs(title = "PCA")
-
+  
+  
   #' -------------------> Correlation
   col3 <- colorRampPalette(c("steelblue4", "white", "firebrick"))
-  corrplot.mixed(cor(data[, -1], use = "complete.obs"),
+  corrplot.mixed(cor(data[, -1], use = "complete.obs", method = method_ion_corr),
     number.cex = .7,
     lower.col = "black", upper.col = col3(100)
   )
   p_corr <- recordPlot()
 
-  #' -------------------> Correlation heatmap
-  col <- colorRampPalette(c("skyblue4", "white", "plum4"))(20)
-  corr <- cor(na.omit(data[, -1]))
-  heatmap(
-    x = corr, col = col, symm = TRUE, cexRow = 1.4, cexCol = 1.4,
-    main = ""
-  )
-  p_corr_heat <- recordPlot()
 
   #' -------------------> Heatmap with dendrogram
   pheatmap(data[, -1], show_rownames = F, cluster_cols = T, cluster_rows = T,
@@ -295,7 +340,9 @@ ExploratoryAnalysis <- function(data = NULL){
     #' library(glasso)
     #' corr_reg <- glasso(corr, rho = 0.01)
     #' net <- network::network(corr_reg$w, directed = FALSE)
-    net <- network::network(corr, directed = FALSE)
+    corr <- cor(na.omit(data[, -1]), method = method_ion_corr)
+    corr[abs(corr) < thres_ion_corr] <- 0
+    net <- network::network(corr[], directed = FALSE)
 
     #' set edge attributes
     net %e% "weight" <- corr
@@ -303,7 +350,7 @@ ExploratoryAnalysis <- function(data = NULL){
     net %e% "color" <- ifelse(net %e% "weight" > 0, "lightgreen", "coral")
     p_net <-
       ggnet2(net,
-        label = TRUE, mode = "spring",
+        label = TRUE, mode = "fruchtermanreingold",
         node.size = 10, edge.size = "weight_abs", edge.color = "color"
       )
   } else {
@@ -318,290 +365,305 @@ ExploratoryAnalysis <- function(data = NULL){
   }
 
   res <- list()
-  res$plot.pca  <- p_pca
   res$data.pca.load <- pca_loadings
+  res$plot.pca  <- p_pca
   res$plot.corr <- p_corr
-  res$plot.corr.heat <- p_corr_heat
-  res$plot.heat <- p_heat
   res$plot.net <- p_net
+  res$plot.heat <- p_heat
+  return(res)
+
+}
+
+
+
+#' =======================================================================
+#' wl-04-10-2020, Sun: Hierarchical clustering
+#' ji-10-01-2020, Sun: Input, Method, Output simplified
+
+ProfileClustering <- function(symbol_profiles, min_clust_size = 10, h_tree = 0, filter_zero_string = TRUE) {
+  
+  if (filter_zero_string){
+    symbol_profiles <- symbol_profiles[rowSums(symbol_profiles[, -1])!=0, ]  
+  }
+  x <- symbol_profiles[, -1] 
+  dis <- stats::dist(x, method = "manhattan")
+  hc <- hclust(d = dis, method = "single")
+  clus <- data.frame(Line = symbol_profiles$Line, Cluster = cutree(hc, h = h_tree))
+  
+  tab <- as.data.frame(table(clus$Cluster), stringsAsFactors = F)
+  names(tab) <- c("Cluster", "Number.of.genes")
+  
+  tab_subset <- tab[tab$Number.of.genes > min_clust_size, ]
+  tab_subset <- tab_subset[order(tab_subset$Number.of.genes, decreasing = T), ]
+  idx_subset <- clus %in% tab_subset$Cluster
+  
+  
+  res <- list()
+  res$clusters.vector <- clus
+  res$tab.clusters <- tab
+  res$tab.clusters.subset <- tab_subset
+
+  return(res)
+  
+}
+
+
+#' =======================================================================
+#' wl-06-11-2020, Fri: Get ENTREZID  from SYMBOL
+#'
+get_entrez_id <- function(gene_list, annot_pkg = "org.Sc.sgd.db", key_type = "ORF") {
+  
+  res <- AnnotationDbi::select(get(annot_pkg), keys = gene_list,
+                               columns = "ENTREZID", keytype = key_type)
+  res <- res[,2,drop = T]
+  res <- res[!is.na(res)]
+  res <- res[!duplicated(res)]
+
   return(res)
 }
 
 #' =======================================================================
-#'
-GeneClustering <- function(data = NULL, data_symb = NULL,
-                           min_clust_size = 10, thres_anno = 5) {
+#' wl-03-10-2020, Sat: KEGG enrichment analysis for symbolization data
+#' wl-06-11-2020, Fri: The first column of data must be ORF for
+#'  org.Sc.sgd.db or SYMBOL for any other annotation packages.
+#' ji-11-01-2020, Mon: Input, Method, Output simplified
+#' 
 
-  #' wl-06-12-2020, Sun: move two files inside 
-  data_GOslim <- read.table("./libraries/data_GOslim.tsv", header = T,
-                            sep = "\t")
-  data_ORF2KEGG <- read.table("./libraries/data_ORF2KEGG.tsv", header = T,
-                              sep = "\t")
+KeggEnricher <- function(cluster_vector, pval = 0.05, 
+                        min_count = 3, annot_pkg = "org.Sc.sgd.db", 
+                        gene_uni = NULL) {
 
-  #' Define clusters
-  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size)
+  if(is.null(gene_uni)){
+    gene_uni <- as.character(cluster_vector$Line)
+  }
+  
+  clusters_set <- unique(cluster_vector$Cluster)
+  
+  #' geneIds can be ORF or ENTREZID
+  enrich <- lapply(clusters_set, function(x) {
+    params <- new("KEGGHyperGParams",
+                  geneIds = gene_uni[cluster_vector$Cluster == x],
+                  universeGeneIds = gene_uni,
+                  annotation = annot_pkg,
+                  categoryName = "KEGG",
+                  pvalueCutoff = pval,
+                  testDirection = "over")
 
-  #' Update data
-  data_symb$cluster <- clust$clus
-  data$cluster <- as.factor(clust$clus)
-  idx <- clust$idx
-  df_sub <- clust$tab_sub
-
-  mat_long <-
-    reshape2::melt(data[idx, ],
-      id = c("Line", "cluster"), variable.name = "Ion",
-      value.name = "log_corr_norm"
-    )
-
-  res <- sapply(mat_long$cluster, function(x) {
-    tmp <- df_sub[df_sub$cluster == x, ]
-    tmp <- paste0("Cluster ", tmp[1], " (", tmp[2], " genes)")
-  })
-  mat_long$cluster <- res
-
-  clus_p <-
-    ggplot(
-      data = mat_long,
-      aes(x = Ion, y = log_corr_norm)
-    ) +
-    facet_wrap(~cluster) +
-    geom_line(aes(group = Line)) +
-    stat_summary(fun.data = "mean_se", color = "red") +
-    labs(x = "", y = "") +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 90, hjust = 1),
-      axis.text = element_text(size = 10)
-    )
-
-  #' -------------------> KEGG AND GO SLIM ANNOTATION
-  mat <- data_symb[idx, ]
-  data_GOslim$Ontology <- as.character(data_GOslim$Ontology)
-
-  kego <- plyr::dlply(mat, "cluster", function(x) {
-    inputGeneSet <- as.character(x$Line)
-    N <- length(inputGeneSet)
-
-    res <- data_GOslim %>%
-      dplyr::mutate(Ontology = setNames(
-        c(
-          "Biological process",
-          "Cellular component",
-          "Molecular function"
-        ),
-        c("P", "C", "F")
-      )[Ontology]) %>%
-      dplyr::filter(ORFs %in% inputGeneSet) %>%
-      dplyr::group_by(GOslim, Ontology) %>%
-      dplyr::filter(GOslim != "other") %>%
-      dplyr::rename(Term = GOslim) %>%
-      dplyr::summarise(Count = n()) %>%
-      dplyr::mutate(Percent = Count / N * 100) %>%
-      dplyr::bind_rows(data_ORF2KEGG %>%
-        dplyr::filter(ORF %in% inputGeneSet) %>%
-        dplyr::group_by(KEGGID, Pathway) %>%
-        dplyr::summarise(Count = n()) %>%
-        dplyr::mutate(Ontology = "KEGG") %>%
-        dplyr::rename(Term = Pathway) %>%
-        dplyr::ungroup() %>%
-        dplyr::filter(KEGGID != "01100") %>%
-        dplyr::select(-KEGGID) %>%
-        dplyr::mutate(Percent = Count / N * 100)) %>%
-      dplyr::filter(!Term %in% c(
-        "molecular_function", "biological_process",
-        "cellular_component"
-      ))
-  })
-  names(kego) <- paste0("Cluster ", df_sub[[1]], " (", df_sub[[2]], " genes)")
-
-  kego <- lapply(kego, function(x) {
-    x[x$Percent > thres_anno, ]
+    over <- hyperGTest(params)
   })
 
-  #' wl-04-08-2020, Tue: bind together
-  kego <- dplyr::bind_rows(kego, .id = "Cluster")
-
-  #' -------------------> GO TERMS ENRICHMENT
-  universeGenes <- as.character(data_symb$Line)
-  mat <- data_symb[idx, ]
-
-  goen <- plyr::dlply(mat, "cluster", function(x) {
-    inputGeneSet <- as.character(x$Line)
-    ont <- c("BP", "MF", "CC")
-    res <- lapply(ont, function(y) {
-      params <- new("GOHyperGParams",
-        geneIds = inputGeneSet,
-        universeGeneIds = universeGenes,
-        annotation = "org.Sc.sgd.db",
-        categoryName = "GO",
-        ontology = y,
-        pvalueCutoff = 0.05,
-        conditional = T,
-        testDirection = "over"
-      )
-      hyperGTest(params)
-    })
-    names(res) <- ont
-
-    res_1 <- lapply(ont, function(y) {
-      hgOver <- res[[y]]
-      tmp <- cbind(setNames(
-        tibble(
-          ID = names(pvalues(hgOver)),
-          Term = Term(ID),
-          pvalues = pvalues(hgOver),
-          oddsRatios = oddsRatios(hgOver),
-          expectedCounts = expectedCounts(hgOver),
-          geneCounts = geneCounts(hgOver),
-          universeCounts = universeCounts(hgOver)
-        ),
-        c(
-          "GO_ID", "Description", "Pvalue", "OddsRatio",
-          "ExpCount", "Count", "CountUniverse"
-        )
-      ),
-      Ontology = y
-      )
-    })
-    res_2 <- do.call("rbind", res_1)
+  # name list with original clusters ID 
+  names(enrich) <- clusters_set
+  
+  #' There is no explicit methods for getting manual summary table.
+  summ <- lapply(enrich, function(x) {
+    tmp <- summary(x)
+    if (nrow(tmp) == 0) tmp <- NULL #' wl-04-10-2020, Sun: it happens very often.
+    return(tmp)
   })
-
-  names(goen) <- paste0("Cluster ", df_sub[[1]], " (", df_sub[[2]], " genes)")
+  summ <- summ[!sapply(summ,is.null)]
 
   #' binding and filtering
-  goen <- lapply(goen, "[", -c(4, 5, 8)) %>%
+  summ <- lapply(summ, "[", -c(3, 4)) %>%
     dplyr::bind_rows(.id = "Cluster") %>%
-    dplyr::filter(Pvalue <= 0.05 & Count > 1)
+    dplyr::filter(Pvalue <= pval & Count >= min_count)
 
   res <- list()
-  res$stats.clusters <- df_sub # selected clusters
-  res$plot.profiles <- clus_p # plot cluster profiles
-  res$stats.Kegg_Goslim_annotation <- kego # KEGG AND GO SLIM ANNOTATION
-  res$stats.Goterms_enrichment <- goen # GO TERMS ENRICHMENT
+  res$enrichment.summary <- summ
+  res$enrichment.full.results <- enrich
   return(res)
+  
+  
 }
 
 #' =======================================================================
+#' wl-03-10-2020, Sat: GO enrichment analysis for symbolization data
+#' wl-06-11-2020, Fri: The first column of data must be ORF for
+#'  org.Sc.sgd.db or SYMBOL for any other annotation packages.
 #'
-GeneNetwork <- function(data = NULL, data_symb = NULL,
-                        min_clust_size = 10, thres_corr = 0.6,
-                        method_corr = c(
-                          "pearson", "spearman", "kendall",
-                          "cosine", "mahal_cosine", "hybrid_mahal_cosine"
-                        )) {
+GOEnricher <- function(cluster_vector, pval = 0.05, ont = c("BP","CC","MF"),
+                      min_count = 3, annot_pkg = "org.Sc.sgd.db",
+                      gene_uni = NULL) {
+  
+  if(is.null(gene_uni)){
+    gene_uni <- as.character(cluster_vector$Line)
+  }
+  
+  ont <- match.arg(ont)
+  
+  genes_not_annotated <- NULL
+  
+  if ( annot_pkg == "org.Sc.sgd.db"){
+    genes_not_annotated <- unlist(mget(
+      mappedkeys(org.Sc.sgdGO2ALLORFS)[which(is.na(Term(mappedkeys(org.Sc.sgdGO2ALLORFS))))], org.Sc.sgdGO2ALLORFS)
+      )
+    gene_uni <- mappedkeys(org.Sc.sgdGO)[mappedkeys(org.Sc.sgdGO) %in% gene_uni]
+  }
+  if ( annot_pkg == "org.Hs.eg.db"){
+    genes_not_annotated <- unlist(mget(
+      mappedkeys(org.Hs.egGO2ALLEGS)[which(is.na(Term(mappedkeys(org.Hs.egGO2ALLEGS))))], org.Hs.egGO2ALLEGS)
+    )
+    #gene_uni <- mappedkeys(org.Hs.egGO)
+    gene_uni <- mappedkeys(org.Hs.egGO)[mappedkeys(org.Hs.egGO) %in% gene_uni]
+  }
+  if ( annot_pkg == "org.Mm.eg.db"){
+    genes_not_annotated <- unlist(mget(
+      mappedkeys(org.Mm.egGO2ALLEGS)[which(is.na(Term(mappedkeys(org.Mm.egGO2ALLEGS))))], org.Mm.egGO2ALLEGS)
+    )
+    gene_uni <- mappedkeys(org.Mm.egGO)[mappedkeys(org.Mm.egGO) %in% cluster_vector$Line]
+  }  
+  
+  gene_uni <- as.character(gene_uni[!gene_uni %in% genes_not_annotated])
+    
+  cluster_vector <- cluster_vector[cluster_vector$Line %in% gene_uni,]
+  clusters_set <- unique(cluster_vector$Cluster)
+  
+  #' geneIds can be ORF or ENTREZID
+  enrich <- lapply(clusters_set, function(x) { 
+    gene_set <- as.character(cluster_vector$Line[cluster_vector$Cluster == x])
+    params <- new("GOHyperGParams",
+                  geneIds = gene_set,
+                  universeGeneIds = gene_uni,
+                  annotation = annot_pkg,
+                  categoryName = "GO",
+                  ontology = ont,
+                  pvalueCutoff = pval,
+                  conditional = T,
+                  testDirection = "over")
 
-  method_corr <- match.arg(method_corr)
-
-  #' Define clusters
-  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size)
-  data_symb$cluster <- clust$clus
-  index <- clust$idx
-  df_sub <- clust$tab_sub
-
-  #' cluster labels with info of accumulation/decumulation of Ions
-  #' (high/lower abundance) Assign label
-  df.symb <- data_symb[index, ]
-  lab <- plyr::ddply(df.symb, "cluster", function(x) {
-    mat <- x[, !names(df.symb) %in% c("Line", "cluster")]
-    res <- NULL
-    if (length(names(which(colSums(mat == 1) > 0))) > 0) {
-      res <- paste0(names(which(colSums(mat == 1) > 0)), "(+)")
-    }
-    if (length(names(which(colSums(mat == -1) > 0))) > 0) {
-      res <- c(res, paste0(names(which(colSums(mat == -1) > 0)), "(-)"))
-    }
-    res <- paste(res, collapse = ", ")
+    over <- hyperGTest(params)
   })
-  names(lab)[2] <- "label"
 
-  #' update df_sub with labels
-  df_sub <- cbind(df_sub, label = lab[, 2])
+  # name list with original clusters ID 
+  names(enrich) <- clusters_set
+  
+  summ <- lapply(enrich, function(x) {
+    Pvalue        <- round(pvalues(x), digit = 4)
+    ID            <- names(Pvalue)
+    Description   <- Term(ID)
+    OddsRatio     <- oddsRatios(x)
+    ExpCount      <- expectedCounts(x)
+    Count         <- geneCounts(x)
+    CountUniverse <- universeCounts(x)
 
-  #' get cluster+gene+label names
-  label <- sapply(df.symb$cluster, function(x) {
-    tmp <- df_sub[df_sub$cluster == x, ]
-    res <- paste0("Cluster ", tmp[1], " (", tmp[2], " genes)")
-    res <- paste(res, tmp[3], sep = ": ")
+    tab <- cbind(ID, Description, Pvalue, OddsRatio, ExpCount, Count, CountUniverse)
+    rownames(tab) <- NULL
+    tab <- na.omit(tab)   #' wl-03-10-2020, Sat: this is why summary fails.
+    tab <- data.frame(tab, Ontology = ont)
   })
-  df.symb$Label <- label
 
-  #' Compute empirical correlation matrix
+  summ <- lapply(summ, "[", -c(4, 5)) %>%
+            dplyr::bind_rows(.id = "Cluster") %>%
+            dplyr::filter(Pvalue <= pval & Count >= min_count)
+
+  res <- list()
+  res$enrichment.summary <- summ
+  res$enrichment.full.results <- enrich
+  return(res)
+}
+
+
+
+
+GeneticNetwork <- function(data = NULL, 
+                        method_corr = c("pearson", "spearman", "kendall",
+                          "cosine", "mahal_cosine", "hybrid_mahal_cosine"),
+                        network_modules = c("louvain", "input"),
+                        thres_corr = 0.7,
+                        cluster_vector = NULL,
+                        cluster_label_vector = NULL,
+                        n_labels = 3
+                        ) {
+
+  
+  mat <- as.matrix(data[,!colnames(data)%in%c("Line","Cluster")])
+  
+
+  #' Compute similarity matrix
   if (method_corr == "pearson" ||
       method_corr == "spearman" ||
       method_corr == "kendall") {
-    corrGenes <- cor(t(as.matrix(data[, -1])), method = method_corr,
+    corrGenes <- cor(t(as.matrix(mat)), 
+                     method = method_corr,
                      use = "pairwise.complete.obs")
   } else if (method_corr == "cosine") {
-    corrGenes <- cosine(t(as.matrix(data[, -1])))
+    corrGenes <- cosine(t(as.matrix(mat)))
   } else if (method_corr == "mahal_cosine") {
-    corrGenes <- cosM(data[, -1], mode = "normal")
+    corrGenes <- cosM(mat, mode = "normal")
   } else if (method_corr == "hybrid_mahal_cosine") {
-    corrGenes <- cosM(data[, -1], mode = "hybrid")
+    corrGenes <- cosM(mat, mode = "hybrid")
   }
-  
-  #' wl-15-12-2020, Tue: assign names
-  gene <- as.character(data[, 1])
-  dimnames(corrGenes) <- list(gene, gene)
 
-  A <- corrGenes[index, index]
+  #' Adjacency matrix
+  A <- corrGenes
   diag(A) <- 0
-
   A <- (A > thres_corr)
   A <- ifelse(A == TRUE, 1, 0)
-
+  
+  if (network_modules == "input"){
+   
+    if (length(cluster_label_vector) == 0){
+      cluster_vector <- as.character(cluster_vector$Cluster)
+    }else{
+      mm <- match(cluster_vector$Cluster, cluster_label_vector$Cluster)
+      cluster_vector <- cluster_label_vector$label[mm]
+    }
+    
+    tmp <- unique(cluster_vector)
+    if (length(tmp) != 1) {
+      cpy <- rainbow(length(tmp))
+      names(cpy) <- tmp
+    } else {
+      cpy <- "Set2"
+    }
+    
+  }
+  if (network_modules == "louvain"){
+    # community detection
+    tmp <- igraph::graph_from_adjacency_matrix(A, mode="undirected")
+    com <- igraph::cluster_louvain(tmp, weights = NULL)
+    cluster_vector <- as.character(igraph::membership(com))
+    degree_vector <- igraph::degree(tmp)
+  
+    tmp <- unique(cluster_vector)
+    if (length(tmp) != 1) {
+      cpy <- rainbow(length(tmp))
+      names(cpy) <- tmp
+    } else {
+      cpy <- "Set2"
+    }
+  }
+  
+  
   #' Generate network
   net <- network::network(A, directed = FALSE)
-
-  net %v% "Label" <- df.symb$Label
-  tmp <- unique(df.symb$Label)
-  if (length(tmp) != 1) {
-    cpy <- rainbow(length(tmp))
-    names(cpy) <- tmp
-  } else {
-    cpy <- "Set2"
+  net %v% "Label" <- cluster_vector
+  
+  #' Remove communities of size 1
+  if (network_modules == "louvain"){
+    net <- delete.vertices(net, which(degree_vector == 0));
   }
-  net_p1 <- GGally::ggnet2(net,
-    mode = "fruchtermanreingold",
-    color = "Label",
-    palette = cpy,
-    edge.alpha = 0.5, size = 2, color.legend = "Symbolic Pheno",
-    legend.size = 10, legend.position = "right"
+  
+  net_p <- GGally::ggnet2(net,
+                           mode = "fruchtermanreingold",
+                           color = "Label",
+                           palette = cpy,
+                           edge.alpha = 0.5, size = 2, 
+                           color.legend = "Modules",
+                           legend.size = 10, 
+                           legend.position = "right"
   )
-  #' net_p1
-
-  #' wl-09-11-2020, Mon: node color controoled by community detection
-  tmp <- igraph::graph_from_adjacency_matrix(A, mode="undirected")
-  com <- igraph::cluster_louvain(tmp, weights = NULL)
-  mem <- as.factor(igraph::membership(com))
-
-  #' wl-16-12-2020, Wed: add more stuff
-  tab <- table(mem)
-  mem <- sapply(mem, function(x) {
-    res <- paste0("Cluster ", x, " (", tab[x], " genes)")
-  })
-
-  tmp <- unique(mem)
-  if (length(tmp) != 1) {
-    cpy <- rainbow(length(tmp))
-    names(cpy) <- tmp
-  } else {
-    cpy <- "Set2"
-  }
-  net_p2 <- GGally::ggnet2(net,
-    mode = "fruchtermanreingold",
-    color = mem,
-    palette = cpy,
-    edge.alpha = 0.5, size = 2, color.legend = "Network Community",
-    legend.size = 10, legend.position = "right"
-  )
-  #' net_p2
+  
+  #' network edge list 
+  net <- as.matrix(net, matrix.type = "edgelist")[,1:2];
+  net[,] <- cbind(as.character(data$Line[net[,1]]), as.character(data$Line[net[,2]]))
 
   #' Impact and betweenness
   btw <- sna::betweenness(A) # or use 'net' instead of 'A'
-  impact <- apply(data[index, -1], 1, norm, type = "2") # L2 norm
+  impact <- apply(mat, 1, norm, type = "2") # L2 norm
 
   df.res <- data.frame(
-    Line = data$Line[index],
+    Line = data$Line,
     impact = round(impact, 3),
     betweenness = round(btw, 3),
     log.betweenness = round(log(btw + 1), 3),
@@ -616,17 +678,22 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
       )
     ))
   )
-  rownames(df.res) <- data$Line[index]
+  rownames(df.res) <- data$Line[]
 
   q1 <- row.names(subset(df.res, (impact < quantile(impact, .75)) & (log.betweenness < quantile(log.betweenness, .75))))
   q2 <- row.names(subset(df.res, (impact < quantile(impact, .75)) & (log.betweenness > quantile(log.betweenness, .75))))
   q3 <- row.names(subset(df.res, (impact > quantile(impact, .75)) & (log.betweenness < quantile(log.betweenness, .75))))
   q4 <- row.names(subset(df.res, (impact > quantile(impact, .75)) & (log.betweenness > quantile(log.betweenness, .75))))
 
-  N <- 6
-  lst <- list(q1, q2, q3, q4) #' sapply(lst, length)
+  #' labels 
+  N <- n_labels
+  lst <- list(q1, q2, q3, q4) 
   idx <- lapply(lst, function(x) {
-    if (length(x) > N) sample(x, N) else x
+    if (length(x) > N){
+      tmp <- df.res[x, c("betweenness","impact")];
+      union(rownames(tmp)[order(tmp$betweenness, decreasing = TRUE)[1:N]],
+            rownames(tmp)[order(tmp$impact, decreasing = TRUE)[1:N]])
+    }else{x}
   })
   idx <- unique(unlist(idx))
 
@@ -653,64 +720,20 @@ GeneNetwork <- function(data = NULL, data_symb = NULL,
     xlab("Impact") +
     ylab("Log(betweenness+1)")
 
-  rownames(df.res) <- c()
-  df.res2 <- df.res[, -c(4, 5)]
-  names(df.res2) <- c("Line", "Impact", "Betweenness", "Position")
-
-  gene.cluster <- df.symb[, c("Line", "Label")]
-
-  names(gene.cluster) <- c("Line", "Cluster")
-  df.res3 <- merge(df.res2, gene.cluster, by = "Line", all.x = TRUE)
-
-  df.tab <- data.frame(table(df.res3$Cluster, df.res3$Position))
-  names(df.tab) <- c("Cluster", "Position", "nGenes")
-  df.tab <- dplyr::arrange(df.tab, desc(nGenes))
-  df.tab2 <- df.tab %>% dplyr::group_by(Cluster) %>% top_n(1, nGenes)
-
-  #' wl-15-12-2020, Tue: get network vertex attributes
-  node_names <- net %v% "vertex.names"
-  symb_pheno <- net %v% "Label"
-  comm_centre <- mem
-  net_node <- data.frame(Line = node_names, symb_pheno = symb_pheno, 
-                         comm_centre = comm_centre)
-
+  
   res <- list()
-  res$plot.pnet1 <- net_p1 # plot gene network with symbolic pheno
-  res$plot.pnet2 <- net_p2 # plot gene network with community detection
+  res$network <- net 
+  res$network.modules <- cluster_vector
+  res$plot.network <- net_p # plot gene network with symbolic pheno
   res$plot.impact_betweenness <- im_be_p # plot impact betweenees
-  res$stats.impact_betweenness <- df.res3 # impact betweenees data
-  res$stats.impact_betweenness_by_cluster <- df.tab2 # plot position by cluster
-  res$stats.impact_betweenness_tab <- df.tab # contingency table
-  res$net_node <- net_node
+  res$stats.impact_betweenness <- df.res # impact and betweenees data
   return(res)
 }
 
-#' =======================================================================
-#' wl-04-10-2020, Sun: Hierarchical clustering
-#'
-gene_clus <- function(x, min_clust_size = 10) {
-  dis <- stats::dist(x, method = "manhattan")
-  hc <- hclust(d = dis, method = "single")
-  clus <- cutree(hc, h = 0)
 
-  tab <- as.data.frame(table(clus), stringsAsFactors = F)
-  names(tab) <- c("cluster", "nGenes")
-  tab_sub <- tab[tab$nGenes > min_clust_size, ]
-  tab_sub <- tab_sub[order(tab_sub$nGenes, decreasing = T), ]
-  rownames(tab_sub) <- NULL
 
-  idx <- clus %in% tab_sub$cluster
 
-  return(list(clus = clus, idx = idx, tab = tab, tab_sub = tab_sub))
-}
 
-#' =======================================================================
-#' ji: Mahalanobis Cosine
-#' Function to compute the mahalanobis cosine between pairs of objects in an
-#' n-by-m data matrix or data frame.
-#' x <- iris[, -5]
-#' res <- cosM(x, mode = "normal")
-#'
 cosM <- function(x, mode = c("normal", "hybrid")) {
 
   #' --------------------------------------------------------------------
@@ -813,7 +836,7 @@ cosM <- function(x, mode = c("normal", "hybrid")) {
   }
 
 }
-
+#' 
 #' =======================================================================
 #' From R package "lsa"
 #' x <- iris[, -5]
@@ -846,149 +869,3 @@ cosine <- function(x, y = NULL) {
     stop("argument mismatch. Either one matrix or two vectors needed as input.")
   }
 }
-
-#' =======================================================================
-#' Get symbolisation profiles based on z-scores in wide format
-#'
-symbol_data <- function(x, thres_symb = 2) {
-  symb <- x[, 2:ncol(x)]
-  symb[(symb > -thres_symb) & (symb < thres_symb)] <- 0
-  symb[symb >= thres_symb] <- 1
-  symb[symb <= -thres_symb] <- -1
-  symb <- cbind(Line = x[, 1], symb)
-  return(symb)
-}
-
-#' =======================================================================
-#' wl-06-11-2020, Fri: Get ENTREZID  from SYMBOL
-#'
-get_entrez_id <- function(symbol, annot_pkg = "org.Hs.eg.db") {
-  res <- AnnotationDbi::select(get(annot_pkg), keys = symbol,
-                               columns = "ENTREZID", keytype="SYMBOL")
-  res <- res[,2,drop = T]
-  res <- res[!is.na(res)]
-  res <- res[!duplicated(res)]
-
-  return(res)
-}
-
-#' =======================================================================
-#' wl-03-10-2020, Sat: KEGG enrichment analysis for symbolization data
-#' wl-06-11-2020, Fri: The first column of data must be ORF for
-#'  org.Sc.sgd.db or SYMBOL for any other annotation packages.
-#' wl-15-12-2020, Tue: KEGG enrichment based on network comunity centre
-#' wl-15-12-2020, Tue: KEGG enrichment for group data
-#'  The group information may be the symbolic clustering or network
-#'  community detection
-#'
-kegg_enrich <- function(mat, pval = 0.05, annot_pkg =  "org.Sc.sgd.db") {
-
-  #' get the gene ids
-  gene_uni <- as.character(mat[, 1])
-  grp <- names(mat[2])
-  gene_ids <- plyr::dlply(mat, grp, function(x) as.character(x[, 1]))
-  ind <- sapply(gene_ids, function(x) ifelse(length(x) > 1, TRUE, FALSE))
-  gene_ids <- gene_ids[ind]
-
-  #' get entrez id for GOStats
-  if (annot_pkg != "org.Sc.sgd.db") {
-    gene_uni <- get_entrez_id(gene_uni, annot_pkg)
-    gene_ids <- lapply(gene_ids, function(x){
-      get_entrez_id(x, annot_pkg)
-    })
-  }
-
-  #' geneIds can be ORF or ENTREZID
-  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]
-    params <- new("KEGGHyperGParams",
-                  geneIds = x,
-                  universeGeneIds = gene_uni,
-                  annotation = annot_pkg,
-                  categoryName = "KEGG",
-                  pvalueCutoff = 1,
-                  testDirection = "over")
-
-    over <- hyperGTest(params)
-  })
-
-  #' There is no explicit methods for getting manual summary table.
-  summ <- lapply(enrich, function(x) {
-    tmp <- summary(x)
-    if (nrow(tmp) == 0) tmp <- NULL #' wl-04-10-2020, Sun: it happens very often.
-    return(tmp)
-  })
-  summ <- summ[!sapply(summ,is.null)]
-
-  #' binding and filtering
-  summ <- lapply(summ, "[", -c(3, 4)) %>%
-    dplyr::bind_rows(.id = grp) %>%
-    dplyr::filter(Pvalue <= pval & Count > 1)
-
-  return(summ)
-}
-
-#' =======================================================================
-#' wl-03-10-2020, Sat: GO enrichment analysis for symbolization data
-#' wl-06-11-2020, Fri: The first column of data must be ORF for
-#'  org.Sc.sgd.db or SYMBOL for any other annotation packages.
-#' wl-15-12-2020, Tue: GO enrichment based on network comunity centre
-#' wl-15-12-2020, Tue: GO enrichment for group data
-#'
-go_enrich <- function(mat, pval = 0.05, ont = "BP",
-                      annot_pkg = "org.Sc.sgd.db") {
-
-  ont <- match.arg(ont, c("BP", "MF", "CC"))
-
-  #' get the gene ids
-  gene_uni <- as.character(mat[, 1])
-  grp <- names(mat[2])
-  gene_ids <- plyr::dlply(mat, grp, function(x) as.character(x[, 1]))
-  ind <- sapply(gene_ids, function(x) ifelse(length(x) > 1, TRUE, FALSE))
-  gene_ids <- gene_ids[ind]
-
-  #' get entrez id for GOStats
-  if (annot_pkg != "org.Sc.sgd.db") {
-    gene_uni <- get_entrez_id(gene_uni, annot_pkg)
-    gene_ids <- lapply(gene_ids, function(x){
-      get_entrez_id(x, annot_pkg)
-    })
-  }
-
-  #' geneIds can be ORF or ENTREZID
-  enrich <- lapply(gene_ids, function(x) { #' x = gene_ids[[1]]
-    params <- new("GOHyperGParams",
-                  geneIds = x,
-                  universeGeneIds = gene_uni,
-                  annotation = annot_pkg,
-                  categoryName = "GO",
-                  ontology = ont,
-                  pvalueCutoff = 1,
-                  conditional = T,
-                  testDirection = "over")
-
-    over <- hyperGTest(params)
-  })
-
-  summ <- lapply(enrich, function(x) {
-    Pvalue        <- round(pvalues(x), digit = 4)
-    ID            <- names(Pvalue)
-    Description   <- Term(ID)
-    OddsRatio     <- oddsRatios(x)
-    ExpCount      <- expectedCounts(x)
-    Count         <- geneCounts(x)
-    CountUniverse <- universeCounts(x)
-
-    tab <- cbind(ID, Description, Pvalue, OddsRatio, ExpCount, Count,
-                 CountUniverse)
-    rownames(tab) <- NULL
-    tab <- na.omit(tab)   #' wl-03-10-2020, Sat: this is why summary fails.
-    tab <- data.frame(tab, Ontology = ont)
-  })
-
-  summ <- lapply(summ, "[", -c(4, 5)) %>%
-    dplyr::bind_rows(.id = grp) %>%
-    dplyr::filter(Pvalue <= pval & Count > 1)
-
-  return(summ)
-}
-

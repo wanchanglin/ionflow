@@ -78,8 +78,9 @@ gene_net$stats.impact_betweenness
 gene_net$stats.impact_betweenness_tab
 head(gene_net$net_node)
 
-#' ==== GO/KEGG enrichment using network community centre ====
-mat <- gene_net$net_node[, c(1, 2)] 
+#' ==== GO/KEGG enrichment ====
+clus_id = 2   #' 2 - symbolic clustering. 3-  network community centre
+mat <- gene_net$net_node[, c(1, clus_id)] 
 pval = 0.05
 annot_pkg =  "org.Sc.sgd.db"
 

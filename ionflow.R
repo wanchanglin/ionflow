@@ -4,7 +4,8 @@
 #' wl-09-08-2020, Sun: recordPlot has problem for command line mode.
 #' wl-02-09-2020, Wed: change for PreProcessing
 #' wl-12-11-2020, Thu: change for version 2
-#' wl-23-03-2021, Tue: change for version 3
+#' wl-23-03-2021, Tue: change for version 3. Select network output for
+#' enrichment analysis
 
 ## ==== General settings ====
 rm(list = ls(all = T))
@@ -109,10 +110,8 @@ if (com_f) {
                   help = "Similarity measure method. Currently support:
                           pearson, spearman, kendall, cosine, mahal_cosine,
                           hybrid_mahal_cosine"),
-
       make_option("--clus_id", type = "integer", default = 2,
                   help = "Select network center for enrichment analysis."),
-
       make_option("--pval", type = "double", default = 0.05,
                   help = "P-values for enrichment analysis."),
       make_option("--ont", type = "character", default = "BP",
@@ -204,7 +203,7 @@ if (com_f) {
     min_clust_size = 5.0,
     thres_corr = 0.6,
     method_corr = "pearson",
-    clus_id = 2,      #' 2 - symbolic clustering; 3 - community centre
+    clus_id = 2,      #' 2 - symbolic cluster; 3 - network community centre
     pval = 0.05,
     ont = "BP",
     annot_pkg =  "org.Sc.sgd.db",
@@ -229,7 +228,7 @@ if (com_f) {
     go_en_out   = paste0(tool_dir, "test-data/res/go_en.tsv")
   )
 }
-print(opt)
+#' print(opt)
 
 suppressPackageStartupMessages({
   source(paste0(tool_dir, "ionflow_funcs.R"))
@@ -322,18 +321,18 @@ write.table(gene_net$stats.impact_betweenness_tab, file = opt$imbe_tab_out,
 #' ==== GO/KEGG enrichment analysis ====
 mat <- gene_net$net_node[, c(1, opt$clus_id)] 
 
-kegg_en  <- kegg_enrich(mat            = mat,
-                        pval           = opt$pval,
-                        annot_pkg      = opt$annot_pkg)
+kegg_en  <- kegg_enrich(mat       = mat,
+                        pval      = opt$pval,
+                        annot_pkg = opt$annot_pkg)
 
 if (nrow(kegg_en) > 0) {
   write.table(kegg_en, file = opt$kegg_en_out, sep = "\t", row.names = FALSE)
 }
 
-go_en  <- go_enrich(mat            = mat,
-                    pval           = opt$pval,
-                    ont            = opt$ont,
-                    annot_pkg      = opt$annot_pkg)
+go_en  <- go_enrich(mat       = mat,
+                    pval      = opt$pval,
+                    ont       = opt$ont,
+                    annot_pkg = opt$annot_pkg)
 
 if (nrow(go_en) > 0) {
   write.table(go_en, file = opt$go_en_out, sep = "\t", row.names = FALSE)

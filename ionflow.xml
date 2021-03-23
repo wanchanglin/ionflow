@@ -3,6 +3,7 @@ wl-10-08-2020, Mon: commence
 wl-24-08-2020, Mon: first version
 wl-09-09-2020, Wed: add input data index for varaible, batch id and data
 wl-16-11-2020, Mon: second version
+wl-23-03-2021, Tue: third version
 -->
 
 <tool id="ionfow" name="IonFlow" version="0.1.0">
@@ -43,6 +44,7 @@ wl-16-11-2020, Mon: second version
         --min_clust_size '$net_enri.min_clust_size'
         --thres_corr '$net_enri.thres_corr'
         --method_corr '$net_enri.method_corr'
+        --clus_id '$net_enri.clus_id'
         --pval '$net_enri.pval'
         --ont '$net_enri.ont'
         --annot_pkg '$net_enri.annot_pkg'
@@ -162,7 +164,7 @@ wl-16-11-2020, Mon: second version
     <section name="net_enri" title="Network and enrichment analysis" >
       <param name="min_clust_size" type="float" value="10.0"
             label="Specify minimal cluster center number" />
-      <param name="thres_corr" type="float" value="0.60" min="0" max="1"
+      <param name="thres_corr" type="float" value="0.75" min="0" max="1"
              label="Specify similarity threshold (0 - 1)" />
 
       <param name="method_corr" type="select"
@@ -173,6 +175,15 @@ wl-16-11-2020, Mon: second version
       <option value="cosine">Cosine</option>
       <option value="mahal_cosine">Mahalanobis Cosine</option>
       <option value="hybrid_mahal_cosine">Hybrid Mahalanobis Cosine</option>
+      </param>
+
+      <param name="clus_id" type="select"
+              label="Specify network clustering for enrichment analysis"
+              help="Choose 'symbolic cluster' or 'network comminuty centre' 
+                    for enrichment analysis."
+              display="radio">
+            <option value="2" selected="True">Symbolic cluster</option>
+            <option value="3">Network comminuty centre</option>
       </param>
 
       <param name="pval" type="float" value="0.05"
@@ -242,6 +253,7 @@ wl-16-11-2020, Mon: second version
       <param name="min_clust_size" value="10.0" />
       <param name="thres_corr" value="0.75" />
       <param name="method_corr" value="pearson" />
+      <param name="clus_id" value="2" />
       <param name="pval" value="0.05" />
       <param name="ont" value="BP" />
       <param name="annot_pkg" value="org.Sc.sgd.db" />

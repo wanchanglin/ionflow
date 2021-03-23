@@ -14,6 +14,7 @@ Rscript --vanilla ../ionflow.R \
   --min_clust_size 10.0 \
   --thres_corr "0.75" \
   --method_corr "pearson" \
+  --clus_id "2" \
   --pval 0.05 \
   --ont "BP" \
   --annot_pkg "org.Sc.sgd.db" \

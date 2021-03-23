@@ -2,14 +2,12 @@
 #' wl-26-10-2020, Mon: test cosM
 #' wl-07-11-2020, Sat: test enrichment
 #' wl-09-11-2020, Mon: test GeneNetwork
-#' wl-16-12-2020, Wed: test enrichment sung network community centre
+#' wl-16-12-2020, Wed: test enrichment using network community centre
+#' wl-23-03-2021, Tue: tidy up for version 3
 
 ## ==== General settings ====
 rm(list = ls(all = T))
-
-#' tool_dir <- "~/my_galaxy/ionflow/"
 tool_dir <- "~/my_galaxy/ionflow/"
-
 setwd(tool_dir)
 pkgs <- c("optparse", "reshape2", "plyr", "dplyr", "tidyr", "ggplot2",
           "ggrepel", "corrplot", "gplots", "network", "sna", "GGally",
@@ -21,15 +19,14 @@ source("ionflow_funcs.R")
 
 #' ion_data <- read.table("./test-data/iondata_test.tsv", header = T, sep = "\t")
 #' ion_data <- read.table("./test-data/iondata.tsv", header = T, sep = "\t")
-#' ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_ko_test.tsv", header = T, sep = "\t")
-ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv", header = T, sep = "\t")
+ion_data <- read.table("~/R_lwc/r_data/icl/test-data/ionome_oe_test.tsv",
+                       header = T, sep = "\t")
 
 #' Test for batch control
 #' idx <- ion_data[, 1] %in% "BY4741"
 #' sum(idx)
 #' control_lines =  "BY4741"    #' only for inome_ko'
 #' control_use = "all",
-
 
 #' Test for cumtom standardisation
 #' stdev <- read.table("./test-data/user_std.tsv", header = T, sep = "\t")
@@ -79,15 +76,13 @@ gene_net$stats.impact_betweenness_tab
 head(gene_net$net_node)
 
 #' ==== GO/KEGG enrichment ====
-clus_id = 2   #' 2 - symbolic clustering. 3-  network community centre
+clus_id = 2   #' 2 - symbolic cluster. 3-  network community centre
 mat <- gene_net$net_node[, c(1, clus_id)] 
-pval = 0.05
-annot_pkg =  "org.Sc.sgd.db"
 
-kegg <- kegg_enrich(mat = mat, pval = 0.05, annot_pkg =  "org.Sc.sgd.db")
+kegg <- kegg_enrich(mat = mat, pval = 0.05, annot_pkg = "org.Sc.sgd.db")
 kegg
 
-go  <- go_enrich(mat = mat, pval = 0.05, ont = "BP", annot_pkg =  "org.Sc.sgd.db")
+go  <- go_enrich(mat = mat, pval = 0.05, ont = "BP", annot_pkg = "org.Sc.sgd.db")
 go
 
 ## ==== Exploratory analysis ====

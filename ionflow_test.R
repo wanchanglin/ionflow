@@ -58,6 +58,15 @@ dat      <- dat[idx, ]
 dat_symb <- dat_symb[idx, ]
 dim(dat)
 
+## ==== Exploratory analysis ====
+expl <- ExploratoryAnalysis(data = dat)
+expl$plot.pca
+expl$plot.corr
+expl$plot.corr.heat
+expl$plot.heat
+expl$plot.net
+head(expl$data.pca.load)
+
 ## ==== Gene Network ====
 gene_net <- GeneNetwork(data = dat,
                         data_symb = dat_symb,
@@ -75,8 +84,9 @@ gene_net$stats.impact_betweenness
 gene_net$stats.impact_betweenness_tab
 head(gene_net$net_node)
 
-#' ==== GO/KEGG enrichment ====
-clus_id = 2   #' 2 - symbolic cluster. 3-  network community centre
+## ==== GO/KEGG enrichment ====
+#' 2 - symbolic cluster. 3 - network community centre
+clus_id = 2
 mat <- gene_net$net_node[, c(1, clus_id)] 
 
 kegg <- kegg_enrich(mat = mat, pval = 0.05, annot_pkg = "org.Sc.sgd.db")
@@ -85,11 +95,3 @@ kegg
 go  <- go_enrich(mat = mat, pval = 0.05, ont = "BP", annot_pkg = "org.Sc.sgd.db")
 go
 
-## ==== Exploratory analysis ====
-expl <- ExploratoryAnalysis(data = dat)
-expl$plot.pca
-expl$plot.corr
-expl$plot.corr.heat
-expl$plot.heat
-expl$plot.net
-head(expl$data.pca.load)

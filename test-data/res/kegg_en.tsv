@@ -1,3 +1,3 @@
-"comm_centre"	"KEGGID"	"Pvalue"	"Count"	"Size"	"Term"
-"Cluster 17 (30 genes)"	"00564"	0.0367132867132867	2	3	"Glycerophospholipid metabolism"
-"Cluster 3 (43 genes)"	"04120"	0.0256410256410256	2	2	"Ubiquitin mediated proteolysis"
+"symb_pheno"	"KEGGID"	"Pvalue"	"Count"	"Size"	"Term"
+"Cluster 11 (45 genes): Na(-)"	"04120"	0.0424242424242424	2	2	"Ubiquitin mediated proteolysis"
+"Cluster 17 (32 genes): Mo(-)"	"00564"	0.0367132867132867	2	3	"Glycerophospholipid metabolism"

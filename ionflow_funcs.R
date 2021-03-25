@@ -232,7 +232,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 
 #' =======================================================================
 #'
-ExploratoryAnalysis <- function(data = NULL){
+ExploratoryAnalysis <- function(data = NULL) {
 
   #' -------------------> PCA
   #' wl-14-07-2020, Tue: Original (trust) pca computation if there is no NAs.
@@ -324,160 +324,6 @@ ExploratoryAnalysis <- function(data = NULL){
   res$plot.corr.heat <- p_corr_heat
   res$plot.heat <- p_heat
   res$plot.net <- p_net
-  return(res)
-}
-
-#' =======================================================================
-#'
-GeneClustering <- function(data = NULL, data_symb = NULL,
-                           min_clust_size = 10, thres_anno = 5) {
-
-  #' wl-06-12-2020, Sun: move two files inside 
-  data_GOslim <- read.table("./libraries/data_GOslim.tsv", header = T,
-                            sep = "\t")
-  data_ORF2KEGG <- read.table("./libraries/data_ORF2KEGG.tsv", header = T,
-                              sep = "\t")
-
-  #' Define clusters
-  clust <- gene_clus(data_symb[, -1], min_clust_size = min_clust_size)
-
-  #' Update data
-  data_symb$cluster <- clust$clus
-  data$cluster <- as.factor(clust$clus)
-  idx <- clust$idx
-  df_sub <- clust$tab_sub
-
-  mat_long <-
-    reshape2::melt(data[idx, ],
-      id = c("Line", "cluster"), variable.name = "Ion",
-      value.name = "log_corr_norm"
-    )
-
-  res <- sapply(mat_long$cluster, function(x) {
-    tmp <- df_sub[df_sub$cluster == x, ]
-    tmp <- paste0("Cluster ", tmp[1], " (", tmp[2], " genes)")
-  })
-  mat_long$cluster <- res
-
-  clus_p <-
-    ggplot(
-      data = mat_long,
-      aes(x = Ion, y = log_corr_norm)
-    ) +
-    facet_wrap(~cluster) +
-    geom_line(aes(group = Line)) +
-    stat_summary(fun.data = "mean_se", color = "red") +
-    labs(x = "", y = "") +
-    theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 90, hjust = 1),
-      axis.text = element_text(size = 10)
-    )
-
-  #' -------------------> KEGG AND GO SLIM ANNOTATION
-  mat <- data_symb[idx, ]
-  data_GOslim$Ontology <- as.character(data_GOslim$Ontology)
-
-  kego <- plyr::dlply(mat, "cluster", function(x) {
-    inputGeneSet <- as.character(x$Line)
-    N <- length(inputGeneSet)
-
-    res <- data_GOslim %>%
-      dplyr::mutate(Ontology = setNames(
-        c(
-          "Biological process",
-          "Cellular component",
-          "Molecular function"
-        ),
-        c("P", "C", "F")
-      )[Ontology]) %>%
-      dplyr::filter(ORFs %in% inputGeneSet) %>%
-      dplyr::group_by(GOslim, Ontology) %>%
-      dplyr::filter(GOslim != "other") %>%
-      dplyr::rename(Term = GOslim) %>%
-      dplyr::summarise(Count = n()) %>%
-      dplyr::mutate(Percent = Count / N * 100) %>%
-      dplyr::bind_rows(data_ORF2KEGG %>%
-        dplyr::filter(ORF %in% inputGeneSet) %>%
-        dplyr::group_by(KEGGID, Pathway) %>%
-        dplyr::summarise(Count = n()) %>%
-        dplyr::mutate(Ontology = "KEGG") %>%
-        dplyr::rename(Term = Pathway) %>%
-        dplyr::ungroup() %>%
-        dplyr::filter(KEGGID != "01100") %>%
-        dplyr::select(-KEGGID) %>%
-        dplyr::mutate(Percent = Count / N * 100)) %>%
-      dplyr::filter(!Term %in% c(
-        "molecular_function", "biological_process",
-        "cellular_component"
-      ))
-  })
-  names(kego) <- paste0("Cluster ", df_sub[[1]], " (", df_sub[[2]], " genes)")
-
-  kego <- lapply(kego, function(x) {
-    x[x$Percent > thres_anno, ]
-  })
-
-  #' wl-04-08-2020, Tue: bind together
-  kego <- dplyr::bind_rows(kego, .id = "Cluster")
-
-  #' -------------------> GO TERMS ENRICHMENT
-  universeGenes <- as.character(data_symb$Line)
-  mat <- data_symb[idx, ]
-
-  goen <- plyr::dlply(mat, "cluster", function(x) {
-    inputGeneSet <- as.character(x$Line)
-    ont <- c("BP", "MF", "CC")
-    res <- lapply(ont, function(y) {
-      params <- new("GOHyperGParams",
-        geneIds = inputGeneSet,
-        universeGeneIds = universeGenes,
-        annotation = "org.Sc.sgd.db",
-        categoryName = "GO",
-        ontology = y,
-        pvalueCutoff = 0.05,
-        conditional = T,
-        testDirection = "over"
-      )
-      hyperGTest(params)
-    })
-    names(res) <- ont
-
-    res_1 <- lapply(ont, function(y) {
-      hgOver <- res[[y]]
-      tmp <- cbind(setNames(
-        tibble(
-          ID = names(pvalues(hgOver)),
-          Term = Term(ID),
-          pvalues = pvalues(hgOver),
-          oddsRatios = oddsRatios(hgOver),
-          expectedCounts = expectedCounts(hgOver),
-          geneCounts = geneCounts(hgOver),
-          universeCounts = universeCounts(hgOver)
-        ),
-        c(
-          "GO_ID", "Description", "Pvalue", "OddsRatio",
-          "ExpCount", "Count", "CountUniverse"
-        )
-      ),
-      Ontology = y
-      )
-    })
-    res_2 <- do.call("rbind", res_1)
-  })
-
-  names(goen) <- paste0("Cluster ", df_sub[[1]], " (", df_sub[[2]], " genes)")
-
-  #' binding and filtering
-  goen <- lapply(goen, "[", -c(4, 5, 8)) %>%
-    dplyr::bind_rows(.id = "Cluster") %>%
-    dplyr::filter(Pvalue <= 0.05 & Count > 1)
-
-  res <- list()
-  res$stats.clusters <- df_sub # selected clusters
-  res$plot.profiles <- clus_p # plot cluster profiles
-  res$stats.Kegg_Goslim_annotation <- kego # KEGG AND GO SLIM ANNOTATION
-  res$stats.Goterms_enrichment <- goen # GO TERMS ENRICHMENT
   return(res)
 }
 
@@ -864,7 +710,7 @@ symbol_data <- function(x, thres_symb = 2) {
 #'
 get_entrez_id <- function(symbol, annot_pkg = "org.Hs.eg.db") {
   res <- AnnotationDbi::select(get(annot_pkg), keys = symbol,
-                               columns = "ENTREZID", keytype="SYMBOL")
+                               columns = "ENTREZID", keytype = "SYMBOL")
   res <- res[,2,drop = T]
   res <- res[!is.na(res)]
   res <- res[!duplicated(res)]
@@ -881,7 +727,7 @@ get_entrez_id <- function(symbol, annot_pkg = "org.Hs.eg.db") {
 #'  The group information may be the symbolic clustering or network
 #'  community detection
 #'
-kegg_enrich <- function(mat, pval = 0.05, annot_pkg =  "org.Sc.sgd.db") {
+kegg_enrich <- function(mat, pval = 0.05, annot_pkg = "org.Sc.sgd.db") {
 
   #' get the gene ids
   gene_uni <- as.character(mat[, 1])

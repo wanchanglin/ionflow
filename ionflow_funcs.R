@@ -193,8 +193,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   data_wide_line_symb <- cbind(Line = data_wide_line_z_score$Line, symb_profiles)
 
   #' plot z-score distributions
-  p1 <-
-    ggplot(
+  p1 <- ggplot(
       data = data_long,
       aes(x = factor(Batch_ID), y = log_corr, col = factor(Batch_ID))
     ) +
@@ -207,8 +206,7 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
 
   # plot overview processed samples
   dat <- reshape2::melt(data_wide_line_z_score, id = "Line")
-  p2 <-
-    ggplot(data = dat, aes(x = value)) +
+  p2 <- ggplot(data = dat, aes(x = value)) +
     geom_histogram(binwidth = .1) +
     facet_wrap(~variable) +
     xlab("Concentration (z-score)") +
@@ -216,6 +214,30 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
     xlim(-10, 10) +
     geom_vline(xintercept = c(-thres_symb, thres_symb), col = "red")
 
+  # Histogram Number of Elements Changed
+  ions.changed <- rowSums(abs(data_wide_line_symb[,2:ncol(data_wide_line_symb)]))
+   
+  p3 <- ggplot(data=data.frame(table(ions.changed)), aes(x=ions.changed, y=Freq)) + 
+               geom_bar(stat="identity") +
+               xlab("Number of Elements Changed") +
+               ylab("Number of Mutants");
+   
+  # Histogram number of changes per element
+  ions.up <- colSums((data_wide_line_symb[,2:ncol(data_wide_line_symb)])==1)
+  ions.down <- colSums((data_wide_line_symb[,2:ncol(data_wide_line_symb)])==-1)
+  
+  ions.direction <- data.frame(hist.name = names(c(ions.down, ions.up)),
+                               hist.val = c(ions.down, ions.up),    
+                               hist.type = c(rep("down",length(ions.down)), rep("up",length(ions.up)))
+                               )
+  
+  p4 <- ggplot(data=ions.direction, aes(fill=hist.type, x=hist.name, y=hist.val)) + 
+    geom_bar(position="stack", stat="identity") +
+    scale_fill_manual(values=c("down"="blue","up"="red")) +
+    theme(legend.title = element_blank()) +
+    ylab("Number of Mutants") +
+    xlab("");
+  
   if (method_norm != "none"){
   # plot batch median log-concentrations
   plot.data.long <- data_long[data_long["Outlier"]==0, ] 
@@ -229,19 +251,19 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   
   batch_median_ions$Ion <- factor(batch_median_ions$Ion, levels = ion.order)
   
- p3 <- ggplot(batch_median_ions, aes(x=Ion, y=med, group = Batch_ID)) +
-    geom_line(aes(), color = "gray") +
-    theme(text = element_text(size=20), axis.title.x=element_blank()) +
-    ylab("Log-concentration") +
-    stat_summary(aes(y = med, group=1), fun = mean, colour="green1", geom="line", group=1) + 
-    stat_summary(fun.min = function(x) mean(x) - sd(x), fun.max = function(x) mean(x) + sd(x), position ='dodge', 
-                 colour="green1", geom = 'errorbar', aes(group = 1), width=.1)+
-    ggtitle("Median log-concentrations of batches");
+  p5 <- ggplot(batch_median_ions, aes(x=Ion, y=med, group = Batch_ID)) +
+      geom_line(aes(), color = "gray") +
+      theme(text = element_text(size=20), axis.title.x=element_blank()) +
+      ylab("Log-concentration") +
+      stat_summary(aes(y = med, group=1), fun = mean, colour="green1", geom="line", group=1) + 
+      stat_summary(fun.min = function(x) mean(x) - sd(x), fun.max = function(x) mean(x) + sd(x), position ='dodge', 
+                   colour="green1", geom = 'errorbar', aes(group = 1), width=.1)+
+      ggtitle("Median log-concentrations of batches");
   
-  # plot CV batch median log-concentrations
+    # plot CV batch median log-concentrations
   ion.batch.cv.median <- batch_median_ions %>%
-    dplyr::group_by(Ion) %>%
-    dplyr::summarize(CV = sd(med, na.rm = TRUE)/mean(med, na.rm = TRUE)) 
+      dplyr::group_by(Ion) %>%
+      dplyr::summarize(CV = sd(med, na.rm = TRUE)/mean(med, na.rm = TRUE)) 
   
   ion.batch.cv.median <- data.frame(ion.batch.cv.median)
   
@@ -249,13 +271,16 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   
   ion.batch.cv.median$Ion <- factor(ion.batch.cv.median$Ion, levels = ion.batch.cv.median$Ion)
   
-  p4 <- ggplot(ion.batch.cv.median, aes(x=Ion, y=abs(CV), group =1)) +
-    ylab(" Absolute CV") +
-    geom_line(aes(), color = "red") +
-    theme(text = element_text(size=20), axis.title.x=element_blank()) +
-    scale_y_log10() +
-    ggtitle("CV median log-concentrations across batches");
+  p6 <- ggplot(ion.batch.cv.median, aes(x=Ion, y=abs(CV), group =1)) +
+      ylab(" Absolute CV") +
+      geom_line(aes(), color = "red") +
+      theme(text = element_text(size=20), axis.title.x=element_blank()) +
+      scale_y_log10() +
+      ggtitle("CV median log-concentrations across batches");
   
+  }else{
+      p5 <- NULL
+      p6 <- NULL
   }
   
   #' -------------------> Output
@@ -270,8 +295,10 @@ PreProcessing <- function(data = NULL, var_id = 1, batch_id = 3, data_id = 5,
   res$data.line.symb     <- data_wide_line_symb
   res$plot.overview      <- p1
   res$plot.hist          <- p2
-  res$plot.medians       <- p3
-  res$plot.CV            <- p4
+  res$plot.change.stat   <- p3
+  res$plot.change.dir    <- p4
+  res$plot.medians       <- p5
+  res$plot.CV            <- p6
   return(res)
 }
 

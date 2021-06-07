@@ -20,7 +20,9 @@ ion_data <- read.table("./test-data/Dataset_IonFlow_Ionome_KO_short.csv",
 ## ==== Data preprocessing ====
 
 pre <- PreProcessing(data = ion_data,
-                     var_id = 1, batch_id = 3, data_id = 5,
+                     var_id = 1,
+                     batch_id = 3,
+                     data_id = 5,
                      method_norm = "median",
                      control_lines = "BY4741",
                      control_use = "all",
@@ -39,7 +41,6 @@ pre <- PreProcessing(data = ion_data,
 pre$stats.raw.data
 pre$stats.outliers
 pre$stats.batches
-pre$stats.std
 head(pre$data.line.zscores)
 head(pre$data.line.symb)
 head(pre$data.long)
@@ -57,7 +58,7 @@ pre$plot.change.stat
 # Histogram Number of Changes per Element
 pre$plot.change.dir  
 
-## ==== Exploratory Analysis Plot ====
+## ==== Exploratory analysis ====
 
 expl <- IonAnalysis(data = pre$data.line.zscores, thres_ion_corr = 0.15)
 ## names(expl)
@@ -67,10 +68,8 @@ expl <- IonAnalysis(data = pre$data.line.zscores, thres_ion_corr = 0.15)
 expl$plot.pca
 # Ion-ion correlation network
 expl$plot.net
-# Ions heatmap
-expl$plot.heat
 
-## ==== Clustering ====
+## ==== Clustering analysis ====
 
 gcl <- ProfileClustering(pre$data.line.symb, min_clust_size = 10,
                          h_tree = 0, filter_zero_string = TRUE)
@@ -120,7 +119,7 @@ p_gcl <-
         axis.text = element_text(size = 10))
 p_gcl
 
-## ==== Enrichment Analysis ====
+## ==== Enrichment analysis ====
 
 # Input ORFs for yeast and ENTREZIDs for mouse or human
 
@@ -132,7 +131,7 @@ ge <- GOEnricher(cluster_vector, pval = 0.05, min_count = 3,
 ## [1] "enrichment.summary" "enrichment.full.results"
 ge$enrichment.summary
 
-## ==== Network Analysis ====
+## ==== Network analysis ====
 
 gn <- GeneticNetwork(data = zscore_profiles, 
                      method_corr = "cosine",

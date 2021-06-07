@@ -1,0 +1,8 @@
+"Cluster"	"ID"	"Description"	"Pvalue"	"Count"	"CountUniverse"	"Ontology"
+"4"	"GO:0006650"	"glycerophospholipid metabolic process"	"0.0029"	"3"	"7"	"BP"
+"4"	"GO:0016043"	"cellular component organization"	"0.0176"	"8"	"83"	"BP"
+"4"	"GO:0019637"	"organophosphate metabolic process"	"0.0203"	"3"	"13"	"BP"
+"4"	"GO:0044255"	"cellular lipid metabolic process"	"0.0365"	"3"	"16"	"BP"
+"4"	"GO:0034613"	"cellular protein localization"	"0.0371"	"4"	"28"	"BP"
+"4"	"GO:0072594"	"establishment of protein localization to organelle"	"0.0431"	"3"	"17"	"BP"
+"11"	"GO:0043412"	"macromolecule modification"	"0.0389"	"5"	"47"	"BP"

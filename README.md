@@ -33,9 +33,6 @@ modification of R package [IonFlow](https://github.com/AlinaPeluso/MetaboFlow).
   ```
 
 - Test data are in `test-data`.
-  - `iondata.tsv`: a full ionomics data set 
-  - `iondata_test.tsv`: a subset of `iondata.tsv`
-  - `user_std.tsv`: user defined standard deviation file with two columns
 
 ## Authors, contributors & contacts ##
 

@@ -1,12 +1,12 @@
 <!--
 wl-10-08-2020, Mon: commence
 wl-24-08-2020, Mon: first version
-wl-09-09-2020, Wed: add input data index for varaible, batch id and data
 wl-16-11-2020, Mon: second version
 wl-23-03-2021, Tue: third version
+wl-08-06-2021, Tue: fourth version: new stuff from Jacopo
 -->
 
-<tool id="ionfow" name="IonFlow" version="0.1.0">
+<tool id="ionfow" name="IonFlow" version="0.4.0">
   <description>
     Pipeline for processing and analysis of ionomics data
   </description>
@@ -23,31 +23,40 @@ wl-23-03-2021, Tue: third version
       Rscript ${__tool_directory__}/ionflow.R
         ## Input
         --ion_file '$ion_file'
-        --var_id '$pre_proc.var_id'
-        --batch_id '$pre_proc.batch_id'
-        --data_id '$pre_proc.data_id'
-        --method_norm '$pre_proc.method_norm'
-        --batch_control '$pre_proc.batch.batch_control'
-        #if $pre_proc.batch.batch_control=='yes'
-          --control_lines '$pre_proc.batch.control_lines'
-          --control_use '$pre_proc.batch.control_use'
+        --var_id '$pre.var_id'
+        --batch_id '$pre.batch_id'
+        --data_id '$pre.data_id'
+        --method_norm '$pre.method_norm'
+        --batch_control '$pre.batch.batch_control'
+        #if $pre.batch.batch_control=='yes'
+          --control_lines '$pre.batch.control_lines'
+          --control_use '$pre.batch.control_use'
         #end if
-        --method_outliers '$pre_proc.method_outliers'
-        --thres_outl '$pre_proc.thres_outl'
-        --stand_method '$pre_proc.stand.stand_method'
-        #if $pre_proc.stand.stand_method=='custom':
-          --std_file '$pre_proc.stand.std_file'
+        --method_outliers '$pre.method_outliers'
+        --thres_outl '$pre.thres_outl'
+        --stand_method '$pre.stand.stand_method'
+        #if $pre.stand.stand_method=='custom':
+          --std_file '$pre.stand.std_file'
         #end if
-        --thres_symb '$pre_proc.thres_symb'
+        --thres_symb '$pre.thres_symb'
 
-        ## network and enrichment analysis
-        --min_clust_size '$net_enri.min_clust_size'
-        --thres_corr '$net_enri.thres_corr'
-        --method_corr '$net_enri.method_corr'
-        --clus_id '$net_enri.clus_id'
-        --pval '$net_enri.pval'
-        --ont '$net_enri.ont'
-        --annot_pkg '$net_enri.annot_pkg'
+        ## Exploratory analysis
+        --thres_ion_corr '$expl.thres_ion_corr'
+
+        ## Clustering analysis
+        --min_clust_size '$clus.min_clust_size'
+        --h_tree '$clus.h_tree'
+        --filter_zero_string '$clus.filter_zero_string'
+
+        ## Enrichment analysis
+        --pval '$enri.pval'
+        --min_count '$enri.min_count'
+        --ont '$enri.ont'
+        --annot_pkg '$enri.annot_pkg'
+
+        ## Network analysis
+        --method_corr '$net.method_corr'
+        --thres_corr '$net.thres_corr'
 
         ## output: pre-processing
         --pre_proc_pdf  '$pre_proc_pdf'
@@ -57,37 +66,38 @@ wl-23-03-2021, Tue: third version
         --data_wide_symb_out  '$data_wide_symb_out'
 
         ## output: exploratory analysis
-        --exp_anal_pdf  '$exp_anal_pdf'
+        --expl_anal_pdf  '$expl_anal_pdf'
 
-        ## output: gene network
-        --gene_net_pdf  '$gene_net_pdf'
-        --imbe_out  '$imbe_out'
-        --imbe_tab_out  '$imbe_tab_out'
+        ## output: clustering analysis
+        --clus_anal_pdf  '$clus_anal_pdf'
 
         ## output: enrichment analysis
-        --kegg_en_out  '$kegg_en_out'
         --go_en_out  '$go_en_out'
+
+        ## output: network analysis
+        --gene_net_pdf  '$gene_net_pdf'
+        --imbe_out  '$imbe_out'
     ]]>
   </command>
 
   <!-- =============================================================== -->
   <inputs>
-    <param name="ion_file" type="data"  format="tabular"
+    <param name="ion_file" type="data" format="csv"
            label="Ion data table"
            help="Ion data table with columns of Ions and meta information." />
 
-    <!-- start of pre_proc -->
-    <section name="pre_proc" title="Pre Processing" >
+    <!-- start of pre -->
+    <section name="pre" title="Pre Processing" >
 
       <param name="var_id" type="integer" value="1"
              label="Specify variable column index of input data"
              help="Indicate which column will be the variable (ORF or SYMBOL)." />
 
-      <param name="batch_id" type="integer" value="2"
+      <param name="batch_id" type="integer" value="3"
              label="Specify batch ID column index of input data"
              help="Indicate which column will be batch ID." />
 
-      <param name="data_id" type="integer" value="3"
+      <param name="data_id" type="integer" value="5"
              label="Specify data start column index of input data"
              help="Indicate which column will be the start of data matrix." />
 
@@ -102,12 +112,12 @@ wl-23-03-2021, Tue: third version
       <conditional name="batch">
         <param name="batch_control" type="select"
                label="Use control lines for batch correction or not" >
-        <option value="yes">Yes</option>
-        <option value="no" selected="true">No</option>
+        <option value="yes" selected="true">Yes</option>
+        <option value="no">No</option>
         </param>
 
         <when value="yes">
-          <param name="control_lines" type="text" value=""
+          <param name="control_lines" type="text" value="BY4741"
                  label="Specify batch control lines (rows)">
           <sanitizer>
             <valid initial="string.ascii_letters,string.digits"></valid>
@@ -116,8 +126,8 @@ wl-23-03-2021, Tue: third version
 
           <param name="control_use" type="select"
                  label="Select lines for batch correction">
-          <option value="control" selected="true">Use control lines for batch correction</option>
-          <option value="all">Use all lines for batch correction</option>
+          <option value="control">Use control lines for batch correction</option>
+          <option value="all" selected="true">Use all lines for batch correction</option>
           <option value="control.out">Use all lines except control lines for batch correction</option>
           </param>
         </when>
@@ -128,9 +138,9 @@ wl-23-03-2021, Tue: third version
 
       <param name="method_outliers" type="select"
              label="Select a method for outlier detection">
-      <option value="IQR" selected="true">IQR</option>
+      <option value="IQR">IQR</option>
       <option value="mad">MAD</option>
-      <option value="log.FC.dist">log FC dist</option>
+      <option value="log.FC.dist" selected="true">log FC dist</option>
       <option value="none">none</option>
       </param>
 
@@ -155,53 +165,58 @@ wl-23-03-2021, Tue: third version
         </when>
       </conditional>
 
-      <param name="thres_symb" type="float" value="2.0" 
+      <param name="thres_symb" type="float" value="2.0"
              label="Specify symbolisation threshold" />
 
     </section>
-    <!-- end of pre_proc -->
+    <!-- end of pre -->
 
-    <section name="net_enri" title="Network and enrichment analysis" >
+    <section name="expl" title="Exploratory analysis" >
+      <param name="thres_ion_corr" type="float" value="0.15"
+             label="Threshold for Ion correlation (0 - 1)" />
+    </section>
+
+    <section name="clus" title="Clustering analysis" >
       <param name="min_clust_size" type="float" value="10.0"
-            label="Specify minimal cluster center number" />
-      <param name="thres_corr" type="float" value="0.75" min="0" max="1"
-             label="Specify similarity threshold (0 - 1)" />
+             label="Specify minimal cluster center number" />
+      <param name="h_tree" type="float" value="0.0"
+             label="Cutting height for hierarchical clustering" />
+      <param name="filter_zero_string" type="boolean" truevalue="True"
+             falsevalue="False" checked="True"
+             label="Filter the zero string?" />
+    </section>
 
-      <param name="method_corr" type="select"
-             label="Select a method for similarity measure">
-      <option value="pearson" selected="true">Pearson</option>
-      <option value="spearman">Spearman</option>
-      <option value="kendall">Kendall</option>
-      <option value="cosine">Cosine</option>
-      <option value="mahal_cosine">Mahalanobis Cosine</option>
-      <option value="hybrid_mahal_cosine">Hybrid Mahalanobis Cosine</option>
-      </param>
-
-      <param name="clus_id" type="select"
-              label="Specify network clustering for enrichment analysis"
-              help="Choose 'symbolic cluster' or 'network comminuty centre' 
-                    for enrichment analysis."
-              display="radio">
-            <option value="2" selected="True">Symbolic cluster</option>
-            <option value="3">Network comminuty centre</option>
-      </param>
-
+    <section name="enri" title="Enrichment analysis" >
       <param name="pval" type="float" value="0.05"
              label="Specify p-value threshold for enrichment analysiss" />
-
+      <param name="min_count" type="float" value="3.0"
+             label="Minimal count number for enrichment analysis" />
       <param name="ont" type="select"
              label="Select gene ontology for GO Terms">
       <option value="BP" selected="true">BP</option>
       <option value="MF">MF</option>
       <option value="CC">CC</option>
       </param>
-
       <param name="annot_pkg" type="select"
-             label="Select an annotation package">
+            label="Select an annotation package">
       <option value="org.Sc.sgd.db" selected="true">Yeast(org.Sc.sgd.db)</option>
       <option value="org.Hs.eg.db">Human(org.Hs.eg.db)</option>
       <option value="org.Mm.eg.db">Mouse(org.Mm.eg.db)</option>
       </param>
+    </section>
+
+    <section name="net" title="Network analysis" >
+      <param name="method_corr" type="select"
+             label="Select a method for similarity measure">
+      <option value="pearson">Pearson</option>
+      <option value="spearman">Spearman</option>
+      <option value="kendall">Kendall</option>
+      <option value="cosine" selected="true">Cosine</option>
+      <option value="mahal_cosine">Mahalanobis Cosine</option>
+      <option value="hybrid_mahal_cosine">Hybrid Mahalanobis Cosine</option>
+      </param>
+      <param name="thres_corr" type="float" value="0.7" min="0" max="1"
+             label="Specify similarity threshold (0 - 1)" />
     </section>
 
   </inputs>
@@ -219,55 +234,53 @@ wl-23-03-2021, Tue: third version
           label="Pre-processed data in wide format on ${on_string}"/>
     <data format="tabular" name="data_wide_symb_out"
           label="Symbolization data in wide format on ${on_string}"/>
-
-    <data format="pdf" name="exp_anal_pdf"
+    <data format="pdf" name="expl_anal_pdf"
           label="Explanatation analysis plots for Ions on ${on_string}" />
-
+    <data format="pdf" name="clus_anal_pdf"
+          label="Explanatation analysis plots for Ions on ${on_string}" />
+    <data format="tabular" name="go_en_out"
+          label="GO enrichment table on ${on_string}"/>
     <data format="pdf" name="gene_net_pdf"
           label="Gene network plots on ${on_string}" />
     <data format="tabular" name="imbe_out"
           label="Impact and betweenness table on ${on_string}"/>
-    <data format="tabular" name="imbe_tab_out"
-          label="Impact and betweenness contingency table on ${on_string}"/>
-
-    <data format="tabular" name="kegg_en_out"
-          label="KEGG entichment table on ${on_string}"/>
-    <data format="tabular" name="go_en_out"
-          label="GO enrichment table on ${on_string}"/>
   </outputs>
 
   <!-- =============================================================== -->
   <tests>
     <test>
-      <param name="ion_file" value="iondata.tsv" />
+      <param name="ion_file" value="Dataset_IonFlow_Ionome_KO_short.csv" />
       <param name="var_id" value="1" />
-      <param name="batch_id" value="2" />
-      <param name="data_id" value="3" />
+      <param name="batch_id" value="3" />
+      <param name="data_id" value="5" />
       <param name="method_norm" value="median" />
-      <param name="batch_control" value="no" />
-      <param name="method_outliers" value="IQR" />
+      <param name="batch_control" value="yes" />
+      <param name="control_lines" value="BY4741" />
+      <param name="control_use" value="all" />
+      <param name="method_outliers" value="log.FC.dist" />
       <param name="thres_outl" value="3.0" />
       <param name="stand_method" value="std" />
-      <param name="std_file" value="user_std.tsv" />
-      <param name="thres_symb" value="2.0" />
+      <param name="thres_symb" value="2" />
+      <param name="thres_ion_corr" value="0.15" />
       <param name="min_clust_size" value="10.0" />
-      <param name="thres_corr" value="0.75" />
-      <param name="method_corr" value="pearson" />
-      <param name="clus_id" value="2" />
+      <param name="h_tree" value="0.0" />
+      <param name="filter_zero_string" value="TRUE" />
       <param name="pval" value="0.05" />
+      <param name="min_count" value="3" />
       <param name="ont" value="BP" />
       <param name="annot_pkg" value="org.Sc.sgd.db" />
+      <param name="method_corr" value="cosine" />
+      <param name="thres_corr" value="0.7" />
       <output name="pre_proc_pdf" file="res/pre_proc.pdf" compare="sim_size" />
       <output name="df_stats_out" file="res/df_stats.tsv" compare="diff" />
       <output name="outl_out" file="res/outl.tsv" compare="diff" />
       <output name="data_wide_out" file="res/data_wide.tsv" compare="diff" />
       <output name="data_wide_symb_out" file="res/data_wide_symb.tsv" compare="diff" />
-      <output name="exp_anal_pdf" file="res/exp_anal.pdf" compare="sim_size" />
+      <output name="expl_anal_pdf" file="res/expl_anal.pdf" compare="sim_size" />
+      <output name="clus_anal_pdf" file="res/clus_anal.pdf" compare="sim_size" />
+      <output name="go_en_out" file="res/go_en.tsv" compare="diff" />
       <output name="gene_net_pdf" file="res/gene_net.pdf" compare="sim_size" />
       <output name="imbe_out" file="res/impact_betweenness.tsv" compare="diff" />
-      <output name="imbe_tab_out" file="res/impact_betweenness_tab.tsv" />
-      <output name="kegg_en_out" file="res/kegg_en.tsv" compare="diff" />
-      <output name="go_en_out" file="res/go_en.tsv" compare="diff" />
     </test>
   </tests>
 
@@ -294,18 +307,24 @@ Exploratory Analysis
   ions. The heatmap with hierarchical clustering and network graph are based
   on the correlation analysis.
 
-Gene Clustering and Enrichment Analysis
+Clustering Analysis
   This step performs hierarchical clustering based on symbolised profile.
   The selected cluster centres (control by the threshold of minimal cluster
-  centre number) are applied to GO Terms and KEGG enrichment analysis.
+  centre number) are applied to enrichment and network analysis.
 
-Gene clustering and Gene Network
-  This part uses hierarchical clustering of the symbolised profile to select
-  genes located in the clustering centre with its number large than the
-  minimal cluster centre threshold for correlation analysis. Genes with
-  correlation coefficient large than a threshold are then used for network
-  analysis. Some network analysis stats such as impact and betweenness are
-  also returned.
+Enrichment Analysis
+  This step uses the clustering results for enrichment analysis. Current suports
+  three annotation packages:
+
+  - Yeast(org.Sc.sgd.db)
+  - Human(org.Hs.eg.db)
+  - Mouse(org.Mm.eg.db)
+
+Network Analysis
+  This part uses hierarchical clustering of the symbolised profile
+  for network analysis. Genes with correlation coefficient large than a
+  threshold are then used. Some network analysis stats such as impact and
+  betweenness are also returned.
 
 .. _IonFlow: https://github.com/AlinaPeluso/MetaboFlow
 
@@ -388,29 +407,29 @@ A single PDF file with plots:
 
 - Correlation map
 - Heatmap with dendrogram
-- Correlation heatmap with dendrogram
-- Correlation network graph
 - PCA plot
+- Correlation network graph
 
-Gene network
-~~~~~~~~~~~~
+Clustering analysis
+~~~~~~~~~~~~~~~~~~~
 
-Three files are returned:
+A single PDF file with clustering plots.
+
+Enrichment analysis
+~~~~~~~~~~~~~~~~~~~
+
+A tabular file for GO Terms enrichment table.
+
+Network analysis
+~~~~~~~~~~~~~~~~
+
+Two files are returned:
 
 - A PDF file for plots
-  - network graph with node colours controlled by symbolic pheno
-  - network graph with node colours controlled by network cluster
+  - network graph
   - impact scatter plot
 - A tabular file for impact and betweenness table
-- A tabular file for impact and betweenness contingency table
 
-Gene enrichment
-~~~~~~~~~~~~~~~
-
-Two tubular files include:
-
-- A tabular file for GO Terms enrichment table
-- A tabular file for KEGG enrichment table
 
 </help>
   <citations>

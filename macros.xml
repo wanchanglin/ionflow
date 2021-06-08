@@ -4,21 +4,22 @@
       <requirement type="package" version="1.6.6">r-optparse</requirement>
       <requirement type="package" version="1.4.4">r-reshape2</requirement>
       <requirement type="package" version="1.8.6">r-plyr</requirement>
-      <requirement type="package" version="1.0.1">r-dplyr</requirement>
-      <requirement type="package" version="1.1.1">r-tidyr</requirement>
-      <requirement type="package" version="3.3.2">r-ggplot2</requirement>
-      <requirement type="package" version="0.8.2">r-ggrepel</requirement>
-      <requirement type="package" version="0.84">r-corrplot</requirement>
-      <requirement type="package" version="3.0.4">r-gplots</requirement>
-      <requirement type="package" version="1.16.0">r-network</requirement>
-      <requirement type="package" version="2.5">r-sna</requirement>
-      <requirement type="package" version="2.0.0">r-ggally</requirement>
-      <requirement type="package" version="3.11.4">bioconductor-go.db</requirement>
-      <requirement type="package" version="2.54.0">bioconductor-gostats</requirement>
+      <requirement type="package" version="1.0.6">r-dplyr</requirement>
+      <requirement type="package" version="1.1.3">r-tidyr</requirement>
+      <requirement type="package" version="3.3.3">r-ggplot2</requirement>
+      <requirement type="package" version="0.9.1">r-ggrepel</requirement>
+      <requirement type="package" version="0.89">r-corrplot</requirement>
+      <requirement type="package" version="3.1.1">r-gplots</requirement>
+      <requirement type="package" version="1.16.1">r-network</requirement>
+      <requirement type="package" version="2.6">r-sna</requirement>
+      <requirement type="package" version="2.1.1">r-ggally</requirement>
+      <requirement type="package" version="3.13.0">bioconductor-go.db</requirement>
+      <requirement type="package" version="2.58.0">bioconductor-gostats</requirement>
       <requirement type="package" version="1.0.12">r-pheatmap</requirement>
-      <!-- <requirement type="package" version="1.2.6">r-igraph</requirement> -->
-      <!-- <requirement type="package" version="3.24">bioconductor-kegg.db</requirement> -->
-      <!-- <requirement type="package" version="3.11.1">bioconductor-org.sc.sgd.db</requirement> -->
+      <requirement type="package" version="1.2.6">r-igraph</requirement>
+      <requirement type="package" version="3.2.4">bioconductor-kegg.db</requirement>
+      <requirement type="package" version="3.13.0">bioconductor-org.sc.sgd.db</requirement>
+      <requirement type="package" version="3.13.0">bioconductor-org.hs.eg.db</requirement>
     </requirements>
   </xml>
   <xml name="stdio">

@@ -1,4 +1,6 @@
-#' wl-07-06-2021, Mon: The final version
+#' wl-07-06-2021, Mon: The fourth version: based on Jacopo's new changes in 
+#' 'ionflow_funcs.R' and new pipeline 'tutorial_galaxy_ionflow.R'
+#' wl-08-06-2021, Tue: finalise
 
 ## ==== General settings ====
 rm(list = ls(all = T))
@@ -11,7 +13,7 @@ options(warn = -1) #' disable R warning. Turn back: options(warn=0)
 
 #' ------------------------------------------------------------------------
 #' Setup R error handling to go to stderr
-#' options( show.error.messages=F, error = function (){
+#' options( show.error.messages=F, error = function () {
 #'   cat( geterrmessage(), file=stderr() )
 #'   q( "no", 1, F )
 #' })
@@ -53,7 +55,7 @@ if (com_f) {
         dest = "verbose", help = "Print little output"
       ),
 
-      #' Data preprocessing
+      #' Data pre-processing
       make_option("--ion_file", type = "character",
                   help = "ion concentration file in tabular format"),
       make_option("--var_id", type = "integer", default = 1,
@@ -72,7 +74,7 @@ if (com_f) {
       make_option("--control_use", type = "character", default = "all",
                   help = "Select lines used for batch correction control.
                           Three selection: control, all and control.out"),
-      make_option("--method_outliers", type = "character", 
+      make_option("--method_outliers", type = "character",
                   default = "log.FC.dist",
                   help = "Outlier detection method. Currently support:
                           mad, IQR, log.FC.dist and none."),
@@ -89,7 +91,7 @@ if (com_f) {
       #' Exploratory analysis
       make_option("--thres_ion_corr", type = "double", default = 0.15,
                   help = "Threshold for Ion correlation (0 - 1)"),
-                  
+
       #' Clustering analysis
       make_option("--min_clust_size", type = "double", default = 10.0,
                   help = "Minimal cluster size."),
@@ -141,8 +143,8 @@ if (com_f) {
       ),
 
       #' output: exploratory analysis
-      make_option("--exp_anal_pdf",
-        type = "character", default = "exp_anal.pdf",
+      make_option("--expl_anal_pdf",
+        type = "character", default = "expl_anal.pdf",
         help = "Save plots from exploratory analysis"
       ),
 
@@ -191,8 +193,6 @@ if (com_f) {
     method_outliers = "log.FC.dist",
     thres_outl = 3.0,
     stand_method = "std",
-    #' stdev = NULL,
-    std_file = paste0(tool_dir, "test-data/user_std.tsv"),
     thres_symb = 2,
 
     #' Exploratory analysis
@@ -200,7 +200,7 @@ if (com_f) {
 
     #' Clustering analysis
     min_clust_size = 10.0,
-    h_tree = 0.0, 
+    h_tree = 0.0,
     filter_zero_string = TRUE,
 
     #' Enrichment analysis
@@ -221,7 +221,7 @@ if (com_f) {
     data_wide_symb_out = paste0(tool_dir, "test-data/res/data_wide_symb.tsv"),
 
     #' output: exploratory analysis
-    exp_anal_pdf = paste0(tool_dir, "test-data/res/exp_anal.pdf"),
+    expl_anal_pdf = paste0(tool_dir, "test-data/res/expl_anal.pdf"),
 
     #' output: clustering analysis
     clus_anal_pdf = paste0(tool_dir, "test-data/res/clus_anal.pdf"),
@@ -234,7 +234,7 @@ if (com_f) {
     imbe_out     = paste0(tool_dir, "test-data/res/impact_betweenness.tsv")
   )
 }
-print(opt)
+#' print(opt)
 
 suppressPackageStartupMessages({
   source(paste0(tool_dir, "ionflow_funcs.R"))
@@ -256,21 +256,21 @@ if (opt$stand_method == "custom") { #' if (lenth(opt$std_file) > 0) {
 }
 
 ## ==== Pre-processing ====
-pre<- PreProcessing(data            = ion_data,
-                    var_id          = opt$var_id,
-                    batch_id        = opt$batch_id,
-                    data_id         = opt$data_id,
-                    method_norm     = opt$method_norm,
-                    control_lines   = control_lines,
-                    control_use     = opt$control_use,
-                    method_outliers = opt$method_outliers,
-                    thres_outl      = opt$thres_outl,
-                    stand_method    = opt$stand_method,
-                    stdev           = stdev,
-                    thres_symb      = opt$thres_symb)
+pre <- PreProcessing(data            = ion_data,
+                     var_id          = opt$var_id,
+                     batch_id        = opt$batch_id,
+                     data_id         = opt$data_id,
+                     method_norm     = opt$method_norm,
+                     control_lines   = control_lines,
+                     control_use     = opt$control_use,
+                     method_outliers = opt$method_outliers,
+                     thres_outl      = opt$thres_outl,
+                     stand_method    = opt$stand_method,
+                     stdev           = stdev,
+                     thres_symb      = opt$thres_symb)
 
 #' save plot in pdf
-pdf(file = opt$pre_proc_pdf, onefile = T, width=15, height=10)
+pdf(file = opt$pre_proc_pdf, onefile = T) # width = 15, height = 10
 plot(pre$plot.hist)
 plot(pre$plot.overview)
 plot(pre$plot.medians)
@@ -279,7 +279,7 @@ plot(pre$plot.change.stat)
 plot(pre$plot.change.dir)
 dev.off()
 
-#' bind stats
+#' combine stats
 df_stats <- list(raw_data = pre$stats.raw.data,
                  bat_data = pre$stats.batches)
 df_stats <- dplyr::bind_rows(df_stats, .id = "Data_Set")
@@ -296,8 +296,8 @@ write.table(pre$data.line.symb, file = opt$data_wide_symb_out,
 
 ## ==== Exploratory analysis ====
 
-pdf(file = opt$exp_anal_pdf, onefile = T)
-expl <- IonAnalysis(data = pre$data.line.zscores, 
+pdf(file = opt$expl_anal_pdf, onefile = T)
+expl <- IonAnalysis(data = pre$data.line.zscores,
                     thres_ion_corr = opt$thres_ion_corr)
 plot(expl$plot.pca)
 plot(expl$plot.net)
@@ -305,42 +305,42 @@ dev.off()
 
 ## ==== Clustering analysis ====
 
-gcl <- ProfileClustering(pre$data.line.symb, 
+gcl <- ProfileClustering(pre$data.line.symb,
                          min_clust_size = opt$min_clust_size,
                          h_tree = opt$h_tree,
                          filter_zero_string = opt$filter_zero_string)
 
 #' select larger clusters
-cluster_vector <- 
+cluster_vector <-
   gcl$clusters.vector[gcl$clusters.vector$Cluster %in%
                       gcl$tab.clusters.subset$Cluster, ]
 
 #' extract symbolic and z-score prifiles for lines in selected clusters
 symbol_profiles <- pre$data.line.symb
-symbol_profiles$Cluster <- 
+symbol_profiles$Cluster <-
   cluster_vector$Cluster[match(symbol_profiles$Line, cluster_vector$Line)]
 
 zscore_profiles <- pre$data.line.zscores
-zscore_profiles$Cluster <- 
+zscore_profiles$Cluster <-
   cluster_vector$Cluster[match(zscore_profiles$Line, cluster_vector$Line)]
 
-#' remove lines showing no phenotype 
+#' remove lines showing no phenotype
 symbol_profiles <- symbol_profiles[!is.na(symbol_profiles$Cluster),]
 zscore_profiles <- zscore_profiles[!is.na(zscore_profiles$Cluster),]
 
 mat_long <- reshape2::melt(zscore_profiles, id = c("Line", "Cluster"),
                  variable.name = "Ion", value.name = "zscore")
 
-mat_long$n.genes <- 
-  gcl$tab.clusters.subset$Number.of.genes[match(mat_long$Cluster, 
+mat_long$n.genes <-
+  gcl$tab.clusters.subset$Number.of.genes[match(mat_long$Cluster,
                                                 gcl$tab.clusters.subset$Cluster)]
-mat_long$title <- paste0('Cluster ', mat_long$Cluster,' (', 
+mat_long$title <- paste0('Cluster ', mat_long$Cluster,' (',
                          mat_long$n.genes, ' genes)')
 
-p_gcl <- 
+p_gcl <-
   ggplot(data = mat_long, aes(x = Ion, y = zscore, group = Line), color = "gray") +
   geom_line() +
-  stat_summary(fun.data = "mean_se", color = "red", geom = "line", group=1) +
+  stat_summary(fun.data = "mean_se", color = "red", geom = "line", group = 1) +
   labs(x = "", y = "z-score") +
   coord_cartesian(ylim = c(-8, 8)) +
   facet_wrap(~title) +
@@ -348,18 +348,18 @@ p_gcl <-
         axis.text.x = element_text(angle = 90, hjust = 1),
         axis.text = element_text(size = 10))
 
-pdf(file = opt$clus_anal_pdf, onefile = T) # ,width=15, height=10)
+pdf(file = opt$clus_anal_pdf, onefile = T)
 plot(p_gcl)
 dev.off()
 
 ## ==== Enrichment analysis ====
 
 ge <- GOEnricher(cluster_vector,
-                 pval = opt$pval, 
-                 min_count = opt$min_count, 
-                 annot_pkg = opt$annot_pkg, 
+                 pval = opt$pval,
+                 min_count = opt$min_count,
+                 annot_pkg = opt$annot_pkg,
                  ont = opt$ont,
-                 gene_uni = as.character(pre$data.line.zscores$Line)) 
+                 gene_uni = as.character(pre$data.line.zscores$Line))
 
 if (nrow(ge$enrichment.summary) > 0) {
   write.table(ge$enrichment.summary, file = opt$go_en_out, sep = "\t",
@@ -375,7 +375,7 @@ gn <- GeneticNetwork(data                 = zscore_profiles,
                      cluster_vector       = cluster_vector,
                      cluster_label_vector = NULL)
 
-pdf(file = opt$gene_net_pdf, onefile = T, width=15, height=10)
+pdf(file = opt$gene_net_pdf, onefile = T) # width = 15, height = 10
 plot(gn$plot.network)
 plot(gn$plot.impact_betweenness)
 dev.off()

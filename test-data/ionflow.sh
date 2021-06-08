@@ -1,4 +1,4 @@
-# wl-07-06-2021, Mon: Rscript test code for Linux. 
+# wl-07-06-2021, Mon: command line test script
 
 Rscript --vanilla ../ionflow.R \
   --ion_file "../test-data/Dataset_IonFlow_Ionome_KO_short.csv" \
@@ -28,7 +28,7 @@ Rscript --vanilla ../ionflow.R \
   --outl_out     "../test-data/res/outl.tsv" \
   --data_wide_out "../test-data/res/data_wide.tsv" \
   --data_wide_symb_out "../test-data/res/data_wide_symb.tsv" \
-  --exp_anal_pdf "../test-data/res/exp_anal.pdf" \
+  --expl_anal_pdf "../test-data/res/expl_anal.pdf" \
   --clus_anal_pdf "../test-data/res/clus_anal.pdf" \
   --go_en_out "../test-data/res/go_en.tsv" \
   --gene_net_pdf "../test-data/res/gene_net.pdf" \

@@ -33,6 +33,11 @@ modification of R package [IonFlow](https://github.com/AlinaPeluso/MetaboFlow).
   ```
 
 - Test data are in `test-data`.
+- This tool is in the Galaxy Tool Shed:
+  https://toolshed.g2.bx.psu.edu/view/metaboflow_cam/ionflow/3b461dc9568b.
+  Follow the instruction in [Installing Tools into
+  Galaxy](https://galaxyproject.org/admin/tools/add-tool-from-toolshed-tutorial/)
+  to install. 
 
 ## Authors, contributors & contacts ##
 
